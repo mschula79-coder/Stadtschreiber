@@ -1,0 +1,29 @@
+name: stadtschreiber
+description: "Stadschreiber"
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.10.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.6.0
+  maplibre_gl: ^0.24.1
+  iconify_flutter: ^0.0.7
+  provider: ^6.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/tiles/
+    - assets/styles/
+    - assets/styles/sprites/
+    - assets/styles/fonts/
+    - assets/data/categories.json

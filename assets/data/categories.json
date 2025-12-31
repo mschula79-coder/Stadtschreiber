@@ -1,0 +1,68 @@
+[
+  {
+    "label": "Hangout",
+    "parent": "true",
+    "children": [
+      {
+        "label": "Parks",
+        "value": "parks",
+        "icon": {
+          "type": "url",
+          "value": "https://raw.githubusercontent.com/mschula79-coder/Stadtschreiber/f39994cfe3e217fe10e7df5c5b4b4e6b51b4daf1/icon_rest_area.png"
+        }
+      },
+      {
+        "label": "Playgrounds",
+        "value": "playgrounds",
+        "icon": {
+          "type": "url",
+          "value": "https://raw.githubusercontent.com/mschula79-coder/Stadtschreiber/f39994cfe3e217fe10e7df5c5b4b4e6b51b4daf1/icon_playground.png"
+        }
+      }
+    ]
+  },
+  {
+    "label": "Sport",
+    "parent": "true",
+    "children": [
+      {
+        "label": "Basketball Courts",
+        "value": "basketball-courts",
+        "icon": {
+          "type": "url",
+          "value": "https://raw.githubusercontent.com/mschula79-coder/Stadtschreiber/f39994cfe3e217fe10e7df5c5b4b4e6b51b4daf1/icon_basketball.png"
+        }
+      },
+      {
+        "label": "Tennis Courts",
+        "parent": "true",
+        "children": [
+          {
+            "label": "Tennis",
+            "value": "tennis",
+            "icon": {
+              "type": "flutter",
+              "value": "sports_tennis"
+            }
+          },
+          {
+            "label": "Table Tennis",
+            "value": "table-tennis",
+            "icon": {
+              "type": "iconify",
+              "value": "mdi:table-tennis"
+            }
+          },
+          {
+            "label": "Pickle Ball",
+            "value": "pickle-ball",
+            "icon": {
+              "type": "iconify",
+              "value": "tabler:ball-tennis"
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
