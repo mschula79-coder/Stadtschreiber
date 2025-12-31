@@ -34,6 +34,7 @@ build/
 coverage/
 **/doc/api/
 **/ios/Flutter/.last_build_id
+assets/tiles/*.pmtiles
 
 # Symbolication related
 app.*.symbols
