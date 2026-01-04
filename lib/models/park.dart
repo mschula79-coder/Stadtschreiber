@@ -1,52 +1,71 @@
 import 'package:maplibre_gl/maplibre_gl.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'dart:math';
-
+import '../services/debug_service.dart';
 
 class Park {
   final String name;
   final LatLng location;
   final String photoUrl;
 
-  Park._(this.name, this.location, this.photoUrl);
+  Park(this.name, this.location, this.photoUrl);
 
-  static Future<Park> create(String name, String photoUrl) async {
-    final center = await _getParkCentroid(name);
+  factory Park.fromFeature(
+    Map<String, dynamic> feature, {
+    required String photoUrl,
+  }) {
+    final props = feature['properties'] as Map<String, dynamic>?;
+
+    final name = props?['name']?.toString() ?? '';
+    if (name.isEmpty) {
+      DebugService.log("⚠️ Feature without a valid name: $feature");
+    }
+
+    final coords = extractPolygonCoords(feature);
+    final center = geoCentroid(coords);
     final location = LatLng(center[0], center[1]);
-    return Park._(name, location, photoUrl);
+
+    return Park(name, location, photoUrl);
   }
-
-  static Future<List<double>> _getParkCentroid(String parkName) async {
-    final geojson = await loadGeoJson();
-    final features = geojson['features'];
-
-    final feature = features.firstWhere(
-      (f) => f['properties']['name'] == parkName,
-    );
-
-    final polygon = extractPolygonCoords(feature);
-    return geoCentroid(polygon);
-  }
-}
-
-Future<Map<String, dynamic>> loadGeoJson() async {
-  final response = await http.get(
-    Uri.parse(
-      'https://raw.githubusercontent.com/mschula79-coder/Stadtschreiber/main/baselparks.geojson',
-    ),
-  );
-  return jsonDecode(response.body);
 }
 
 List<List<double>> extractPolygonCoords(Map<String, dynamic> feature) {
-  final coords = feature['geometry']['coordinates'][0];
-  return coords
+  final geometry = feature['geometry'];
+  final type = geometry['type'];
+  final coords = geometry['coordinates'];
+
+  // Handle Point geometry
+  if (type == 'Point') {
+    final lon = (coords[0] as num).toDouble();
+    final lat = (coords[1] as num).toDouble();
+
+    DebugService.log("Using Point geometry as center: $lon, $lat");
+    
+
+    // Return a single coordinate pair
+    return [
+      [lon, lat]
+    ];
+  }
+
+  // Handle Polygon and MultiPolygon
+  List<dynamic> ring;
+
+  if (type == 'Polygon') {
+    ring = coords[0];
+  } else if (type == 'MultiPolygon') {
+    ring = coords[0][0];
+  } else {
+    DebugService.log("Skipping unsupported geometry type: $type");
+    return [];
+  }
+
+  return ring
       .map<List<double>>(
         (c) => [(c[0] as num).toDouble(), (c[1] as num).toDouble()],
       )
       .toList();
 }
+
 
 List<double> geoCentroid(List<List<double>> coords) {
   double x = 0, y = 0, z = 0;

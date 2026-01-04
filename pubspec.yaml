@@ -13,6 +13,7 @@ dependencies:
   maplibre_gl: ^0.24.1
   iconify_flutter: ^0.0.7
   provider: ^6.0.0
+  flutter_svg: ^2.0.7
 
 dev_dependencies:
   flutter_test:
@@ -24,6 +25,20 @@ flutter:
   assets:
     - assets/tiles/
     - assets/styles/
-    - assets/styles/sprites/
-    - assets/styles/fonts/
+    - assets/fonts/
     - assets/data/categories.json
+    - assets/icons/
+
+fonts:
+  - family: Open Sans Regular
+    fonts:
+      - asset: assets/fonts/OpenSans-Regular.ttf
+  - family: Open Sans Bold
+    fonts:
+      - asset: assets/fonts/OpenSans-Bold.ttf
+  - family: Open Sans Italic
+    fonts:
+      - asset: assets/fonts/OpenSans-Italic.ttf
+  - family: Open Sans Semibold
+    fonts:
+      - asset: assets/fonts/OpenSans-SemiBold.ttf

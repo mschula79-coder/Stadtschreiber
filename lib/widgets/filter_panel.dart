@@ -49,10 +49,9 @@ class FilterPanel extends StatelessWidget {
                   ? true
                   : null,
               tristate: true,
-              secondary: Image.network(
-                'https://raw.githubusercontent.com/mschula79-coder/Stadtschreiber/refs/heads/main/map_search_black.png',
-                height: 24,
-                width: 24,
+              secondary: Icon(
+                Icons.map_outlined, 
+                size: 24
               ),
               title: const Text("Alles auswählen"),
               controlAffinity: ListTileControlAffinity.leading,
@@ -191,6 +190,12 @@ class FilterPanel extends StatelessWidget {
         return Icons.sports_tennis;
       case "park":
         return Icons.park;
+      case "playground":
+        return Icons.play_lesson;
+      case "basketball_court":
+        return Icons.sports_basketball;
+      case "tennis_court":
+        return Icons.sports_tennis; 
       default:
         return Icons.help_outline;
     }

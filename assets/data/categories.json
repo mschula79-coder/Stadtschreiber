@@ -7,16 +7,16 @@
         "label": "Parks",
         "value": "parks",
         "icon": {
-          "type": "url",
-          "value": "https://raw.githubusercontent.com/mschula79-coder/Stadtschreiber/f39994cfe3e217fe10e7df5c5b4b4e6b51b4daf1/icon_rest_area.png"
+          "type": "flutter",
+          "value": "parks"
         }
       },
       {
         "label": "Playgrounds",
         "value": "playgrounds",
         "icon": {
-          "type": "url",
-          "value": "https://raw.githubusercontent.com/mschula79-coder/Stadtschreiber/f39994cfe3e217fe10e7df5c5b4b4e6b51b4daf1/icon_playground.png"
+          "type": "flutter",
+          "value": "playgrounds"
         }
       }
     ]
@@ -29,8 +29,8 @@
         "label": "Basketball Courts",
         "value": "basketball-courts",
         "icon": {
-          "type": "url",
-          "value": "https://raw.githubusercontent.com/mschula79-coder/Stadtschreiber/f39994cfe3e217fe10e7df5c5b4b4e6b51b4daf1/icon_basketball.png"
+          "type": "flutter",
+          "value": "basketball-courts"
         }
       },
       {

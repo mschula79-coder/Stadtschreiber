@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+/* import 'package:flutter_svg/flutter_svg.dart'; */
 
 class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
   final GlobalKey filterButtonKey;
@@ -18,10 +19,8 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
       surfaceTintColor: Colors.transparent,
       title: Row(
         children: [
-          Image.network(
-            'https://raw.githubusercontent.com/mschula79-coder/Stadtschreiber/f39994cfe3e217fe10e7df5c5b4b4e6b51b4daf1/logo-basel.png',
-            height: 35,
-          ),
+          Image.asset('assets/icons/basel.jpg', height: 35),
+          /* SvgPicture.asset( 'assets/icons/basel.svg', height: 35, ), */
           const SizedBox(width: 5),
           const Text(
             'THIS IS BASEL',
@@ -46,11 +45,11 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: IconButton(
             key: filterButtonKey,
             iconSize: 50,
-            icon: Image.network(
-              'https://raw.githubusercontent.com/mschula79-coder/Stadtschreiber/refs/heads/main/map_search_black.png',
-              height: 30,
-              width: 30,
-            ),
+            icon: 
+              Icon(
+                Icons.map_rounded,
+                size: 30,
+              ),
             onPressed: onFilterPressed,
           ),
         ),

@@ -4,3 +4,77 @@ rgba(255, 189, 189, 0.8)
 
 blue:
 rgba(189, 246, 255, 1)
+
+Maps made with these vector tiles must display a visible credit:
+- ┬® OpenMapTiles ┬® OpenStreetMap contributors
+Thanks to all free, open source software developers and Open Data Contributors!
+adb pair 192.168.1.5:40691
+adb connect 192.168.1.5:40691
+
+cd C:\Planetiler .\build-basel.ps1
+
+.\martin.exe basel_50km.mbtiles
+
+cd /mnt/c/planetiler
+python3 -m http.server 8000 --bind 0.0.0.0
+
+in WSL get the connectadress:
+hostname -I
+(powershell admin)
+
+netsh interface portproxy reset
+
+netsh interface portproxy add v4tov4 listenport=8000 listenaddress=0.0.0.0 connectport=8000 connectaddress=172.30.136.88 
+
+verifiy:
+netsh interface portproxy show all
+
+Skript to run python server
+
+wsl:
+nano ~/start_python.sh
+
+notepad C:\portproxy\setup_portproxy.ps1
+
+reboot sequence:
+wsl
+./start_python.sh
+powershell admin
+C:\portproxy\setup_portproxy.ps1  
+nano /home/maiks/start_python.sh    
+output:
+Detected WSL IP: 172.30.xxx.xxx
+Resetting portproxy rules...
+Adding new portproxy rule...
+Current portproxy rules:
+0.0.0.0:8000   172.30.xxx.xxx:8000
+Done.
+test:http://localhost:8000/baselparks.geojson
+phone: http://192.168.1.6:8000/baselparks.geojson
+
+portproxy rule:
+netsh interface portproxy show v4tov4
+-> update IP from this  
+netsh interface portproxy add v4tov4 listenport=9000 listenaddress=0.0.0.0 connectport=9000 connectaddress=172.30.136.88
+
+Hetzner
+connect:
+ssh root@88.99.170.209
+upload:
+scp /mnt/c/Users/maiks/Downloads/export.sql root@88.99.170.209:/root/
+
+import nach Supabase
+
+
+wsl
+cd /mnt/c/Planetiler
+
+cd ~/basel_osm
+./run_export_upload_import.sh
+
+
+osmium merge \
+  switzerland-latest.osm.pbf \
+  baden-wuerttemberg-latest.osm.pbf \
+  alsace-latest.osm.pbf \
+  -o basel-region.osm.pbf

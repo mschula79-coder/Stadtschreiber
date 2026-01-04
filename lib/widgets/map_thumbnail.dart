@@ -21,7 +21,11 @@ class MapThumbnail extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 3),
               image: DecorationImage(
-                image: NetworkImage(park.photoUrl),
+                // ignore: unnecessary_null_comparison
+                image: (park.photoUrl != null && park.photoUrl.isNotEmpty)
+                    ? NetworkImage(park.photoUrl)
+                    : const AssetImage('assets/icons/placeholder.png')
+                          as ImageProvider,
                 fit: BoxFit.cover,
               ),
               boxShadow: const [

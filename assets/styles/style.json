@@ -2,26 +2,25 @@
   "version": 8,
   "name": "Basic",
   "center": [7.60788, 47.57158],
-  "zoom": 15.05,
+  "zoom": 14.00,
+
   "metadata": {
-    "mapbox:autocomposite": false,
-    "mapbox:type": "template",
-    "maputnik:renderer": "mbgljs",
-    "openmaptiles:version": "3.x",
-    "openmaptiles:mapbox:owner": "openmaptiles",
-    "openmaptiles:mapbox:source:url": "mapbox://openmaptiles.4qljc88t"
+    "maputnik:renderer": "mbgljs"
   },
-  
+
   "sources": {
-    "openmaptiles": { 
-      "type": "vector", 
-      "tiles": ["http://192.168.1.6:3000/basel_50km/{z}/{x}/{y}"], 
-      "minzoom": 0, 
-      "maxzoom": 15 
+    "openmaptiles": {
+      "type": "vector",
+      "tiles": ["http://192.168.1.6:3000/basel_50km/{z}/{x}/{y}"],
+      "minzoom": 0,
+      "maxzoom": 15
     }
   },
- "sprite": "assets/styles/sprites/sprite",
- "layers": [
+
+  "sprite": "http://192.168.1.6:9000/sprites/sprite",
+  "glyphs": "http://192.168.1.6:9000/fonts/{fontstack}/{range}.pbf",
+
+  "layers": [
     {
       "id": "background",
       "type": "background",
