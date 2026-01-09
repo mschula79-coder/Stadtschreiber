@@ -4,7 +4,7 @@
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/poi.dart';
-import '../services/debug_service.dart';
+/* import '../services/debug_service.dart'; */
 
 class PoiRepository {
   final supabase = Supabase.instance.client;

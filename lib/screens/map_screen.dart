@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
@@ -25,6 +24,7 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   MapLibreMapController? mapController;
   final Completer<MapLibreMapController> _controllerCompleter = Completer();
+  // TODO umstellen auf Completer
   final MapOverlayController _overlayController = MapOverlayController();
   final mapStyleService = MapStyleService();
   bool _isUpdating = false;
@@ -48,9 +48,12 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _loadPois() async { 
     final filterState = context.read<FilterState>(); 
-    final poiRepository = await poiRepository.loadPois( 
+    final pois = await poiRepository.loadPois( 
       filterState.selectedValues.toList(), 
     );
+    setState(() { 
+      poiSelected = pois; 
+    }); 
   }
 
   @override
@@ -93,11 +96,10 @@ class _MapScreenState extends State<MapScreen> {
               );
               DebugService.log("Map style loaded.");
               await Future.delayed(const Duration(milliseconds: 300));
-              await _setupMap(mapController!);
               _initialOverlayUpdate();
             },
             onCameraIdle: _initialOverlayUpdate,
-            onMapClick: _onMapClick,
+/*             onMapClick: _onMapClick, */
           ),
         ),
         MapOverlayLayer(
@@ -121,24 +123,6 @@ class _MapScreenState extends State<MapScreen> {
     return await rootBundle.loadString(path);
   }
 
-  Future<void> _setupMap(MapLibreMapController controller) async {
-    final poiBytes = await rootBundle.load(
-      'assets/icons/icon_nature_people.png',
-    );
-    await controller.addImage('park-icon', poiBytes.buffer.asUint8List());
-
-    final playgroundBytes = await rootBundle.load(
-      'assets/icons/icon_playground.png',
-    );
-    await controller.addImage(
-      'playground-icon',
-      playgroundBytes.buffer.asUint8List(),
-    );
-
-    final forestBytes = await rootBundle.load('assets/icons/icon_forest.png');
-    await controller.addImage('forest-icon', forestBytes.buffer.asUint8List());
-  }
-
   Future<void> _initialOverlayUpdate() async {
     if (!_styleLoaded || mapController == null || poiSelected.isEmpty) return;
 
@@ -150,7 +134,7 @@ class _MapScreenState extends State<MapScreen> {
     if (mounted) setState(() {});
   }
 
-  void _onMapClick(Point<double> point, LatLng coordinates) async {
+  /* void _onMapClick(Point<double> point, LatLng coordinates) async {
     if (mapController == null) return;
 
     final features = await mapController!.queryRenderedFeatures(
@@ -160,7 +144,7 @@ class _MapScreenState extends State<MapScreen> {
     );
 
     if (features.isEmpty) return;
-  }
+  } */
 
   void _onPointerMove(PointerMoveEvent event) async {
     if (!_styleLoaded || mapController == null || poiSelected.isEmpty) return;
