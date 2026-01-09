@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../models/park.dart';
+import '../models/poi.dart';
 
 class MapThumbnail extends StatelessWidget {
-  final Park park;
+  final PointOfInterest poi;
   final VoidCallback? onTap;
 
-  const MapThumbnail({super.key, required this.park, this.onTap});
+  const MapThumbnail({super.key, required this.poi, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -22,8 +22,8 @@ class MapThumbnail extends StatelessWidget {
               border: Border.all(color: Colors.white, width: 3),
               image: DecorationImage(
                 // ignore: unnecessary_null_comparison
-                image: (park.photoUrl != null && park.photoUrl.isNotEmpty)
-                    ? NetworkImage(park.photoUrl)
+                image: (poi.photoUrl != null && poi.photoUrl.isNotEmpty)
+                    ? NetworkImage(poi.photoUrl)
                     : const AssetImage('assets/icons/placeholder.png')
                           as ImageProvider,
                 fit: BoxFit.cover,
@@ -46,7 +46,7 @@ class MapThumbnail extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
-              park.name,
+              poi.name,
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
               overflow: TextOverflow.ellipsis,
             ),

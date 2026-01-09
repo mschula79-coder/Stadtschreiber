@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
-import '../models/park.dart';
+import '../models/poi.dart';
 
 class MapOverlayController {
   final Map<String, Offset> screenPositions = {};
@@ -11,7 +11,7 @@ class MapOverlayController {
 
   Future<void> updatePositions({
     required MapLibreMapController controller,
-    required List<Park> parks,
+    required List<PointOfInterest> poiSelected,
   }) async {
     if (_updating) return;
     _updating = true;
@@ -20,9 +20,9 @@ class MapOverlayController {
       final dpr = WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
       final newPositions = <String, Offset>{};
 
-      for (final park in parks) {
-        final raw = await controller.toScreenLocation(park.location);
-        newPositions[park.name] = Offset(raw.x / dpr, raw.y / dpr);
+      for (final poi in poiSelected) {
+        final raw = await controller.toScreenLocation(poi.location);
+        newPositions[poi.name] = Offset(raw.x / dpr, raw.y / dpr);
         
       }
 
@@ -42,14 +42,14 @@ class MapOverlayController {
   void updatePositionsThrottled({
     required BuildContext context,
     required MapLibreMapController controller,
-    required List<Park> parks,
+    required List<PointOfInterest> poiSelected,
   }) {
     if (_throttle?.isActive ?? false) return;
 
     _throttle = Timer(const Duration(milliseconds: 0), () {
       updatePositions(
         controller: controller,
-        parks: parks,
+        poiSelected: poiSelected,
       );
     });
   }

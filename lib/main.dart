@@ -3,9 +3,16 @@ import 'package:provider/provider.dart';
 import 'state/filter_state.dart';
 import 'screens/home_screen.dart';
 import 'repositories/category_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Supabase.initialize(
+    url: 'https://ymniruxxduyewqvyjrve.supabase.co',
+    anonKey: 'sb_publishable_UoTQd39QJPhglwwJ-QQhHg_83s3h-Lo',
+  );
+
   runApp(
     MultiProvider(
       providers: [

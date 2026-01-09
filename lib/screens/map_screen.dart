@@ -3,15 +3,17 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
+import 'package:provider/provider.dart';
 import '../controllers/map_overlay_controller.dart';
-import '../widgets/map_overlay_layer.dart';
-import '../models/park.dart';
+import '../models/poi.dart';
 import '../repositories/poi_repository.dart';
-import '../widgets/map_popup.dart';
 import '../services/map_style_service.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../services/debug_service.dart';
+import '../state/filter_state.dart';
+import '../widgets/map_popup.dart';
+import '../widgets/map_overlay_layer.dart';
+
+
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -29,7 +31,7 @@ class _MapScreenState extends State<MapScreen> {
   bool _styleLoaded = false;
   final poiRepository = PoiRepository();
   Map<String, dynamic>? _baselParksGeojson;
-  List<Park> parks = [];
+  List<PointOfInterest> poiSelected = [];
 
   Timer? _idleTimer;
 
@@ -38,22 +40,17 @@ class _MapScreenState extends State<MapScreen> {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      _loadData();
+      _loadPois();
       setState(() {});
       _initialOverlayUpdate();
     });
   }
 
-  Future<void> _loadData() async {
-    _baselParksGeojson = await loadGeoJson();
-    parks = await poiRepository.loadParksFromGeojson(_baselParksGeojson!);
-  }
-
-  Future<Map<String, dynamic>> loadGeoJson() async {
-    final response = await http.get(
-      Uri.parse('http://192.168.1.6:9000/baselparks.geojson'),
+  Future<void> _loadPois() async { 
+    final filterState = context.read<FilterState>(); 
+    final poiRepository = await poiRepository.loadPois( 
+      filterState.selectedValues.toList(), 
     );
-    return jsonDecode(response.body);
   }
 
   @override
@@ -105,14 +102,14 @@ class _MapScreenState extends State<MapScreen> {
         ),
         MapOverlayLayer(
           controller: _overlayController,
-          parks: parks,
-          onTapPark: (park) {
+          poiSelected: poiSelected,
+          onTapPoi: (poi) {
             MapPopup.show(
               context: context,
-              name: park.name,
+              name: poi.name,
               history: "No history available",
               leisure: "park",
-              coords: park.location,
+              coords: poi.location,
             );
           },
         ),
@@ -125,10 +122,10 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _setupMap(MapLibreMapController controller) async {
-    final parkBytes = await rootBundle.load(
+    final poiBytes = await rootBundle.load(
       'assets/icons/icon_nature_people.png',
     );
-    await controller.addImage('park-icon', parkBytes.buffer.asUint8List());
+    await controller.addImage('park-icon', poiBytes.buffer.asUint8List());
 
     final playgroundBytes = await rootBundle.load(
       'assets/icons/icon_playground.png',
@@ -143,11 +140,11 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _initialOverlayUpdate() async {
-    if (!_styleLoaded || mapController == null || parks.isEmpty) return;
+    if (!_styleLoaded || mapController == null || poiSelected.isEmpty) return;
 
     await _overlayController.updatePositions(
       controller: mapController!,
-      parks: parks,
+      poiSelected: poiSelected,
     );
 
     if (mounted) setState(() {});
@@ -166,7 +163,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _onPointerMove(PointerMoveEvent event) async {
-    if (!_styleLoaded || mapController == null || parks.isEmpty) return;
+    if (!_styleLoaded || mapController == null || poiSelected.isEmpty) return;
     if (_isUpdating) return;
 
     _isUpdating = true;
@@ -177,7 +174,7 @@ class _MapScreenState extends State<MapScreen> {
 
     await _overlayController.updatePositions(
       controller: mapController!,
-      parks: parks,
+      poiSelected: poiSelected,
     );
 
     if (mounted) setState(() {});

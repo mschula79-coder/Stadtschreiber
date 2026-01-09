@@ -1,32 +1,6 @@
-import 'package:maplibre_gl/maplibre_gl.dart';
 import 'dart:math';
 import '../services/debug_service.dart';
 
-class Park {
-  final String name;
-  final LatLng location;
-  final String photoUrl;
-
-  Park(this.name, this.location, this.photoUrl);
-
-  factory Park.fromFeature(
-    Map<String, dynamic> feature, {
-    required String photoUrl,
-  }) {
-    final props = feature['properties'] as Map<String, dynamic>?;
-
-    final name = props?['name']?.toString() ?? '';
-    if (name.isEmpty) {
-      DebugService.log("⚠️ Feature without a valid name: $feature");
-    }
-
-    final coords = extractPolygonCoords(feature);
-    final center = geoCentroid(coords);
-    final location = LatLng(center[0], center[1]);
-
-    return Park(name, location, photoUrl);
-  }
-}
 
 List<List<double>> extractPolygonCoords(Map<String, dynamic> feature) {
   final geometry = feature['geometry'];

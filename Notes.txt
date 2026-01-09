@@ -69,7 +69,7 @@ import nach Supabase
 wsl
 cd /mnt/c/Planetiler
 
-cd ~/basel_osm
+  cd ~/basel_osm
 ./run_export_upload_import.sh
 
 
