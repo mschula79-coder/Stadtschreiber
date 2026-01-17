@@ -4,24 +4,29 @@ import 'package:flutter/services.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:provider/provider.dart';
 import '../controllers/map_overlay_controller.dart';
+import '../controllers/poi_controller.dart';
+
 import '../models/poi.dart';
 import '../repositories/poi_repository.dart';
 import '../services/map_style_service.dart';
 import '../services/debug_service.dart';
+import '../state/app_state.dart';
+import '../state/poi_state.dart';
 import '../state/filter_state.dart';
-import '../widgets/map_popup.dart';
+// TODO Check if necessary: import '../widgets/map_popup.dart';
+// TODO Center map when opening poi panel
 import '../widgets/map_overlay_layer.dart';
-
-
+import '../widgets/map_actions.dart';
+import '../widgets/poi_panel_persistent.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
   @override
-  State<MapScreen> createState() => _MapScreenState();
+  State<MapScreen> createState() => MapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen> {
+class MapScreenState extends State<MapScreen> {
   MapLibreMapController? mapController;
   final Completer<MapLibreMapController> _controllerCompleter = Completer();
   // TODO umstellen auf Completer
@@ -29,9 +34,10 @@ class _MapScreenState extends State<MapScreen> {
   final mapStyleService = MapStyleService();
   bool _isUpdating = false;
   bool _styleLoaded = false;
+  bool _isReloadingPois = false;
+
   final poiRepository = PoiRepository();
-  Map<String, dynamic>? _baselParksGeojson;
-  List<PointOfInterest> poiSelected = [];
+  List<PointOfInterest> visiblePOIs = [];
 
   Timer? _idleTimer;
 
@@ -46,15 +52,26 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
-  Future<void> _loadPois() async { 
-    final filterState = context.read<FilterState>(); 
-    final pois = await poiRepository.loadPois( 
-      filterState.selectedValues.toList(), 
+  Future<void> _loadPois() async {
+    _isReloadingPois = true;
+
+    final filterState = context.read<FilterState>();
+    final pois = await poiRepository.loadPois(
+      filterState.selectedValues.toList(),
     );
-    setState(() { 
-      poiSelected = pois; 
-    }); 
+
+    setState(() {
+      visiblePOIs = pois;
+    });
+
+    _isReloadingPois = false;
+
+    if (_styleLoaded && mapController != null) {
+      await _initialOverlayUpdate();
+    }
   }
+
+  Future<void> reloadPois() => _loadPois();
 
   @override
   void dispose() {
@@ -67,6 +84,7 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
+        // MapLibreMap
         Listener(
           behavior: HitTestBehavior.opaque,
           onPointerMove: _onPointerMove,
@@ -84,35 +102,33 @@ class _MapScreenState extends State<MapScreen> {
             },
             onStyleLoadedCallback: () async {
               _styleLoaded = true;
-              final geojson = _baselParksGeojson!;
-              await mapController!.addSource(
-                "baselparks",
-                GeojsonSourceProperties(data: geojson),
-              );
-              await mapController!.addLayer(
-                "baselparks",
-                "baselparks-layer",
-                LineLayerProperties(lineColor: "#00AA00", lineWidth: 2.0),
-              );
               DebugService.log("Map style loaded.");
               await Future.delayed(const Duration(milliseconds: 300));
               _initialOverlayUpdate();
             },
             onCameraIdle: _initialOverlayUpdate,
-/*             onMapClick: _onMapClick, */
           ),
         ),
         MapOverlayLayer(
           controller: _overlayController,
-          poiSelected: poiSelected,
+          visiblePOIs: visiblePOIs,
           onTapPoi: (poi) {
-            MapPopup.show(
-              context: context,
-              name: poi.name,
-              history: "No history available",
-              leisure: "park",
-              coords: poi.location,
-            );
+            context.read<PoiController>().selectPoi(poi);
+            context.read<PoiState>().selectPoi(poi);
+          },
+        ),
+        const MapActions(),
+
+        Consumer<PoiState>(
+          builder: (_, state, _) {
+            return state.isPanelOpen
+                ? Align(
+                    alignment: Alignment.bottomCenter,
+                    child: PersistentPoiPanel(
+                      isAdmin: context.read<AppState>().isAdmin,
+                    ),
+                  )
+                : const SizedBox.shrink();
           },
         ),
       ],
@@ -124,11 +140,12 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _initialOverlayUpdate() async {
-    if (!_styleLoaded || mapController == null || poiSelected.isEmpty) return;
+    if (_isReloadingPois) return; // <-- block early calls
+    if (!_styleLoaded || mapController == null || visiblePOIs.isEmpty) return;
 
     await _overlayController.updatePositions(
       controller: mapController!,
-      poiSelected: poiSelected,
+      visiblePOIs: visiblePOIs,
     );
 
     if (mounted) setState(() {});
@@ -147,7 +164,7 @@ class _MapScreenState extends State<MapScreen> {
   } */
 
   void _onPointerMove(PointerMoveEvent event) async {
-    if (!_styleLoaded || mapController == null || poiSelected.isEmpty) return;
+    if (!_styleLoaded || mapController == null || visiblePOIs.isEmpty) return;
     if (_isUpdating) return;
 
     _isUpdating = true;
@@ -158,7 +175,7 @@ class _MapScreenState extends State<MapScreen> {
 
     await _overlayController.updatePositions(
       controller: mapController!,
-      poiSelected: poiSelected,
+      visiblePOIs: visiblePOIs,
     );
 
     if (mounted) setState(() {});

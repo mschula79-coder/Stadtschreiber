@@ -9,7 +9,7 @@ class MapThumbnail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasPhoto = poi.photoUrl?.isNotEmpty ?? false;
+    final hasPhoto = poi.featuredImageUrl?.isNotEmpty ?? false;
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -23,7 +23,7 @@ class MapThumbnail extends StatelessWidget {
               border: Border.all(color: Colors.white, width: 3),
               image: DecorationImage(
                 image: hasPhoto
-                    ? NetworkImage(poi.photoUrl!)
+                    ? NetworkImage(poi.featuredImageUrl!)
                     : const AssetImage('assets/icons/placeholder.png'),
                 fit: BoxFit.cover,
               ),

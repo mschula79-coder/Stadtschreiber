@@ -18,6 +18,22 @@
           "type": "flutter",
           "value": "playgrounds"
         }
+      },
+      {
+        "label": "Markets",
+        "value": "markets",
+        "icon": {
+          "type": "flutter",
+          "value": "market"
+        }
+      },
+      {
+        "label": "Food Courts",
+        "value": "food-courts",
+        "icon": {
+          "type": "flutter",
+          "value": "food-court"
+        }
       }
     ]
   },

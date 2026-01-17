@@ -4,7 +4,7 @@ class FilterOverlayController {
   OverlayEntry? _entry;
   AnimationController? _animationController;
   Animation<Offset>? _animation;
-
+  VoidCallback? onClosed;
   bool get isOpen => _entry != null;
 
   void initAnimation(TickerProvider vsync) {
@@ -25,9 +25,11 @@ class FilterOverlayController {
   void show({
     required BuildContext context,
     required GlobalKey buttonKey,
+    required TickerProvider vsync,
     required Widget Function(Animation<Offset> anim) builder,
-  }) 
-  {
+  }) {
+    initAnimation(vsync);
+
     if (_entry != null) return;
 
     final RenderBox button =
@@ -75,6 +77,7 @@ class FilterOverlayController {
 
     if (_animationController == null) {
       entry?.remove();
+      onClosed?.call();
       return;
     }
 
@@ -83,18 +86,25 @@ class FilterOverlayController {
       _animationController?.dispose();
       _animationController = null;
       _animation = null;
+      onClosed?.call();
     });
   }
 
   void toggle({
     required BuildContext context,
     required GlobalKey buttonKey,
+    required TickerProvider vsync,
     required Widget Function(Animation<Offset> anim) builder,
   }) {
     if (isOpen) {
       hide();
     } else {
-      show(context: context, buttonKey: buttonKey, builder: builder);
+      show(
+        context: context,
+        buttonKey: buttonKey,
+        vsync: vsync,
+        builder: builder,
+      );
     }
   }
 
@@ -103,5 +113,9 @@ class FilterOverlayController {
     _animationController = null;
     _animation = null;
     _entry = null;
+  }
+
+  void setOnClosed(VoidCallback callback) { 
+    onClosed = callback; 
   }
 }

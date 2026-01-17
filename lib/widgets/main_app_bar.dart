@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:iconify_flutter/iconify_flutter.dart';
+import 'package:iconify_flutter/icons/mdi.dart';
 /* import 'package:flutter_svg/flutter_svg.dart'; */
 
 class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -46,14 +48,11 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
             key: filterButtonKey,
             iconSize: 50,
             icon: 
-              Icon(
-                Icons.map_rounded,
-                size: 30,
-              ),
+              Iconify(Mdi.map_search, size: 30),
             onPressed: onFilterPressed,
           ),
         ),
-        const SizedBox(width: 20),
+        const SizedBox(width: 8),
       ],
     );
   }

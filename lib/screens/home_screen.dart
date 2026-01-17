@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
-import '../models/category.dart';
-import '../widgets/main_app_bar.dart';
-import '../widgets/map_actions.dart';
-import '../widgets/filter_overlay.dart';
-import '../controllers/filter_overlay_controller.dart';
-import '../repositories/category_repository.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'map_screen.dart';
+
+import '../controllers/filter_overlay_controller.dart';
+import '../controllers/poi_controller.dart';
+import '../models/category.dart';
+import '../repositories/category_repository.dart';
+import '../state/app_state.dart';
+import '../services/debug_service.dart';
+import '../widgets/filter_overlay.dart';
+import '../widgets/main_app_bar.dart';
 
 class MyHomePage extends StatefulWidget {
   final String title;
@@ -21,13 +26,48 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   final GlobalKey _filterKey = GlobalKey();
   late final CategoryRepository _categoryRepository;
   final FilterOverlayController _overlayController = FilterOverlayController();
+  final GlobalKey<MapScreenState> _mapKey = GlobalKey<MapScreenState>();
 
   @override
   void initState() {
     super.initState();
+    _overlayController.initAnimation(this);
+
+    _overlayController.setOnClosed(() {
+      _mapKey.currentState?.reloadPois();
+    });
+
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      final session = data.session;
+      if (session != null) {
+        _loadUserProfile(session.user.id);
+      }
+    });
+  }
+
+  @override
+  // ignore: unused_element
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _categoryRepository = context.read<CategoryRepository>();
     _initCategories();
-    _overlayController.initAnimation(this);
+  }
+
+  Future<void> _loadUserProfile(String userId) async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      DebugService.log('User is null, userId: $userId');
+      return;
+    }
+
+    final profile = await Supabase.instance.client
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', userId)
+        .single();
+    final isAdmin = profile['is_admin'] ?? false;
+    if (!mounted) return;
+    context.read<AppState>().setAdmin(isAdmin);
   }
 
   @override
@@ -55,9 +95,16 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         onFilterPressed: toggleFilterOverlay,
       ),
       body: Stack(
-        children: const [
-          MapScreen(),
-          MapActions(),
+        children: [
+          Consumer<PoiController>(
+            builder: (_, controller, _) {
+              controller.addListener(() {
+                _mapKey.currentState?.reloadPois();
+              });
+
+              return MapScreen(key: _mapKey);
+            },
+          ),
         ],
       ),
     );
@@ -67,6 +114,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     _overlayController.toggle(
       context: context,
       buttonKey: _filterKey,
+      vsync: this,
       builder: (anim) {
         return FilterOverlayContent(
           categories: categories,

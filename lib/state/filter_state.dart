@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 class FilterState extends ChangeNotifier {
-  final Set<String> selectedValues = {};
+  final List<String> selectedValues = [];
 
   bool isSelected(String value) => selectedValues.contains(value);
 

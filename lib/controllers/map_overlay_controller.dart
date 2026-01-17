@@ -11,7 +11,7 @@ class MapOverlayController {
 
   Future<void> updatePositions({
     required MapLibreMapController controller,
-    required List<PointOfInterest> poiSelected,
+    required List<PointOfInterest> visiblePOIs,
   }) async {
     if (_updating) return;
     _updating = true;
@@ -20,7 +20,7 @@ class MapOverlayController {
       final dpr = WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
       final newPositions = <String, Offset>{};
 
-      for (final poi in poiSelected) {
+      for (final poi in visiblePOIs) {
         final raw = await controller.toScreenLocation(poi.location);
         newPositions[poi.name] = Offset(raw.x / dpr, raw.y / dpr);
         
@@ -42,14 +42,14 @@ class MapOverlayController {
   void updatePositionsThrottled({
     required BuildContext context,
     required MapLibreMapController controller,
-    required List<PointOfInterest> poiSelected,
+    required List<PointOfInterest> visiblePOIs,
   }) {
     if (_throttle?.isActive ?? false) return;
 
     _throttle = Timer(const Duration(milliseconds: 0), () {
       updatePositions(
         controller: controller,
-        poiSelected: poiSelected,
+        visiblePOIs: visiblePOIs,
       );
     });
   }

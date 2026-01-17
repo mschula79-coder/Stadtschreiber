@@ -184,6 +184,10 @@ class FilterPanel extends StatelessWidget {
 
   IconData _flutterIconFromString(String name) {
     switch (name) {
+      case "parks":
+        return Icons.park;
+      case "playgrounds":
+        return Icons.local_play;
       case "sports":
         return Icons.sports;
       case "sports_tennis":
@@ -192,6 +196,10 @@ class FilterPanel extends StatelessWidget {
         return Icons.park;
       case "playground":
         return Icons.play_lesson;
+      case "food_court":
+        return Icons.restaurant;
+      case "market":
+        return Icons.local_grocery_store;
       case "basketball_court":
         return Icons.sports_basketball;
       case "tennis_court":
@@ -213,6 +221,7 @@ class FilterPanel extends StatelessWidget {
         return const Iconify(Mdi.help_outline, size: 24);
     }
   }
+
 
   // ---------- tree helpers ----------
 

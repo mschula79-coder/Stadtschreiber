@@ -5,13 +5,13 @@ import '../models/poi.dart';
 
 class MapOverlayLayer extends StatelessWidget {
   final MapOverlayController controller;
-  final List<PointOfInterest> poiSelected;
+  final List<PointOfInterest> visiblePOIs;
   final void Function(PointOfInterest poi) onTapPoi;
 
   const MapOverlayLayer({
     super.key,
     required this.controller,
-    required this.poiSelected,
+    required this.visiblePOIs,
     required this.onTapPoi,
   });
 
@@ -21,7 +21,7 @@ class MapOverlayLayer extends StatelessWidget {
       children: controller.screenPositions.entries.map((entry) {
         final poiName = entry.key;
         final pos = entry.value;
-        final PointOfInterest poi = poiSelected.firstWhere((p) => p.name == poiName);
+        final PointOfInterest poi = visiblePOIs.firstWhere((p) => p.name == poiName);
 
         return Stack(
           clipBehavior: Clip.none,
