@@ -1,3 +1,6 @@
+// TODO Admin View Toggle
+// TODO Kategorie Padding
+
 import 'package:flutter/material.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/mdi.dart';

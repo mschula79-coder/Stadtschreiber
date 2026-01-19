@@ -97,7 +97,7 @@ class MapScreenState extends State<MapScreen> {
               mapController = controller; // keep this if you need it later
               _controllerCompleter.complete(controller);
               await mapController!.setStyle(
-                "http://192.168.1.6:9000/style.json",
+                "https://stadtschreiber.duckdns.org/styles/basel/style.json",
               );
             },
             onStyleLoadedCallback: () async {

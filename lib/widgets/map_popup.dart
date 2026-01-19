@@ -70,18 +70,4 @@ class MapPopup {
     );
   }
 
-// TODO Ersetze MapPopup.show(...) durch: 
 }
-/* showDialog(
-  context: context,
-  builder: (_) => Dialog(
-    child: MapPopupTabs(
-      name: poi.name,
-      history: poi.history ?? "",
-      coords: poi.location,
-      featuredImageUrl: poi.photoUrl ?? "",
-      isAdmin: isAdmin,
-      poiId: poi.id,
-    ),
-  ),
-); */

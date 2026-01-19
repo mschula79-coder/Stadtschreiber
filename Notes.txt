@@ -78,3 +78,118 @@ osmium merge \
   baden-wuerttemberg-latest.osm.pbf \
   alsace-latest.osm.pbf \
   -o basel-region.osm.pbf
+
+
+scp basel-region.mbtiles root@stadtschreiber.duckdns.org:/opt/tiles/
+scp style.json root@stadtschreiber.duckdns.org:/opt/tiles/
+scp -r fonts root@stadtschreiber.duckdns.org:/opt/tiles/
+scp -r sprites root@stadtschreiber.duckdns.org:/opt/tiles/
+
+
+
+1. Folder Structure (on host: /opt/tiles)
+
+/opt/tiles
+  basel-region.mbtiles
+  style.json
+  config.json
+  sprites/
+      sprite.png
+      sprite.json
+      sprite@2x.png
+      sprite@2x.json
+  fonts/
+  styles/   ← optional, not used by Tileserver unless referenced
+2. Tileserver‑GL Docker Compose Service
+
+    Runs on port 8080 inside the container
+
+    Traefik forwards HTTPS traffic to it
+
+    Mounted volume:
+    Code
+
+    /opt/tiles:/data
+
+3. Traefik Routing
+
+    Router rule must be:
+    Code
+
+    Host(`stadtschreiber.duckdns.org`)
+
+        No PathPrefix rules
+
+    No rewrites
+
+    Everything under the domain goes to Tileserver
+
+    TLS via DuckDNS resolver
+
+4. config.json — Critical Behavior
+
+When config.json exists, Tileserver‑GL disables auto‑discovery.
+You must explicitly expose paths.
+
+Working config:
+json
+
+{
+  "options": {
+    "paths": {
+      "root": "",
+      "fonts": "fonts",
+      "sprites": "sprites",
+      "styles": "styles",
+      "mbtiles": ""
+    }
+  },
+
+  "serveOptions": {
+    "paths": {
+      "/sprites": "sprites"
+    }
+  },
+
+  "data": {
+    "basel-region": {
+      "mbtiles": "basel-region.mbtiles"
+    }
+  },
+
+  "styles": {
+    "basel": {
+      "style": "style.json",
+      "tilejson": {
+        "bounds": [6.9, 47.2, 8.0, 47.9],
+        "center": [7.60788, 47.57158, 14]
+      }
+    }
+  }
+}
+ style.json Requirements
+
+    Source name must match MBTiles filename (without extension):
+
+    "url": "mbtiles://basel-region"
+"source": "basel-region"
+Sprite URL must be relative:
+Code
+
+"sprite": "/sprites/sprite"
+
+6. Debugging Commands
+
+docker ps
+Run tileserver with logs:
+docker-compose run --rm tileserver
+Restart services:
+Code
+
+docker-compose restart tileserver
+docker-compose restart traefik
+
+Test sprite availability:
+Code
+
+https://stadtschreiber.duckdns.org/sprites/sprite.png

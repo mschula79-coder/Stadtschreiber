@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
-// ignore: unused_import
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../models/article_entry.dart';
 import '../models/poi.dart';
 import '../controllers/poi_controller.dart';
 import '../repositories/poi_repository.dart';
+import '../widgets/article_edit_modal.dart';
+import '../widgets/editable_list.dart';
 
 class MapPopupTabs extends StatefulWidget {
   final bool isAdmin;
@@ -102,7 +106,7 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
       _buildFeaturedImageTab(poi),
       _buildInfoTab(poi, isAdmin),
       _buildHistoryTab(poi, isAdmin),
-      _buildArticlesTab(poi),
+      _buildArticlesTab(poi, isAdmin),
       _buildGalleryTab(poi),
       _buildRatingsTab(poi),
     ];
@@ -140,23 +144,6 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
     );
   }
 
-  Widget _buildInfoTab2(PointOfInterest poi) {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Info:'),
-          Text(poi.name),
-          Text('Koordinaten: $poi.location'),
-          (poi.history == null || poi.history!.isEmpty)
-              ? Text('-')
-              : Text(poi.history!),
-        ],
-      ),
-    );
-  }
-
   Widget _buildInfoTab(PointOfInterest poi, bool isAdmin) {
     return Padding(
       padding: const EdgeInsets.all(12),
@@ -170,7 +157,7 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
                   ? const EdgeInsets.fromLTRB(0, 0, 35, 0)
                   : const EdgeInsets.fromLTRB(0, 0, 0, 0),
             ),
-            child: Text(poi.name)
+            child: Text(poi.name),
           ),
         ],
       ),
@@ -224,13 +211,75 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
     );
   }
 
-  Widget _buildArticlesTab(PointOfInterest poi) {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [Text('Stories und Artikel:'), Text('-')],
-      ),
+  Widget _buildArticlesTab(PointOfInterest poi, bool isAdmin) {
+    final articles = poi.articles ?? [];
+
+    return EditableList<ArticleEntry>(
+      items: articles,
+      isAdmin: isAdmin,
+      onAdd: () async {
+        final newEntry = await showDialog<ArticleEntry>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) =>
+              const ArticleEditModal(initialTitle: "", initialUrl: ""),
+        );
+
+        if (newEntry != null) {
+          final updated = [...articles, newEntry];
+          await PoiRepository.updatePoiArticles(poi.id, updated);
+          await poiController.reloadSelectedPoi();
+        }
+
+        return newEntry;
+      },
+      onEdit: (entry) async {
+        final updatedEntry = await showDialog<ArticleEntry>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => ArticleEditModal(
+            initialTitle: entry.title,
+            initialUrl: entry.url,
+          ),
+        );
+
+        if (updatedEntry != null) {
+          final updated = [...articles];
+          final index = updated.indexOf(entry);
+          updated[index] = updatedEntry;
+
+          await PoiRepository.updatePoiArticles(poi.id, updated);
+          await poiController.reloadSelectedPoi();
+        }
+
+        return updatedEntry;
+      },
+      onDelete: (entry) async {
+        final updated = [...articles]..remove(entry);
+        await PoiRepository.updatePoiArticles(poi.id, updated);
+        await poiController.reloadSelectedPoi();
+      },
+      itemBuilder: (entry) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(10, 0, 0, 15),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+
+            children: [
+              InkWell(
+                onTap: () => launchUrl(Uri.parse(entry.url)),
+                child: Text(
+                  entry.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.normal,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -318,10 +367,8 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
                       }
                     });
                   },
-            // TODO add featuredimageurl
             // TODO add categories checkboxes
             // TODO add poi owner
-            // TODO add article addition
             // TODO automatic url and image url test
             child: _saving
                 ? const SizedBox(

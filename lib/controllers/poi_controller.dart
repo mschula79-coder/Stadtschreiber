@@ -13,8 +13,14 @@ class PoiController with ChangeNotifier {
     notifyListeners();
   }
 
-  void selectPoi(PointOfInterest poi) {
+  /* void selectPoi(PointOfInterest poi) {
     selectedPoi = poi;
+    notifyListeners();
+  }
+ */
+  Future<void> selectPoi(PointOfInterest poi) async {
+    final fresh = await repo.loadPoiById(poi.id);
+    selectedPoi = fresh ?? poi;
     notifyListeners();
   }
 
@@ -26,18 +32,11 @@ class PoiController with ChangeNotifier {
   Future<void> reloadSelectedPoi() async {
     if (selectedPoi == null) return;
 
-    // Reload POIs using the same categories the user has selected
-    // (you probably store this in FilterState)
-    final categories = selectedPoi!.categories;
+    final freshPoi = await repo.loadPoiById(selectedPoi!.id);
 
-    final freshPois = await repo.loadPois(categories);
-
-    // Replace selected POI with the fresh version
-    selectedPoi = freshPois.firstWhere(
-      (p) => p.id == selectedPoi!.id,
-      orElse: () => selectedPoi!,
-    );
-
-    notifyListeners();
+    if (freshPoi != null) {
+      selectedPoi = freshPoi;
+      notifyListeners();
+    }
   }
 }

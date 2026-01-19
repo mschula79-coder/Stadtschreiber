@@ -1,9 +1,9 @@
 // TODO: OSM-ID Check
-// TODO: POI‑Editor
 // TODO: Supabase Import umbauen: siehe Chat: 1. Du importierst OSM‑Daten NICHT per „truncate + insert“
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/poi.dart';
+import '../models/article_entry.dart';
 
 /* import '../services/debug_service.dart';
  */
@@ -41,19 +41,39 @@ class PoiRepository {
   }
 
   static Future<void> updatePoi(
-    int id, 
-    String history, 
-    String featuredImageUrl
+    int id,
+    String history,
+    String featuredImageUrl,
   ) async {
     final supabase = Supabase.instance.client;
 
     await supabase
         .from('export_pois')
-        .update({
-          'history': history,
-          'featured_image_url': featuredImageUrl
-          })
-        
+        .update({'history': history, 'featured_image_url': featuredImageUrl})
         .eq('id', id);
+  }
+
+  static Future<void> updatePoiArticles(
+    int id,
+    List<ArticleEntry> articles,
+  ) async {
+    final supabase = Supabase.instance.client;
+
+    await supabase
+        .from('export_pois')
+        .update({'articles': articles.map((e) => e.toJson()).toList()})
+        .eq('id', id);
+  }
+
+  Future<PointOfInterest?> loadPoiById(int id) async {
+    final result = await supabase
+        .from('export_pois')
+        .select()
+        .eq('id', id)
+        .maybeSingle();
+
+    if (result == null) return null;
+
+    return PointOfInterest.fromSupabase(result);
   }
 }
