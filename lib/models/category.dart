@@ -1,4 +1,3 @@
-
 class CategoryIcon {
   final String type; // flutter, iconify, url
   final String value;
@@ -35,6 +34,5 @@ class CategoryNode {
           : [],
     );
   }
-
-  bool get isLeaf => value != null;
+  bool get isLeaf => children.isEmpty;
 }

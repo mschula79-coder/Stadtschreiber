@@ -56,6 +56,4 @@ class PersistentPoiPanel extends StatelessWidget {
       ),
     );
   }
-
-  // TODO das Panel draggable machen (wie Apple Maps)
 }

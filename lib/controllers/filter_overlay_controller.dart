@@ -71,7 +71,7 @@ class FilterOverlayController {
 
   void hide() {
     if (_entry == null) return;
-
+    
     final entry = _entry;
     _entry = null;
 

@@ -193,3 +193,6 @@ Test sprite availability:
 Code
 
 https://stadtschreiber.duckdns.org/sprites/sprite.png
+
+Generieren von Schlüsselpaar (Typ RSA, 2?048 Bit) und selbst signiertem Zertifikat (SHA384withRSA) mit einer Gültigkeit von 10?000 Tagen
+        für: CN=Maik Schulte-Althoff, OU=Stadtschreiber, O=Stadtschreiber, L=Basel, ST=Basel-Stadt, C=CH

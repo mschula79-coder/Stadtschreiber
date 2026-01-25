@@ -1,9 +1,9 @@
-import 'package:maplibre_gl/maplibre_gl.dart';
+import 'package:maplibre/maplibre.dart';
 import '../models/article_entry.dart';
 
 class PointOfInterest {
   final String name; // from OSM
-  final LatLng location; // from OSM
+  final Geographic location; // from OSM
   final int id;
   final List<String> categories; // <-- NEU: mehrere Kategorien
   final String? featuredImageUrl; // own data
@@ -24,9 +24,9 @@ class PointOfInterest {
     return PointOfInterest(
       id: row['id'],
       name: row['name'] ?? '',
-      location: LatLng(
-        (row['lat'] as num).toDouble(),
-        (row['lon'] as num).toDouble(),
+      location: Geographic(
+        lat: (row['lat'] as num).toDouble(),
+        lon:(row['lon'] as num).toDouble(),
       ),
       categories: List<String>.from(row['categories'] ?? const []),
       featuredImageUrl: row['featured_image_url'],
@@ -43,8 +43,8 @@ class PointOfInterest {
     return {
       'id': id,
       'name': name,
-      'lat': location.latitude,
-      'lon': location.longitude,
+      'lat': location.lat,
+      'lon': location.lon,
       'categories': categories,
       'featured_image_url': featuredImageUrl,
       'history': history,

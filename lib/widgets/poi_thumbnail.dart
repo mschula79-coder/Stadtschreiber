@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/poi.dart';
 
-class MapThumbnail extends StatelessWidget {
+class PoiThumbnail extends StatelessWidget {
   final PointOfInterest poi;
   final VoidCallback? onTap;
 
-  const MapThumbnail({super.key, required this.poi, this.onTap});
-
+  const PoiThumbnail({super.key, required this.poi, this.onTap});
   @override
   Widget build(BuildContext context) {
     final hasPhoto = poi.featuredImageUrl?.isNotEmpty ?? false;

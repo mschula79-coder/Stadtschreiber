@@ -1,5 +1,4 @@
 // TODO Admin View Toggle
-// TODO Kategorie Padding
 
 import 'package:flutter/material.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
@@ -44,8 +43,9 @@ class FilterPanel extends StatelessWidget {
               "Karteninhalte",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
+            // alles auswählen
             CheckboxListTile(
-              contentPadding: const EdgeInsets.only(top: 5, right: 15),
+              contentPadding: const EdgeInsets.only(left: 4, top: 5, right: 15),
               value: filterState.selectedValues.isEmpty
                   ? false
                   : filterState.selectedValues.length == allLeafValues.length
@@ -86,8 +86,9 @@ class FilterPanel extends StatelessWidget {
   Widget _buildCategoryNode(BuildContext context, CategoryNode node) {
     if (node.isLeaf) {
       final isChecked = node.value != null && filterState.isSelected(node.value!);
+      // 2nd level
       return CheckboxListTile(
-        contentPadding: const EdgeInsets.only(right: 15),
+        contentPadding: const EdgeInsets.only(left:4, right: 15),
         value: isChecked,
         onChanged: (checked) {
           if (node.value == null) return;
@@ -129,8 +130,9 @@ class FilterPanel extends StatelessWidget {
         contentPadding: EdgeInsets.zero,
         horizontalTitleGap: 0,
         minLeadingWidth: 0,
+        // 1st Level Nodes
         child: ExpansionTile(
-          tilePadding: const EdgeInsets.only(right: 15),
+          tilePadding: const EdgeInsets.only(left: 0, right: 15),
           childrenPadding: EdgeInsets.zero,
           leading: Checkbox(
             value: parentChecked,
@@ -224,9 +226,6 @@ class FilterPanel extends StatelessWidget {
         return const Iconify(Mdi.help_outline, size: 24);
     }
   }
-
-
-  // ---------- tree helpers ----------
 
   List<String> _collectLeafValues(CategoryNode node) {
     final result = <String>[];

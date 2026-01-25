@@ -25,15 +25,15 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   List<CategoryNode> categories = [];
   final GlobalKey _filterKey = GlobalKey();
   late final CategoryRepository _categoryRepository;
-  final FilterOverlayController _overlayController = FilterOverlayController();
+  final FilterOverlayController _filterOverlayController = FilterOverlayController();
   final GlobalKey<MapScreenState> _mapKey = GlobalKey<MapScreenState>();
 
   @override
   void initState() {
     super.initState();
-    _overlayController.initAnimation(this);
+    _filterOverlayController.initAnimation(this);
 
-    _overlayController.setOnClosed(() {
+    _filterOverlayController.setOnClosed(() {
       _mapKey.currentState?.reloadPois();
     });
 
@@ -72,7 +72,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _overlayController.dispose();
+    _filterOverlayController.dispose();
     super.dispose();
   }
 
@@ -111,7 +111,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   void toggleFilterOverlay() {
-    _overlayController.toggle(
+    _filterOverlayController.toggle(
       context: context,
       buttonKey: _filterKey,
       vsync: this,
@@ -119,7 +119,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         return FilterOverlayContent(
           categories: categories,
           animation: anim,
-          onClose: _overlayController.hide,
+          onClose: _filterOverlayController.hide,
         );
       },
     );

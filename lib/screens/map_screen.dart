@@ -1,21 +1,20 @@
+// ignore_for_file: avoid_print
+// TODO Hide Thumbnails when Zoomed Out
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:maplibre_gl/maplibre_gl.dart';
+import 'package:maplibre/maplibre.dart';
 import 'package:provider/provider.dart';
-import '../controllers/map_overlay_controller.dart';
+import '../controllers/map_poi_overlay_controller.dart';
 import '../controllers/poi_controller.dart';
 
 import '../models/poi.dart';
 import '../repositories/poi_repository.dart';
-import '../services/map_style_service.dart';
-import '../services/debug_service.dart';
 import '../state/app_state.dart';
 import '../state/poi_state.dart';
 import '../state/filter_state.dart';
-// TODO Check if necessary: import '../widgets/map_popup.dart';
-// TODO Center map when opening poi panel
-import '../widgets/map_overlay_layer.dart';
+import '../widgets/map_poi_overlay_layer.dart';
 import '../widgets/map_actions.dart';
 import '../widgets/poi_panel_persistent.dart';
 
@@ -27,14 +26,16 @@ class MapScreen extends StatefulWidget {
 }
 
 class MapScreenState extends State<MapScreen> {
-  MapLibreMapController? mapController;
-  final Completer<MapLibreMapController> _controllerCompleter = Completer();
+  MapController? mapController;
+  final Completer<MapController> _controllerCompleter = Completer();
   // TODO umstellen auf Completer
-  final MapOverlayController _overlayController = MapOverlayController();
-  final mapStyleService = MapStyleService();
+  final MapPoiOverlayController _poiOverlayController =
+      MapPoiOverlayController();
   bool _isUpdating = false;
   bool _styleLoaded = false;
-  bool _isReloadingPois = false;
+  bool _isCentering = false;
+  Position? _lastCenteredPoi;
+  bool _isChangingStyle = false;
 
   final poiRepository = PoiRepository();
   List<PointOfInterest> visiblePOIs = [];
@@ -47,14 +48,10 @@ class MapScreenState extends State<MapScreen> {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _loadPois();
-      setState(() {});
-      _initialOverlayUpdate();
     });
   }
 
   Future<void> _loadPois() async {
-    _isReloadingPois = true;
-
     final filterState = context.read<FilterState>();
     final pois = await poiRepository.loadPois(
       filterState.selectedValues.toList(),
@@ -64,10 +61,11 @@ class MapScreenState extends State<MapScreen> {
       visiblePOIs = pois;
     });
 
-    _isReloadingPois = false;
-
     if (_styleLoaded && mapController != null) {
-      await _initialOverlayUpdate();
+      await _poiOverlayController.updatePositions(
+        controller: mapController!,
+        visiblePOIs: visiblePOIs,
+      );
     }
   }
 
@@ -82,6 +80,8 @@ class MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+/*     print("Screen size: ${MediaQuery.of(context).size}");
+ */
     return Stack(
       children: [
         // MapLibreMap
@@ -89,39 +89,80 @@ class MapScreenState extends State<MapScreen> {
           behavior: HitTestBehavior.opaque,
           onPointerMove: _onPointerMove,
           child: MapLibreMap(
-            initialCameraPosition: const CameraPosition(
-              target: LatLng(47.571922, 7.60092),
-              zoom: 14.67,
+            options: MapOptions(
+              initCenter: Geographic(lon: 7.60132, lat: 47.57118),
+              initZoom: 14,
+              initStyle:
+                  'https://stadtschreiber.duckdns.org/styles/basel-vintage/style.json',
             ),
             onMapCreated: (controller) async {
-              mapController = controller; // keep this if you need it later
+              mapController = controller;
               _controllerCompleter.complete(controller);
-              await mapController!.setStyle(
-                "https://stadtschreiber.duckdns.org/styles/basel/style.json",
-              );
+              /*               print("🟦 Map created, initStyle called");
+ */
             },
-            onStyleLoadedCallback: () async {
-              _styleLoaded = true;
-              DebugService.log("Map style loaded.");
-              await Future.delayed(const Duration(milliseconds: 300));
-              _initialOverlayUpdate();
+            onEvent: (event) async {
+/*               print("📡 MapEvent: ${event.runtimeType}");
+ */
+              if (event case MapEventStyleLoaded()) {
+                _styleLoaded = true;
+
+                if (visiblePOIs.isNotEmpty) {
+                  await _poiOverlayController.updatePositions(
+                    controller: mapController!,
+                    visiblePOIs: visiblePOIs,
+                  );
+                  if (mounted) setState(() {});
+                }
+              }
+              if (event case MapEventCameraIdle()) {
+                print(
+                  "🧭 Camera center lat: ${mapController!.camera!.center.lat}, lon: ${mapController!.camera!.center.lon}",
+                );
+
+                /*                 print("🟨 Camera idle");
+ */
+                if (!_isCentering) {
+                  if (visiblePOIs.isNotEmpty) {
+                    await _poiOverlayController.updatePositions(
+                      controller: mapController!,
+                      visiblePOIs: visiblePOIs,
+                    );
+                    if (mounted) setState(() {});
+                  }
+                }
+              }
             },
-            onCameraIdle: _initialOverlayUpdate,
+            /* children: const [
+              MapControlButtons(showTrackLocation: true),
+              MapScalebar(),
+              SourceAttribution(),
+            ], */
           ),
         ),
-        MapOverlayLayer(
-          controller: _overlayController,
+        MapPoiOverlayLayer(
+          controller: _poiOverlayController,
           visiblePOIs: visiblePOIs,
           onTapPoi: (poi) {
-            context.read<PoiController>().selectPoi(poi);
-            context.read<PoiState>().selectPoi(poi);
+            final state = context.read<PoiState>();
+            state.selectPoi(poi); 
+            context.read<PoiController>().selectPoi(poi); 
           },
         ),
-        const MapActions(),
+        MapActions(onChangeStyle: () => changeStyle()),
+        // TODO Fix Thumbnail Centering 
+        Selector<PoiState, (bool, PointOfInterest?)>(
+          selector: (_, state) => (state.isPanelOpen, state.selected),
+          builder: (_, tuple, __) {
+            final (isPanelOpen, selectedPoi) = tuple;
+            print("Panel open: $isPanelOpen, Selected POI: $selectedPoi");
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (isPanelOpen && selectedPoi != null) {
+                _centerPoiConsideringPanel();
+              }
+            });
 
-        Consumer<PoiState>(
-          builder: (_, state, _) {
-            return state.isPanelOpen
+            return isPanelOpen
                 ? Align(
                     alignment: Alignment.bottomCenter,
                     child: PersistentPoiPanel(
@@ -139,29 +180,50 @@ class MapScreenState extends State<MapScreen> {
     return await rootBundle.loadString(path);
   }
 
-  Future<void> _initialOverlayUpdate() async {
-    if (_isReloadingPois) return; // <-- block early calls
-    if (!_styleLoaded || mapController == null || visiblePOIs.isEmpty) return;
+  Future<void> _centerPoiConsideringPanel() async {
+    if (_isCentering) return;
+    final poi = context.read<PoiState>().selected;
+    if (poi == null) return;
+    if (_lastCenteredPoi == poi.location) return;
+    _lastCenteredPoi = poi.location;
+    _isCentering = true;
 
-    await _overlayController.updatePositions(
-      controller: mapController!,
-      visiblePOIs: visiblePOIs,
+    /*     final panelHeight = MediaQuery.of(context).size.height * 0.35;
+ */
+    final panelHeight = 350;
+
+    final double screenTop = mapController!
+        .toLngLat(Offset(MediaQuery.of(context).size.width / 2, 0))
+        .lat;
+    final double screenBottom = mapController!
+        .toLngLat(
+          Offset(
+            MediaQuery.of(context).size.width / 2,
+            MediaQuery.of(context).size.height,
+          ),
+        )
+        .lat;
+    final double mapScreenBottom = mapController!
+        .toLngLat(
+          Offset(
+            MediaQuery.of(context).size.width / 2,
+            (MediaQuery.of(context).size.height + panelHeight) / 2,
+          ),
+        )
+        .lat;
+    final double distanceMapCentertoScreenCenter =
+        (screenTop - mapScreenBottom) / 2 - (screenTop - screenBottom) / 2;
+
+    await mapController!.animateCamera(
+      center: Geographic(
+        lat: poi.location.y + distanceMapCentertoScreenCenter,
+        lon: poi.location.x,
+      ),
+      nativeDuration: const Duration(milliseconds: 200),
     );
 
-    if (mounted) setState(() {});
+    _isCentering = false;
   }
-
-  /* void _onMapClick(Point<double> point, LatLng coordinates) async {
-    if (mapController == null) return;
-
-    final features = await mapController!.queryRenderedFeatures(
-      point,
-      ['baselparks-names'],
-      ['all'],
-    );
-
-    if (features.isEmpty) return;
-  } */
 
   void _onPointerMove(PointerMoveEvent event) async {
     if (!_styleLoaded || mapController == null || visiblePOIs.isEmpty) return;
@@ -173,7 +235,7 @@ class MapScreenState extends State<MapScreen> {
 
     if (!mounted) return;
 
-    await _overlayController.updatePositions(
+    await _poiOverlayController.updatePositions(
       controller: mapController!,
       visiblePOIs: visiblePOIs,
     );
@@ -182,4 +244,86 @@ class MapScreenState extends State<MapScreen> {
 
     _isUpdating = false;
   }
+
+  int styleCounter = 1;
+  void changeStyle() async {
+    if (_isChangingStyle) return;
+    if (mapController == null) return;
+
+    _isChangingStyle = true;
+    _styleLoaded = false;
+
+    styleCounter = styleCounter == 4 ? 1 : styleCounter + 1;
+    final styleString = switch (styleCounter) {
+      1 => "https://stadtschreiber.duckdns.org/styles/basel-vintage/style.json",
+      2 => "https://stadtschreiber.duckdns.org/styles/basel-green/style.json",
+      3 => "https://stadtschreiber.duckdns.org/styles/basel-osm/style.json",
+      4 => "https://stadtschreiber.duckdns.org/styles/basel-blue/style.json",
+      _ => throw Exception("Invalid styleCounter"),
+    };
+
+    mapController!.setStyle(styleString);
+    _isChangingStyle = false;
+  }
+
+  List<PointOfInterest> searchPois(String query) {
+    final q = query.toLowerCase();
+
+    return visiblePOIs.where((poi) {
+      final nameMatch = poi.name.toLowerCase().contains(q);
+
+      final categoryMatch = poi.categories.any(
+        (c) => c.toLowerCase().contains(q),
+      );
+
+      return nameMatch || categoryMatch;
+    }).toList();
+  }
 }
+
+
+// Suchfelder 
+
+/* TextField(
+  decoration: InputDecoration(
+    hintText: "POI suchen…",
+    prefixIcon: Icon(Icons.search),
+  ),
+  onChanged: (value) {
+    final results = searchPois(value);
+    setState(() => searchResults = results);
+  },
+)
+
+ListView.builder(
+  itemCount: searchResults.length,
+  itemBuilder: (_, i) {
+    final poi = searchResults[i];
+    return ListTile(
+      title: Text(poi.name),
+      subtitle: Text(poi.category),
+      onTap: () {
+        context.read<PoiState>().selectPoi(poi);
+        context.read<PoiController>().selectPoi(poi);
+
+        // Panel öffnen
+        context.read<PoiState>().openPanel();
+
+        // Karte zentrieren
+        _centerPoiConsideringPanel();
+      },
+    );
+  },
+)
+
+Future<void> goToPoi(PointOfInterest poi) async {
+  await mapController!.animateCamera(
+    CameraUpdate.newLatLng(poi.location),
+    duration: const Duration(milliseconds: 1200),
+  );
+
+  await mapController!.animateCamera(
+    CameraUpdate.scrollBy(0, panelHeight),
+    duration: const Duration(milliseconds: 1200),
+  );
+} */

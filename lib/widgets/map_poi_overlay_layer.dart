@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import '../controllers/map_overlay_controller.dart';
-import '../widgets/map_thumbnail.dart';
+import '../controllers/map_poi_overlay_controller.dart';
+import '../widgets/poi_thumbnail.dart';
 import '../models/poi.dart';
 
-class MapOverlayLayer extends StatelessWidget {
-  final MapOverlayController controller;
+class MapPoiOverlayLayer extends StatelessWidget {
+  final MapPoiOverlayController controller;
   final List<PointOfInterest> visiblePOIs;
   final void Function(PointOfInterest poi) onTapPoi;
 
-  const MapOverlayLayer({
+  const MapPoiOverlayLayer({
     super.key,
     required this.controller,
     required this.visiblePOIs,
@@ -19,9 +19,9 @@ class MapOverlayLayer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: controller.screenPositions.entries.map((entry) {
-        final poiName = entry.key;
+        final poiId = entry.key;  
         final pos = entry.value;
-        final PointOfInterest poi = visiblePOIs.firstWhere((p) => p.name == poiName);
+        final PointOfInterest poi = visiblePOIs.firstWhere((p) => p.id == poiId);
 
         return Stack(
           clipBehavior: Clip.none,
@@ -30,7 +30,8 @@ class MapOverlayLayer extends StatelessWidget {
             Positioned(
               left: pos.dx - 55,
               top: pos.dy - 20,
-              child: MapThumbnail(poi: poi, onTap: () => onTapPoi(poi)),
+              child: PoiThumbnail(poi: poi, onTap: () => onTapPoi(poi)),
+              
             ),
 
             // 🔴 Red dot (underneath)

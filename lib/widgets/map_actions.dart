@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class MapActions extends StatelessWidget {
-  const MapActions({super.key});
+  final VoidCallback onChangeStyle;
+  const MapActions({super.key, required this.onChangeStyle});
 
   @override
   Widget build(BuildContext context) {
@@ -12,6 +13,7 @@ class MapActions extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
+          //info
           FloatingActionButton(
             heroTag: "btn1",
             onPressed: () {},
@@ -19,19 +21,22 @@ class MapActions extends StatelessWidget {
             child: const Icon(Icons.info_outlined),
           ),
           const SizedBox(height: 12),
+          //change style
           FloatingActionButton(
             heroTag: "btn2",
-            onPressed: () {},
+            onPressed: onChangeStyle,
             mini: true,
             child: const Icon(Icons.color_lens_outlined),
           ),
           const SizedBox(height: 12),
+          //my location
           FloatingActionButton(
             heroTag: "btn3",
             onPressed: () {},
             mini: true,
             child: const Icon(Icons.my_location),
           ),
+          //search
           const SizedBox(height: 12),
           FloatingActionButton(
             heroTag: "btn4",
