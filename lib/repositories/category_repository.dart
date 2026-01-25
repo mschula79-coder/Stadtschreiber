@@ -9,7 +9,8 @@ class CategoryRepository {
     final catListRaw = await supabase
         .from('categories')
         .select('id, slug, name, sort_order, icon_source, icon_name')
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .order('sort_order', ascending: true);
 
     final Map<String, CategoryDto> categories = {
       for (var c in catListRaw) c['id'] as String: CategoryDto.fromJson(c),

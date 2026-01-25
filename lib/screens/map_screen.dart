@@ -8,7 +8,6 @@ import 'package:maplibre/maplibre.dart';
 import 'package:provider/provider.dart';
 import '../controllers/map_poi_overlay_controller.dart';
 import '../controllers/poi_controller.dart';
-
 import '../models/poi.dart';
 import '../repositories/poi_repository.dart';
 import '../state/app_state.dart';
@@ -153,7 +152,7 @@ class MapScreenState extends State<MapScreen> {
         // TODO Fix Thumbnail Centering 
         Selector<PoiState, (bool, PointOfInterest?)>(
           selector: (_, state) => (state.isPanelOpen, state.selected),
-          builder: (_, tuple, __) {
+          builder: (_, tuple, _) {
             final (isPanelOpen, selectedPoi) = tuple;
             print("Panel open: $isPanelOpen, Selected POI: $selectedPoi");
             WidgetsBinding.instance.addPostFrameCallback((_) {
