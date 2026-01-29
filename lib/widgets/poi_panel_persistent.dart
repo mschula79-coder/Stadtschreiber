@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'map_popup_tabs.dart';
 import '../controllers/poi_controller.dart';
-import '../state/poi_state.dart';
+import '../state/poi_panel_state.dart';
 
 class PersistentPoiPanel extends StatelessWidget {
   final bool isAdmin;
@@ -11,7 +11,7 @@ class PersistentPoiPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<PoiState>();
+    final state = context.watch<PoiPanelState>();
     final poi = state.selected;
     final isOpen = state.isPanelOpen;
 
@@ -45,7 +45,7 @@ class PersistentPoiPanel extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () {
-                  context.read<PoiState>().closePanel();
+                  context.read<PoiPanelState>().closePanel();
                   context.read<PoiController>().clearSelection();
                 },
               ),

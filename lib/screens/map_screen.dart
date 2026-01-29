@@ -6,14 +6,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:maplibre/maplibre.dart';
 import 'package:provider/provider.dart';
-import '../controllers/map_poi_overlay_controller.dart';
+import '../controllers/poi_thumbnails_controller.dart';
 import '../controllers/poi_controller.dart';
+import '../controllers/category_controller.dart';
 import '../models/poi.dart';
 import '../repositories/poi_repository.dart';
 import '../state/app_state.dart';
-import '../state/poi_state.dart';
-import '../state/filter_state.dart';
-import '../widgets/map_poi_overlay_layer.dart';
+import '../state/poi_panel_state.dart';
+import '../state/pois_thumbnails_state.dart';
+import '../state/categories_menu_state.dart';
+import '../widgets/poi_thumbnails_layer.dart';
 import '../widgets/map_actions.dart';
 import '../widgets/poi_panel_persistent.dart';
 
@@ -28,8 +30,8 @@ class MapScreenState extends State<MapScreen> {
   MapController? mapController;
   final Completer<MapController> _controllerCompleter = Completer();
   // TODO umstellen auf Completer
-  final MapPoiOverlayController _poiOverlayController =
-      MapPoiOverlayController();
+
+  Future<void> reloadPois() => _loadPois();
   bool _isUpdating = false;
   bool _styleLoaded = false;
   bool _isCentering = false;
@@ -37,13 +39,16 @@ class MapScreenState extends State<MapScreen> {
   bool _isChangingStyle = false;
 
   final poiRepository = PoiRepository();
-  List<PointOfInterest> visiblePOIs = [];
 
   Timer? _idleTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<CategoryController>().loadCategories();
+    });
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _loadPois();
@@ -51,24 +56,44 @@ class MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _loadPois() async {
-    final filterState = context.read<FilterState>();
+    final categoriesMenuState = context.read<CategoriesMenuState>();
+    final poiThumbnailsState = context.read<PoiThumbnailsState>();
+    final thumbnailsController = context.read<PoiThumbnailsController>();
+
     final pois = await poiRepository.loadPois(
-      filterState.selectedValues.toList(),
+      categoriesMenuState.selectedValues.toList(),
     );
 
-    setState(() {
-      visiblePOIs = pois;
-    });
+    poiThumbnailsState.setAll(pois);
 
-    if (_styleLoaded && mapController != null) {
-      await _poiOverlayController.updatePositions(
+    if (mapController != null) {
+      await thumbnailsController.updatePositions(
         controller: mapController!,
-        visiblePOIs: visiblePOIs,
+        visiblePOIs: poiThumbnailsState.visible,
       );
     }
   }
 
-  Future<void> reloadPois() => _loadPois();
+  Future<void> selectPoi(PointOfInterest poi) async {
+    final poiController = context.read<PoiController>();
+    final visiblePoiState = context.read<PoiThumbnailsState>();
+    final thumbnailsController = context.read<PoiThumbnailsController>();
+    final poiPanelState = context.read<PoiPanelState>();
+
+    final fresh = await poiController.poiRepo.loadPoiById(poi.id);
+    final realPoi = fresh ?? poi;
+
+    visiblePoiState.add(realPoi);
+
+    if (mapController != null) {
+      await thumbnailsController.updatePositions(
+        controller: mapController!,
+        visiblePOIs: visiblePoiState.visible,
+      );
+    }
+    poiPanelState.selectPoi(poi);
+/*     poiController.selectPoi(poi);
+ */  }
 
   @override
   void dispose() {
@@ -79,8 +104,15 @@ class MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
-/*     print("Screen size: ${MediaQuery.of(context).size}");
- */
+    /*print("Screen size: ${MediaQuery.of(context).size}");*/
+    context.watch<PoiThumbnailsState>();
+    print("MapScreen build()");
+    final thumbnailsState = Provider.of<PoiThumbnailsState>(
+      context,
+      listen: false,
+    );
+    print("ThumbnailsState instance: $thumbnailsState");
+
     return Stack(
       children: [
         // MapLibreMap
@@ -97,21 +129,22 @@ class MapScreenState extends State<MapScreen> {
             onMapCreated: (controller) async {
               mapController = controller;
               _controllerCompleter.complete(controller);
-              /*               print("🟦 Map created, initStyle called");
- */
+              /*               print("🟦 Map created, initStyle called");*/
             },
             onEvent: (event) async {
-/*               print("📡 MapEvent: ${event.runtimeType}");
- */
+              /*               print("📡 MapEvent: ${event.runtimeType}");*/
+              final visiblePOIs = context.read<PoiThumbnailsState>().visible;
+              final thumbnailsController = context
+                  .read<PoiThumbnailsController>();
+
               if (event case MapEventStyleLoaded()) {
                 _styleLoaded = true;
 
                 if (visiblePOIs.isNotEmpty) {
-                  await _poiOverlayController.updatePositions(
+                  await thumbnailsController.updatePositions(
                     controller: mapController!,
                     visiblePOIs: visiblePOIs,
                   );
-                  if (mounted) setState(() {});
                 }
               }
               if (event case MapEventCameraIdle()) {
@@ -119,15 +152,13 @@ class MapScreenState extends State<MapScreen> {
                   "🧭 Camera center lat: ${mapController!.camera!.center.lat}, lon: ${mapController!.camera!.center.lon}",
                 );
 
-                /*                 print("🟨 Camera idle");
- */
+                /*                 print("🟨 Camera idle");*/
                 if (!_isCentering) {
                   if (visiblePOIs.isNotEmpty) {
-                    await _poiOverlayController.updatePositions(
+                    await thumbnailsController.updatePositions(
                       controller: mapController!,
                       visiblePOIs: visiblePOIs,
                     );
-                    if (mounted) setState(() {});
                   }
                 }
               }
@@ -139,18 +170,28 @@ class MapScreenState extends State<MapScreen> {
             ], */
           ),
         ),
-        MapPoiOverlayLayer(
-          controller: _poiOverlayController,
-          visiblePOIs: visiblePOIs,
-          onTapPoi: (poi) {
-            final state = context.read<PoiState>();
-            state.selectPoi(poi); 
-            context.read<PoiController>().selectPoi(poi); 
+
+        Consumer2<PoiThumbnailsController, PoiThumbnailsState>(
+          builder: (context, controller, visibleState, _) {
+            print(
+              "Consumer2 rebuilding → visible: ${visibleState.visible.length}",
+            );
+
+            return PoiThumbnailsLayer(
+              controller: controller,
+              visiblePOIs: visibleState.visible,
+              onTapPoi: (poi) {
+                final panel = context.read<PoiPanelState>();
+                panel.selectPoi(poi);
+                context.read<PoiController>().selectPoi(poi);
+              },
+            );
           },
         ),
-        MapActions(onChangeStyle: () => changeStyle()),
-        // TODO Fix Thumbnail Centering 
-        Selector<PoiState, (bool, PointOfInterest?)>(
+
+        MapActions(onChangeStyle: changeStyle, onSelectPoi: selectPoi),
+        // TODO Fix Thumbnail Centering after ontap and after selecting a searched poi
+        Selector<PoiPanelState, (bool, PointOfInterest?)>(
           selector: (_, state) => (state.isPanelOpen, state.selected),
           builder: (_, tuple, _) {
             final (isPanelOpen, selectedPoi) = tuple;
@@ -181,7 +222,7 @@ class MapScreenState extends State<MapScreen> {
 
   Future<void> _centerPoiConsideringPanel() async {
     if (_isCentering) return;
-    final poi = context.read<PoiState>().selected;
+    final poi = context.read<PoiPanelState>().selected;
     if (poi == null) return;
     if (_lastCenteredPoi == poi.location) return;
     _lastCenteredPoi = poi.location;
@@ -225,6 +266,9 @@ class MapScreenState extends State<MapScreen> {
   }
 
   void _onPointerMove(PointerMoveEvent event) async {
+    final visiblePOIs = context.read<PoiThumbnailsState>().visible;
+    final thumbnailsController = context.read<PoiThumbnailsController>();
+
     if (!_styleLoaded || mapController == null || visiblePOIs.isEmpty) return;
     if (_isUpdating) return;
 
@@ -234,12 +278,10 @@ class MapScreenState extends State<MapScreen> {
 
     if (!mounted) return;
 
-    await _poiOverlayController.updatePositions(
+    await thumbnailsController.updatePositions(
       controller: mapController!,
       visiblePOIs: visiblePOIs,
     );
-
-    if (mounted) setState(() {});
 
     _isUpdating = false;
   }
@@ -267,6 +309,7 @@ class MapScreenState extends State<MapScreen> {
 
   List<PointOfInterest> searchPois(String query) {
     final q = query.toLowerCase();
+    final visiblePOIs = context.read<PoiThumbnailsState>().visible;
 
     return visiblePOIs.where((poi) {
       final nameMatch = poi.name.toLowerCase().contains(q);
@@ -279,50 +322,3 @@ class MapScreenState extends State<MapScreen> {
     }).toList();
   }
 }
-
-
-// Suchfelder 
-
-/* TextField(
-  decoration: InputDecoration(
-    hintText: "POI suchen…",
-    prefixIcon: Icon(Icons.search),
-  ),
-  onChanged: (value) {
-    final results = searchPois(value);
-    setState(() => searchResults = results);
-  },
-)
-
-ListView.builder(
-  itemCount: searchResults.length,
-  itemBuilder: (_, i) {
-    final poi = searchResults[i];
-    return ListTile(
-      title: Text(poi.name),
-      subtitle: Text(poi.category),
-      onTap: () {
-        context.read<PoiState>().selectPoi(poi);
-        context.read<PoiController>().selectPoi(poi);
-
-        // Panel öffnen
-        context.read<PoiState>().openPanel();
-
-        // Karte zentrieren
-        _centerPoiConsideringPanel();
-      },
-    );
-  },
-)
-
-Future<void> goToPoi(PointOfInterest poi) async {
-  await mapController!.animateCamera(
-    CameraUpdate.newLatLng(poi.location),
-    duration: const Duration(milliseconds: 1200),
-  );
-
-  await mapController!.animateCamera(
-    CameraUpdate.scrollBy(0, panelHeight),
-    duration: const Duration(milliseconds: 1200),
-  );
-} */

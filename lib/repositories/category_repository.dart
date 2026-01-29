@@ -1,4 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+
 import '../models/category.dart';
 import '../models/category_dto.dart';
 
@@ -62,4 +65,13 @@ class CategoryRepository {
     );
   }
 
+}
+
+class CategoryState extends ChangeNotifier {
+  List<CategoryNode> categories = [];
+
+  void setCategories(List<CategoryNode> list) {
+    categories = list;
+    notifyListeners();
+  }
 }

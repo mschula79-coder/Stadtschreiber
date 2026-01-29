@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class FilterOverlayController {
+class CategoriesMenuController {
   OverlayEntry? _entry;
   AnimationController? _animationController;
   Animation<Offset>? _animation;

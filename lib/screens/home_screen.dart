@@ -4,13 +4,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'map_screen.dart';
 
-import '../controllers/filter_overlay_controller.dart';
-import '../controllers/poi_controller.dart';
+import '../controllers/categories_menu_controller.dart';
 import '../models/category.dart';
 import '../repositories/category_repository.dart';
-import '../state/app_state.dart';
 import '../services/debug_service.dart';
-import '../widgets/filter_overlay.dart';
+import '../state/app_state.dart';
+import '../widgets/categories_menu.dart';
 import '../widgets/main_app_bar.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -25,15 +24,16 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   List<CategoryNode> categories = [];
   final GlobalKey _filterKey = GlobalKey();
   late final CategoryRepository _categoryRepository;
-  final FilterOverlayController _filterOverlayController = FilterOverlayController();
+  final CategoriesMenuController _categoriesMenuController =
+      CategoriesMenuController();
   final GlobalKey<MapScreenState> _mapKey = GlobalKey<MapScreenState>();
 
   @override
   void initState() {
     super.initState();
-    _filterOverlayController.initAnimation(this);
+    _categoriesMenuController.initAnimation(this);
 
-    _filterOverlayController.setOnClosed(() {
+    _categoriesMenuController.setOnClosed(() {
       _mapKey.currentState?.reloadPois();
     });
 
@@ -72,7 +72,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _filterOverlayController.dispose();
+    _categoriesMenuController.dispose();
     super.dispose();
   }
 
@@ -85,6 +85,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+
     if (categories.isEmpty) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -92,34 +93,25 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     return Scaffold(
       appBar: MainAppBar(
         filterButtonKey: _filterKey,
-        onFilterPressed: toggleFilterOverlay,
+        onFilterPressed: toggleCategoryMenuOverlay,
       ),
       body: Stack(
-        children: [
-          Consumer<PoiController>(
-            builder: (_, controller, _) {
-              controller.addListener(() {
-                _mapKey.currentState?.reloadPois();
-              });
-
-              return MapScreen(key: _mapKey);
-            },
-          ),
-        ],
+        clipBehavior: Clip.hardEdge,
+        children: [MapScreen(key: _mapKey)],
       ),
     );
   }
 
-  void toggleFilterOverlay() {
-    _filterOverlayController.toggle(
+  void toggleCategoryMenuOverlay() {
+    _categoriesMenuController.toggle(
       context: context,
       buttonKey: _filterKey,
       vsync: this,
       builder: (anim) {
-        return FilterOverlayContent(
+        return CategoriesMenuOverlayContent(
           categories: categories,
           animation: anim,
-          onClose: _filterOverlayController.hide,
+          onClose: _categoriesMenuController.hide,
         );
       },
     );

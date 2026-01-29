@@ -33,7 +33,10 @@ class PoiRepository {
     await supabase.from('export_pois').insert(poi.toMap());
   }
 
-  Future<void> updatePoiCategories(int poiId, List<String> categories) async {
+  Future<void> updatePoiCategories({
+    required int poiId,
+    required List<String> categories,
+  }) async {
     await supabase
         .from('export_pois')
         .update({'categories': categories})
@@ -75,5 +78,20 @@ class PoiRepository {
     if (result == null) return null;
 
     return PointOfInterest.fromSupabase(result);
+  }
+
+  Future<List<PointOfInterest>> searchPois(String query) async {
+    final supabase = Supabase.instance.client;
+
+    final q = query.toLowerCase();
+
+    final result = await supabase
+        .from('export_pois')
+        .select()
+        .or('name.ilike.%$q%, categories.cs.{$q}');
+
+    return result
+        .map<PointOfInterest>((row) => PointOfInterest.fromSupabase(row))
+        .toList();
   }
 }

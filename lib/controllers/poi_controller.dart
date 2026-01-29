@@ -3,23 +3,18 @@ import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/repositories/poi_repository.dart';
 
 class PoiController with ChangeNotifier {
-  final PoiRepository repo = PoiRepository();
+  final PoiRepository poiRepo = PoiRepository();
 
   List<PointOfInterest> pois = [];
   PointOfInterest? selectedPoi;
 
   Future<void> loadPois(List<String> categories) async {
-    pois = await repo.loadPois(categories);
+    pois = await poiRepo.loadPois(categories);
     notifyListeners();
   }
 
-  /* void selectPoi(PointOfInterest poi) {
-    selectedPoi = poi;
-    notifyListeners();
-  }
- */
   Future<void> selectPoi(PointOfInterest poi) async {
-    final fresh = await repo.loadPoiById(poi.id);
+    final fresh = await poiRepo.loadPoiById(poi.id);
     selectedPoi = fresh ?? poi;
     notifyListeners();
   }
@@ -32,11 +27,50 @@ class PoiController with ChangeNotifier {
   Future<void> reloadSelectedPoi() async {
     if (selectedPoi == null) return;
 
-    final freshPoi = await repo.loadPoiById(selectedPoi!.id);
+    final freshPoi = await poiRepo.loadPoiById(selectedPoi!.id);
 
     if (freshPoi != null) {
       selectedPoi = freshPoi;
       notifyListeners();
     }
+  }
+
+  Future<void> toggleCategory({
+    required PointOfInterest poi,
+    required String categorySlug,
+    required bool enabled,
+  }) async {
+    // 1. Update local list
+    final updatedCategories = [...poi.categories];
+
+    if (enabled) {
+      if (!updatedCategories.contains(categorySlug)) {
+        updatedCategories.add(categorySlug);
+      }
+    } else {
+      updatedCategories.remove(categorySlug);
+    }
+
+    await poiRepo.updatePoiCategories(
+      poiId: poi.id,
+      categories: updatedCategories,
+    );
+
+    selectedPoi = PointOfInterest(
+      id: poi.id,
+      name: poi.name,
+      location: poi.location,
+      categories: updatedCategories,
+      featuredImageUrl: poi.featuredImageUrl,
+      history: poi.history,
+      articles: poi.articles,
+    );
+
+    notifyListeners();
+  }
+
+  Future<List<PointOfInterest>> searchRemote(String query) async {
+    if (query.isEmpty) return [];
+    return await poiRepo.searchPois(query);
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-class FilterState extends ChangeNotifier {
+class CategoriesMenuState extends ChangeNotifier {
   final List<String> selectedValues = [];
 
   bool isSelected(String value) => selectedValues.contains(value);

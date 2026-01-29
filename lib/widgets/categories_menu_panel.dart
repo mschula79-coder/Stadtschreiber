@@ -1,29 +1,26 @@
-// TODO Admin View Toggle
-
 import 'package:flutter/material.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:iconify_flutter/icons/tabler.dart';
-import '../state/filter_state.dart';
+import '../state/categories_menu_state.dart';
 
 import '../models/category.dart';
 
-class FilterPanel extends StatelessWidget {
+class CategoriesMenuPanel extends StatelessWidget {
   final List<CategoryNode> categories;
-  final FilterState filterState;
+  final CategoriesMenuState categoriesMenuState;
   final VoidCallback onClose;
 
-  const FilterPanel({
+  const CategoriesMenuPanel({
     super.key,
     required this.categories,
-    required this.filterState,
+    required this.categoriesMenuState,
     required this.onClose,
   });
 
   @override
   Widget build(BuildContext context) {
-    final allLeafValues = _collectAllLeafValues(categories);
-
+//TODO Fix entry text position
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -43,8 +40,9 @@ class FilterPanel extends StatelessWidget {
               "Karteninhalte",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            // alles auswählen
-            CheckboxListTile(
+            
+            // TODO braucht es das: alles auswählen
+            /* CheckboxListTile(
               contentPadding: const EdgeInsets.only(left: 4, top: 5, right: 15),
               value: filterState.selectedValues.isEmpty
                   ? false
@@ -73,7 +71,7 @@ class FilterPanel extends StatelessWidget {
                   }
                 }
               },
-            ),
+            ), */
             ...categories.map((node) => _buildCategoryNode(context, node)),
           ],
         ),
@@ -85,14 +83,14 @@ class FilterPanel extends StatelessWidget {
 
   Widget _buildCategoryNode(BuildContext context, CategoryNode node) {
     if (node.isLeaf) {
-      final isChecked = node.value != null && filterState.isSelected(node.value!);
+      final isChecked = node.value != null && categoriesMenuState.isSelected(node.value!);
       // 2nd level
       return CheckboxListTile(
         contentPadding: const EdgeInsets.only(left:4, right: 15),
         value: isChecked,
         onChanged: (checked) {
           if (node.value == null) return;
-          filterState.setSelected(node.value!, checked ?? false);
+          categoriesMenuState.setSelected(node.value!, checked ?? false);
         },
         secondary: _buildIcon(node),
         controlAffinity: ListTileControlAffinity.leading,
@@ -110,7 +108,7 @@ class FilterPanel extends StatelessWidget {
         .toList();
 
     final checkedChildren = allDescendantLeaves
-        .where((v) => filterState.isSelected(v))
+        .where((v) => categoriesMenuState.isSelected(v))
         .length;
 
     bool? parentChecked;
@@ -140,14 +138,14 @@ class FilterPanel extends StatelessWidget {
             onChanged: (checked) {
               if (checked == true) {
                 for (final value in directLeafChildren) {
-                  if (!filterState.isSelected(value)) {
-                    filterState.setSelected(value, true);
+                  if (!categoriesMenuState.isSelected(value)) {
+                    categoriesMenuState.setSelected(value, true);
                   }
                 }
               } else {
                 for (final value in directLeafChildren) {
-                  if (filterState.isSelected(value)) {
-                    filterState.setSelected(value, false);
+                  if (categoriesMenuState.isSelected(value)) {
+                    categoriesMenuState.setSelected(value, false);
                   }
                 }
               }
@@ -241,14 +239,6 @@ class FilterPanel extends StatelessWidget {
     }
 
     walk(node);
-    return result;
-  }
-
-  List<String> _collectAllLeafValues(List<CategoryNode> roots) {
-    final result = <String>[];
-    for (final node in roots) {
-      result.addAll(_collectLeafValues(node));
-    }
     return result;
   }
 }

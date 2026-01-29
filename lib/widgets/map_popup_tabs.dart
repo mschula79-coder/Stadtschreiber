@@ -9,6 +9,8 @@ import '../models/poi.dart';
 import '../controllers/poi_controller.dart';
 import '../repositories/poi_repository.dart';
 import '../widgets/article_edit_modal.dart';
+import '../widgets/category_node_tile.dart';
+import '../repositories/category_repository.dart';
 import '../widgets/editable_list.dart';
 
 class MapPopupTabs extends StatefulWidget {
@@ -111,7 +113,7 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
       _buildRatingsTab(poi),
     ];
     if (isAdmin) {
-      pages.add(_buildEditTab(poi));
+      pages.add(_buildEditTab(poi, isAdmin));
     }
 
     return DefaultTabController(
@@ -315,24 +317,54 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
   bool _saved = false;
   bool _saving = false;
 
-  Widget _buildEditTab(PointOfInterest poi) {
+  Widget _buildEditTab(PointOfInterest poi, bool isAdmin) {
+// TODO ADD Listener and Provider
+    // ignore: unused_local_variable
+    bool adminViewEnabled = isAdmin;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(12),
       child: Column(
         children: [
-          TextField(
-            controller: nameController,
-            decoration: const InputDecoration(labelText: "Name"),
-          ),
-          TextField(
-            controller: historyController,
-            decoration: const InputDecoration(labelText: "Geschichte"),
-            maxLines: 4,
+          CheckboxListTile(
+            title: const Text("POI veröffentlicht"),
+            value: isAdmin ? true : false,
+            onChanged: (checked) async {
+              if (checked == null) return;
+              adminViewEnabled = checked;
+            },
           ),
           TextField(
             controller: imageController,
             decoration: const InputDecoration(labelText: "Featured Image-URL"),
           ),
+          const SizedBox(height: 20),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              "Kategorien",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          Consumer<CategoryState>(
+            builder: (context, catState, _) {
+              final categories = catState.categories;
+
+              if (categories.isEmpty) {
+                return const Text("Keine Kategorien geladen");
+              }
+
+              return ListView(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                children: categories
+                    .map((root) => CategoryNodeTile(node: root, poi: poi))
+                    .toList(),
+              );
+            },
+          ),
+
           const SizedBox(height: 12),
 
           ElevatedButton(
@@ -367,7 +399,6 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
                       }
                     });
                   },
-            // TODO add categories checkboxes
             // TODO add poi owner
             // TODO automatic url and image url test
             child: _saving

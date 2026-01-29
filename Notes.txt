@@ -85,7 +85,7 @@ scp style.json root@stadtschreiber.duckdns.org:/opt/tiles/
 scp -r fonts root@stadtschreiber.duckdns.org:/opt/tiles/
 scp -r sprites root@stadtschreiber.duckdns.org:/opt/tiles/
 
-
+flutter build appbundle --release    
 
 1. Folder Structure (on host: /opt/tiles)
 
