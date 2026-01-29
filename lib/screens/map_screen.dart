@@ -1,6 +1,3 @@
-// ignore_for_file: avoid_print
-// TODO Hide Thumbnails when Zoomed Out
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -92,8 +89,9 @@ class MapScreenState extends State<MapScreen> {
       );
     }
     poiPanelState.selectPoi(poi);
-/*     poiController.selectPoi(poi);
- */  }
+    /*     poiController.selectPoi(poi);
+ */
+  }
 
   @override
   void dispose() {
@@ -106,12 +104,6 @@ class MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     /*print("Screen size: ${MediaQuery.of(context).size}");*/
     context.watch<PoiThumbnailsState>();
-    print("MapScreen build()");
-    final thumbnailsState = Provider.of<PoiThumbnailsState>(
-      context,
-      listen: false,
-    );
-    print("ThumbnailsState instance: $thumbnailsState");
 
     return Stack(
       children: [
@@ -129,10 +121,9 @@ class MapScreenState extends State<MapScreen> {
             onMapCreated: (controller) async {
               mapController = controller;
               _controllerCompleter.complete(controller);
-              /*               print("🟦 Map created, initStyle called");*/
             },
             onEvent: (event) async {
-              /*               print("📡 MapEvent: ${event.runtimeType}");*/
+              /* print("📡 MapEvent: ${event.runtimeType}");*/
               final visiblePOIs = context.read<PoiThumbnailsState>().visible;
               final thumbnailsController = context
                   .read<PoiThumbnailsController>();
@@ -148,11 +139,10 @@ class MapScreenState extends State<MapScreen> {
                 }
               }
               if (event case MapEventCameraIdle()) {
-                print(
+                /* print(
                   "🧭 Camera center lat: ${mapController!.camera!.center.lat}, lon: ${mapController!.camera!.center.lon}",
-                );
+                ); */
 
-                /*                 print("🟨 Camera idle");*/
                 if (!_isCentering) {
                   if (visiblePOIs.isNotEmpty) {
                     await thumbnailsController.updatePositions(
@@ -161,6 +151,8 @@ class MapScreenState extends State<MapScreen> {
                     );
                   }
                 }
+                final zoom = mapController!.camera!.zoom;
+                thumbnailsController.setZoom(zoom);
               }
             },
             /* children: const [
@@ -173,13 +165,10 @@ class MapScreenState extends State<MapScreen> {
 
         Consumer2<PoiThumbnailsController, PoiThumbnailsState>(
           builder: (context, controller, visibleState, _) {
-            print(
-              "Consumer2 rebuilding → visible: ${visibleState.visible.length}",
-            );
-
             return PoiThumbnailsLayer(
               controller: controller,
               visiblePOIs: visibleState.visible,
+              zoom: controller.currentZoom,
               onTapPoi: (poi) {
                 final panel = context.read<PoiPanelState>();
                 panel.selectPoi(poi);
@@ -190,12 +179,11 @@ class MapScreenState extends State<MapScreen> {
         ),
 
         MapActions(onChangeStyle: changeStyle, onSelectPoi: selectPoi),
-        // TODO Fix Thumbnail Centering after ontap and after selecting a searched poi
+        // TODO Fix Thumbnail Centering after ontap and after selecting a searched poi; Fix PinMarker positioning
         Selector<PoiPanelState, (bool, PointOfInterest?)>(
           selector: (_, state) => (state.isPanelOpen, state.selected),
           builder: (_, tuple, _) {
             final (isPanelOpen, selectedPoi) = tuple;
-            print("Panel open: $isPanelOpen, Selected POI: $selectedPoi");
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (isPanelOpen && selectedPoi != null) {
                 _centerPoiConsideringPanel();
@@ -306,7 +294,7 @@ class MapScreenState extends State<MapScreen> {
     mapController!.setStyle(styleString);
     _isChangingStyle = false;
   }
-
+  //TODO Fix searchresults by cutting of trailing spaces
   List<PointOfInterest> searchPois(String query) {
     final q = query.toLowerCase();
     final visiblePOIs = context.read<PoiThumbnailsState>().visible;

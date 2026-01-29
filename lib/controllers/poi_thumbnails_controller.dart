@@ -5,6 +5,7 @@ import '../models/poi.dart';
 
 class PoiThumbnailsController extends ChangeNotifier {
   final Map<int, Offset> screenPositions = {};
+  double currentZoom = 14.0; // Default zoom level that will be overwritten on map load with the actual zoom level
 
   Timer? _throttle;
   bool _updating = false;
@@ -46,5 +47,12 @@ class PoiThumbnailsController extends ChangeNotifier {
   void dispose() {
     _throttle?.cancel();
     super.dispose();
+  }
+
+  void setZoom(double zoom) {
+    if (currentZoom != zoom) {
+      currentZoom = zoom;
+      notifyListeners();
+    }
   }
 }

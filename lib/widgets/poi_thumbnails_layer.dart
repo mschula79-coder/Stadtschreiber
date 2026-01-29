@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../controllers/poi_thumbnails_controller.dart';
+import '../widgets/poi_pin_marker.dart';
 import '../widgets/poi_thumbnail.dart';
 import '../models/poi.dart';
 
@@ -7,16 +8,19 @@ class PoiThumbnailsLayer extends StatelessWidget {
   final PoiThumbnailsController controller;
   final List<PointOfInterest> visiblePOIs;
   final void Function(PointOfInterest poi) onTapPoi;
+  final double zoom;
 
   const PoiThumbnailsLayer({
     super.key,
     required this.controller,
     required this.visiblePOIs,
     required this.onTapPoi,
+    required this.zoom,
   });
 
   @override
   Widget build(BuildContext context) {
+    final showThumbnails = zoom >= 14.0;
     return Stack(
       clipBehavior: Clip.none,
       children: controller.screenPositions.entries.map((entry) {
@@ -27,7 +31,9 @@ class PoiThumbnailsLayer extends StatelessWidget {
         return Positioned(
           left: pos.dx - 55,
           top: pos.dy - 20,
-          child: PoiThumbnail(poi: poi, onTap: () => onTapPoi(poi)),
+          child: showThumbnails 
+          ? PoiThumbnail(poi: poi, onTap: () => onTapPoi(poi))
+          : PinMarker(poi: poi, onTap: () => onTapPoi(poi))
         );
       }).toList(),
     );
