@@ -176,10 +176,10 @@ class MapScreenState extends State<MapScreen> {
               },
             );
           },
-        ),
+        ),  
 
         MapActions(onChangeStyle: changeStyle, onSelectPoi: selectPoi),
-        // TODO Fix Thumbnail Centering after ontap and after selecting a searched poi; Fix PinMarker positioning
+        // TODO Fix Thumbnail Centering after ontap and after selecting a searched poi; Fix PinMarker positioning. remove name if too many items on screen
         Selector<PoiPanelState, (bool, PointOfInterest?)>(
           selector: (_, state) => (state.isPanelOpen, state.selected),
           builder: (_, tuple, _) {

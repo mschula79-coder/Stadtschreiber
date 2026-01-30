@@ -1,16 +1,33 @@
 import 'package:flutter/material.dart';
 import '../models/poi.dart';
 
-class PoiThumbnail extends StatelessWidget {
+class PoiThumbnail extends StatefulWidget {
   final PointOfInterest poi;
   final VoidCallback? onTap;
+  final ValueChanged<Size>? onSize;
 
-  const PoiThumbnail({super.key, required this.poi, this.onTap});
+  const PoiThumbnail({super.key, required this.poi, this.onTap, this.onSize});
+
+  @override
+  State<PoiThumbnail> createState() => _PoiThumbnailState();
+}
+
+class _PoiThumbnailState extends State<PoiThumbnail> {
+
+  @override
+  void initState() {
+    super.initState();
+    final estimatedSize = const Size(120, 50 + 4 + 20);
+    if (widget.onSize != null) {
+      widget.onSize!(estimatedSize);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final hasPhoto = poi.featuredImageUrl?.isNotEmpty ?? false;
+    final hasPhoto = widget.poi.featuredImageUrl?.isNotEmpty ?? false;
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -22,7 +39,7 @@ class PoiThumbnail extends StatelessWidget {
               border: Border.all(color: Colors.white, width: 3),
               image: DecorationImage(
                 image: hasPhoto
-                    ? NetworkImage(poi.featuredImageUrl!)
+                    ? NetworkImage(widget.poi.featuredImageUrl!)
                     : const AssetImage('assets/icons/placeholder.png'),
                 fit: BoxFit.cover,
               ),
@@ -44,7 +61,7 @@ class PoiThumbnail extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
-              poi.name,
+              widget.poi.name,
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
               overflow: TextOverflow.ellipsis,
             ),

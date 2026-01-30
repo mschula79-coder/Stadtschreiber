@@ -18,7 +18,7 @@ class PoiRepository {
     if (selectedCategories.isEmpty) return [];
 
     var query = supabase
-        .from('export_pois')
+        .from('pois')
         .select('id, name, lat, lon, categories, featured_image_url, history')
         .overlaps('categories', selectedCategories)
         .order('name');
@@ -30,7 +30,7 @@ class PoiRepository {
   }
 
   Future<void> savePoi(PointOfInterest poi) async {
-    await supabase.from('export_pois').insert(poi.toMap());
+    await supabase.from('pois').insert(poi.toMap());
   }
 
   Future<void> updatePoiCategories({
@@ -38,7 +38,7 @@ class PoiRepository {
     required List<String> categories,
   }) async {
     await supabase
-        .from('export_pois')
+        .from('pois')
         .update({'categories': categories})
         .eq('id', poiId);
   }
@@ -51,7 +51,7 @@ class PoiRepository {
     final supabase = Supabase.instance.client;
 
     await supabase
-        .from('export_pois')
+        .from('pois')
         .update({'history': history, 'featured_image_url': featuredImageUrl})
         .eq('id', id);
   }
@@ -63,14 +63,14 @@ class PoiRepository {
     final supabase = Supabase.instance.client;
 
     await supabase
-        .from('export_pois')
+        .from('pois')
         .update({'articles': articles.map((e) => e.toJson()).toList()})
         .eq('id', id);
   }
 
   Future<PointOfInterest?> loadPoiById(int id) async {
     final result = await supabase
-        .from('export_pois')
+        .from('pois')
         .select()
         .eq('id', id)
         .maybeSingle();
@@ -86,7 +86,7 @@ class PoiRepository {
     final q = query.toLowerCase();
 
     final result = await supabase
-        .from('export_pois')
+        .from('pois')
         .select()
         .or('name.ilike.%$q%, categories.cs.{$q}');
 
