@@ -12,6 +12,8 @@ import '../widgets/article_edit_modal.dart';
 import '../widgets/category_node_tile.dart';
 import '../repositories/category_repository.dart';
 import '../widgets/editable_list.dart';
+import '../utils/url_utils.dart';
+import '../utils/message_utils.dart';
 
 class MapPopupTabs extends StatefulWidget {
   final bool isAdmin;
@@ -24,7 +26,8 @@ class MapPopupTabs extends StatefulWidget {
 class _MapPopupTabsState extends State<MapPopupTabs> {
   late final TextEditingController nameController = TextEditingController();
   late final TextEditingController historyController = TextEditingController();
-  late final TextEditingController imageController = TextEditingController();
+  late final TextEditingController featuredImageUrlController =
+      TextEditingController();
   late final PoiController poiController;
 
   @override
@@ -42,7 +45,7 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
 
     nameController.text = poi.name;
     historyController.text = poi.history ?? '';
-    imageController.text = poi.featuredImageUrl ?? '';
+    featuredImageUrlController.text = poi.featuredImageUrl ?? '';
   }
 
   @override
@@ -50,7 +53,7 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
     poiController.removeListener(_updateControllers);
     nameController.dispose();
     historyController.dispose();
-    imageController.dispose();
+    featuredImageUrlController.dispose();
     super.dispose();
   }
 
@@ -318,7 +321,7 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
   bool _saving = false;
 
   Widget _buildEditTab(PointOfInterest poi, bool isAdmin) {
-// TODO ADD Listener and Provider
+// TODO implement adminViewEnabled Icons.construction_outlined
     // ignore: unused_local_variable
     bool adminViewEnabled = isAdmin;
     return SingleChildScrollView(
@@ -334,7 +337,7 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
             },
           ),
           TextField(
-            controller: imageController,
+            controller: featuredImageUrlController,
             decoration: const InputDecoration(labelText: "Featured Image-URL"),
           ),
           const SizedBox(height: 20),
@@ -371,14 +374,30 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
             onPressed: _saving
                 ? null
                 : () async {
+                  final con = context;
                     setState(() {
                       _saving = true;
                     });
 
+                     final url = featuredImageUrlController.text.trim();
+                    
+                    if (!isValidUrl(url)) {
+                      showMessage(context, "The URL you entered is not valid. Please try again.");
+                      setState(() => _saving = false);
+                      return;
+                    }
+
+                    final exists = await urlExists(url);
+                    if (!exists && con.mounted) {
+                      showMessage(con, "The URL you entered is not reachable. Please try again.");
+                      setState(() => _saving = false);
+                      return;
+                    }
+
                     await PoiRepository.updatePoi(
                       poi.id,
                       historyController.text,
-                      imageController.text,
+                      featuredImageUrlController.text,
                     );
 
                     if (mounted) {
@@ -400,7 +419,6 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
                     });
                   },
             // TODO add poi owner
-            // TODO automatic url and image url test
             child: _saving
                 ? const SizedBox(
                     width: 18,
@@ -408,7 +426,7 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : _saved
-                ? const Icon(Icons.check, color: Colors.green)
+                ? const Icon(Icons.control_point, color: Colors.green)
                 : const Text("Speichern"),
           ),
         ],

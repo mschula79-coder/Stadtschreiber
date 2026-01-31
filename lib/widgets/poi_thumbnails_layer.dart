@@ -30,7 +30,8 @@ class _PoiThumbnailsLayerState extends State<PoiThumbnailsLayer> {
     final showThumbnails = widget.zoom >= 14.0;
 
     return Stack(
-      clipBehavior: Clip.none,
+      // Fix overflow issues with thumbnails at the edges
+      clipBehavior: Clip.hardEdge,
       children: widget.controller.poiScreenPositions.entries.expand((entry) {
         final poiId = entry.key;
         final pos = entry.value;

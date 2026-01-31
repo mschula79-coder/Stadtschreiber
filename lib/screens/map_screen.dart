@@ -28,9 +28,6 @@ class MapScreen extends StatefulWidget {
 
 class MapScreenState extends State<MapScreen> {
   maplibre.MapController? mapController;
-  final Completer<maplibre.MapController> _controllerCompleter = Completer();
-
-  // TODO umstellen auf Completer
 
   Future<void> reloadPois() => _loadPois();
   bool _styleLoaded = false;
@@ -147,7 +144,6 @@ class MapScreenState extends State<MapScreen> {
             ),
             onMapCreated: (controller) async {
               mapController = controller;
-              _controllerCompleter.complete(controller);
             },
             onEvent: (event) async {
               /* print("📡 MapEvent: ${event.runtimeType}");*/
