@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
+import 'package:geolocator/geolocator.dart'; 
 import 'map_screen.dart';
 
 import '../controllers/categories_menu_controller.dart';
@@ -68,6 +68,23 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     final isAdmin = profile['is_admin'] ?? false;
     if (!mounted) return;
     context.read<AppState>().setAdmin(isAdmin);
+    ensureLocationPermission();
+  }
+
+  Future<bool> ensureLocationPermission() async {
+    final con = context.read<AppState>();
+
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return false;
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    con.setLocationPermission(true);
+
+    return permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
   }
 
   @override
@@ -85,7 +102,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-
     if (categories.isEmpty) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }

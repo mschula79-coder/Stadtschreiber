@@ -4,13 +4,13 @@ import 'package:maplibre/maplibre.dart';
 import '../models/poi.dart';
 
 class PoiThumbnailsController extends ChangeNotifier {
-  final Map<int, Offset> screenPositions = {};
+  final Map<int, Offset> poiScreenPositions = {};
   double currentZoom = 14.0; // Default zoom level that will be overwritten on map load with the actual zoom level
 
   Timer? _throttle;
   bool _updating = false;
 
-  Future<void> updatePositions({
+  Future<void> updatePoiScreenPositions({
     required MapController controller,
     required List<PointOfInterest> visiblePOIs,
   }) async {
@@ -23,7 +23,7 @@ class PoiThumbnailsController extends ChangeNotifier {
       final coords = controller.toScreenLocation(poi.location);
       newPositions[poi.id] = Offset(coords.dx, coords.dy);
     }
-    screenPositions
+    poiScreenPositions
       ..clear()
       ..addAll(newPositions);
 
@@ -39,7 +39,7 @@ class PoiThumbnailsController extends ChangeNotifier {
     if (_throttle?.isActive ?? false) return;
 
     _throttle = Timer(const Duration(milliseconds: 0), () {
-      updatePositions(controller: controller, visiblePOIs: visiblePOIs);
+      updatePoiScreenPositions(controller: controller, visiblePOIs: visiblePOIs);
     });
   }
 

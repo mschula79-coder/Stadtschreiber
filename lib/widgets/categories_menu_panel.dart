@@ -20,7 +20,6 @@ class CategoriesMenuPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-//TODO Fix entry text position
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -41,7 +40,6 @@ class CategoriesMenuPanel extends StatelessWidget {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             
-            // TODO braucht es das: alles auswählen
             /* CheckboxListTile(
               contentPadding: const EdgeInsets.only(left: 4, top: 5, right: 15),
               value: filterState.selectedValues.isEmpty
@@ -86,7 +84,7 @@ class CategoriesMenuPanel extends StatelessWidget {
       final isChecked = node.value != null && categoriesMenuState.isSelected(node.value!);
       // 2nd level
       return CheckboxListTile(
-        contentPadding: const EdgeInsets.only(left:4, right: 15),
+        contentPadding: const EdgeInsets.only(top:0, left:20, right: 15),
         value: isChecked,
         onChanged: (checked) {
           if (node.value == null) return;
@@ -95,7 +93,7 @@ class CategoriesMenuPanel extends StatelessWidget {
         secondary: _buildIcon(node),
         controlAffinity: ListTileControlAffinity.leading,
         title: Padding(
-          padding: const EdgeInsets.only(left: 15),
+          padding: const EdgeInsets.only(left: 0),
           child: Text(node.label),
         ),
       );
@@ -153,7 +151,7 @@ class CategoriesMenuPanel extends StatelessWidget {
           ),
           title: Row(
             children: [
-              const SizedBox(width: 15),
+              const SizedBox(width: 0),
               Text(node.label),
               _buildIcon(node),
             ],

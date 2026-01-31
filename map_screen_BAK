@@ -17,8 +17,6 @@ import '../widgets/poi_thumbnails_layer.dart';
 import '../widgets/map_actions.dart';
 import '../widgets/poi_panel_persistent.dart';
 
-enum MapUpdateType { pointerMove, cameraIdle, animationFinished, styleLoaded }
-
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
@@ -33,14 +31,17 @@ class MapScreenState extends State<MapScreen> {
   // TODO umstellen auf Completer
 
   Future<void> reloadPois() => _loadPois();
+  bool _isUpdating = false;
   bool _styleLoaded = false;
+  bool _isCentering = false;
   bool _isChangingStyle = false;
 
   final poiRepository = PoiRepository();
 
+  Timer? _idleTimer;
+
   Offset? userMarkerOffset;
   geo.Position? _lastUserPosition;
-  MapUpdateType? _pendingUpdate;
 
   @override
   void initState() {
@@ -118,6 +119,7 @@ class MapScreenState extends State<MapScreen> {
   @override
   void dispose() {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    _idleTimer?.cancel();
     super.dispose();
   }
 
@@ -151,20 +153,25 @@ class MapScreenState extends State<MapScreen> {
             },
             onEvent: (event) async {
               /* print("📡 MapEvent: ${event.runtimeType}");*/
+              final visiblePOIs = context.read<PoiThumbnailsState>().visible;
               final thumbnailsController = context
                   .read<PoiThumbnailsController>();
 
               if (event case maplibre.MapEventStyleLoaded()) {
                 _styleLoaded = true;
-                _requestUpdate(MapUpdateType.styleLoaded);
+
+                if (visiblePOIs.isNotEmpty) {
+                  await thumbnailsController.updatePoiScreenPositions(
+                    controller: mapController!,
+                    visiblePOIs: visiblePOIs,
+                  );
+                }
               }
-
               if (event case maplibre.MapEventCameraIdle()) {
-                if (mapController == null) return;
-
-                thumbnailsController.setZoom(mapController!.camera!.zoom);
-
-                _requestUpdate(MapUpdateType.cameraIdle);
+                if (_isCentering) return; // ignore idle during animations
+                final zoom = mapController!.camera!.zoom;
+                thumbnailsController.setZoom(zoom);
+                await _updateAllScreenPositions(thumbnailsController);
               }
             },
           ),
@@ -180,7 +187,6 @@ class MapScreenState extends State<MapScreen> {
                 final panel = context.read<PoiPanelState>();
                 panel.selectPoi(poi);
                 context.read<PoiController>().selectPoi(poi);
-
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   _centerPoiConsideringPanel();
                 });
@@ -193,9 +199,8 @@ class MapScreenState extends State<MapScreen> {
           onChangeStyle: changeStyle,
           onSelectPoi: selectPoi,
           onLocateMe: _locateMe,
-          onRemoveThumbnails: removeAllThumbnails,
         ),
-        // TODO remove name if too many items on screen
+        // TODO Fix Thumbnail Centering after ontap and after selecting a searched poi; Fix PinMarker positioning. remove name if too many items on screen
         Selector<PoiPanelState, (bool, PointOfInterest?)>(
           selector: (_, state) => (state.isPanelOpen, state.selected),
           builder: (_, tuple, _) {
@@ -241,18 +246,27 @@ class MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _centerPoiConsideringPanel() async {
+    if (_isCentering) return;
+
     final poiState = context.read<PoiPanelState>();
+    final thumbnailsController = context.read<PoiThumbnailsController>();
+
     final poi = poiState.selected;
-    if (poi == null || mapController == null) return;
+    if (poi == null) return;
+
+    _isCentering = true;
+
+    final panelHeight = 350;
 
     final size = MediaQuery.of(context).size;
-    final panelHeight = 350;
     final halfWidth = size.width / 2;
 
     final screenTop = mapController!.toLngLat(Offset(halfWidth, 0)).lat;
+
     final screenBottom = mapController!
         .toLngLat(Offset(halfWidth, size.height))
         .lat;
+
     final mapScreenBottom = mapController!
         .toLngLat(Offset(halfWidth, (size.height + panelHeight) / 2))
         .lat;
@@ -260,40 +274,31 @@ class MapScreenState extends State<MapScreen> {
     final distanceMapCentertoScreenCenter =
         (screenTop - mapScreenBottom) / 2 - (screenTop - screenBottom) / 2;
 
-    try {
-      await mapController!.animateCamera(
-        center: maplibre.Geographic(
-          lat: poi.location.y + distanceMapCentertoScreenCenter,
-          lon: poi.location.x,
-        ),
-        nativeDuration: const Duration(milliseconds: 200),
-      );
-    } catch (e) {
-      debugPrint("⚠️ Camera animation cancelled: $e");
-    }
+    await mapController!.animateCamera(
+      center: maplibre.Geographic(
+        lat: poi.location.y + distanceMapCentertoScreenCenter,
+        lon: poi.location.x,
+      ),
+      nativeDuration: const Duration(milliseconds: 200),
+    );
 
-    _requestUpdate(MapUpdateType.animationFinished);
+    if (!mounted) return;
+
+    _isCentering = false;
+    await Future.delayed(const Duration(milliseconds: 16)); // one render frame
+    await _updateAllScreenPositions(thumbnailsController);
   }
+void _requestUpdate(MapUpdateType type) {
+  _pendingUpdate = type;
+  WidgetsBinding.instance.addPostFrameCallback((_) => _processUpdate());
+}
 
-  void _requestUpdate(MapUpdateType type) {
-    _pendingUpdate = type;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // collapse multiple requests into one
-      if (_pendingUpdate == null) return;
-      await _updateAllScreenPositions();
-      _pendingUpdate = null;
-    });
-  }
+  Future<void> _updateAllScreenPositions(
+    PoiThumbnailsController thumbnailsController,
+  ) async {
+    if (mapController == null) return;
 
-  Future<void> _updateAllScreenPositions() async {
-    if (!mounted || mapController == null) return;
-
-    // capture everything BEFORE async
-    final thumbnailsController = context.read<PoiThumbnailsController>();
     final visiblePOIs = context.read<PoiThumbnailsState>().visible;
-    final lastUserPos = _lastUserPosition;
-
-    await _waitForMapToSettle();
 
     if (visiblePOIs.isNotEmpty) {
       await thumbnailsController.updatePoiScreenPositions(
@@ -302,17 +307,29 @@ class MapScreenState extends State<MapScreen> {
       );
     }
 
-    if (lastUserPos != null) {
-      updateUserLocationOnMap(lastUserPos);
+    if (_lastUserPosition != null) {
+      updateUserLocationOnMap(_lastUserPosition!);
     }
   }
 
-  void _onPointerMove(PointerMoveEvent event) {
-    if (!_styleLoaded || mapController == null) return;
-    _requestUpdate(MapUpdateType.pointerMove);
-    if (context.read<PoiPanelState>().isPanelOpen) {
-      context.read<PoiPanelState>().closePanel();
+  void _onPointerMove(PointerMoveEvent event) async {
+    if (!_styleLoaded || mapController == null || _isCentering || _isUpdating) {
+      return;
     }
+
+    final thumbnailsController = context.read<PoiThumbnailsController>();
+
+    _isUpdating = true;
+
+    await Future.delayed(const Duration(milliseconds: 16));
+    if (!mounted) {
+      _isUpdating = false;
+      return;
+    }
+
+    await _updateAllScreenPositions(thumbnailsController);
+
+    _isUpdating = false;
   }
 
   int styleCounter = 1;
@@ -336,8 +353,9 @@ class MapScreenState extends State<MapScreen> {
     _isChangingStyle = false;
   }
 
+  //TODO Fix searchresults by cutting of trailing spaces
   List<PointOfInterest> searchPois(String query) {
-    final q = query.trim().toLowerCase();
+    final q = query.toLowerCase();
     final visiblePOIs = context.read<PoiThumbnailsState>().visible;
 
     return visiblePOIs.where((poi) {
@@ -368,6 +386,7 @@ class MapScreenState extends State<MapScreen> {
     final pos = await getCurrentPosition();
     if (pos == null) return;
 
+    _isCentering = true;
     try {
       await mapController!.animateCamera(
         center: maplibre.Geographic(lat: pos.latitude, lon: pos.longitude),
@@ -378,18 +397,8 @@ class MapScreenState extends State<MapScreen> {
       debugPrint("📌 Stack trace: $stack");
     }
 
+    _isCentering = false;
+
     updateUserLocationOnMap(pos);
-    _requestUpdate(MapUpdateType.animationFinished);
-  }
-
-  Future<void> _waitForMapToSettle() async {
-    await Future.delayed(Duration.zero); // microtask
-    await Future.delayed(const Duration(milliseconds: 16)); // next frame
-  }
-
-  void removeAllThumbnails() {
-    final state = context.read<PoiThumbnailsState>();
-    state.setAll([]);
-    _requestUpdate(MapUpdateType.cameraIdle);
   }
 }

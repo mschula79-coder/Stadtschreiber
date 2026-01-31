@@ -1,12 +1,9 @@
-// TODO: OSM-ID Check
-// TODO: Supabase Import umbauen: siehe Chat: 1. Du importierst OSM‑Daten NICHT per „truncate + insert“
+// TODO: In Supabase: OSM-ID Check und Import umbauen: siehe Chat: 1. Du importierst OSM‑Daten NICHT per „truncate + insert“
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/poi.dart';
 import '../models/article_entry.dart';
 
-/* import '../services/debug_service.dart';
- */
 class PoiRepository {
   final supabase = Supabase.instance.client;
 

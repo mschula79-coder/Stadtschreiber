@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:iconify_flutter/icons/mdi.dart';
+import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:provider/provider.dart';
+
 import '../controllers/poi_controller.dart';
 import '../models/poi.dart';
 
 class MapActions extends StatefulWidget {
   final VoidCallback onChangeStyle;
+  final VoidCallback onLocateMe;
+  final VoidCallback onRemoveThumbnails;
+
   final Future<void> Function(PointOfInterest) onSelectPoi;
 
   const MapActions({
-    super.key, 
+    super.key,
     required this.onChangeStyle,
     required this.onSelectPoi,
+    required this.onLocateMe,
+    required this.onRemoveThumbnails,
   });
 
   @override
@@ -33,12 +41,14 @@ class _MapActionsState extends State<MapActions> {
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          //info
+          //my location
           FloatingActionButton(
-            heroTag: "btn1",
-            onPressed: () {},
+            heroTag: "btn3",
+            onPressed: () {
+              widget.onLocateMe();
+            },
             mini: true,
-            child: const Icon(Icons.info_outlined),
+            child: const Icon(Icons.my_location),
           ),
           const SizedBox(height: 12),
 
@@ -50,13 +60,15 @@ class _MapActionsState extends State<MapActions> {
             child: const Icon(Icons.color_lens_outlined),
           ),
           const SizedBox(height: 12),
-
-          //my location
+          //remove thumbnails
           FloatingActionButton(
-            heroTag: "btn3",
-            onPressed: () {},
+            heroTag: "btn1",
+            onPressed: () {
+              widget.onRemoveThumbnails();
+            },
             mini: true,
-            child: const Icon(Icons.my_location),
+
+            child: const Iconify(Mdi.pin_off_outline, size: 24),
           ),
           const SizedBox(height: 12),
 
@@ -107,26 +119,33 @@ class _MapActionsState extends State<MapActions> {
                           BoxShadow(color: Colors.black26, blurRadius: 6),
                         ],
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: _results.map((poi) {
-                          return ListTile(
-                            dense: true,
-                            title: Text(poi.name),
-                            subtitle: poi.categories.isNotEmpty
-                                ? Text(poi.categories.join(", "))
-                                : null,
-                            onTap: () async {
-                              await poiController.selectPoi(poi);
-                              widget.onSelectPoi(poi);
-                              setState(() {
-                                _searchVisible = false;
-                                _searchController.clear();
-                                _results = [];
-                              });
-                            },
-                          );
-                        }).toList(),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxHeight: 5 * 56, // 5 ListTiles, each ~56px high
+                        ),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _results.length,
+                          itemBuilder: (context, index) {
+                            final poi = _results[index];
+                            return ListTile(
+                              dense: true,
+                              title: Text(poi.name),
+                              subtitle: poi.categories.isNotEmpty
+                                  ? Text(poi.categories.join(", "))
+                                  : null,
+                              onTap: () async {
+                                await poiController.selectPoi(poi);
+                                widget.onSelectPoi(poi);
+                                setState(() {
+                                  _searchVisible = false;
+                                  _searchController.clear();
+                                  _results = [];
+                                });
+                              },
+                            );
+                          },
+                        ),
                       ),
                     ),
                   // END OF SEARCH RESULTS DROPDOWN

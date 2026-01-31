@@ -28,19 +28,26 @@ class _PoiThumbnailsLayerState extends State<PoiThumbnailsLayer> {
   @override
   Widget build(BuildContext context) {
     final showThumbnails = widget.zoom >= 14.0;
+
     return Stack(
       clipBehavior: Clip.none,
-      children: widget.controller.screenPositions.entries.expand((entry) {
+      children: widget.controller.poiScreenPositions.entries.expand((entry) {
         final poiId = entry.key;
         final pos = entry.value;
-        final poi = widget.visiblePOIs.firstWhere((p) => p.id == poiId);
+
+        final matching = widget.visiblePOIs.where((p) => p.id == poiId);
+        if (matching.isEmpty) {
+          return const Iterable<Widget>.empty();
+        }
+        final poi = matching.first;
+
         return [
           Positioned(
             left: showThumbnails
                 ? poiSizes[poi.id] == null
                       ? pos.dx - 50
                       : pos.dx - poiSizes[poi.id]!.width / 2.5
-                : pos.dx-10,
+                : pos.dx - 10,
             top: showThumbnails
                 ? pos.dy - 24
                 : poiSizes[poi.id] == null

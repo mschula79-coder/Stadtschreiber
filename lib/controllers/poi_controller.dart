@@ -71,6 +71,6 @@ class PoiController with ChangeNotifier {
 
   Future<List<PointOfInterest>> searchRemote(String query) async {
     if (query.isEmpty) return [];
-    return await poiRepo.searchPois(query);
+    return await poiRepo.searchPois(query.trimRight());
   }
 }
