@@ -9,10 +9,12 @@ import '../controllers/poi_controller.dart';
 import '../controllers/category_controller.dart';
 import '../models/poi.dart';
 import '../repositories/poi_repository.dart';
+import '../repositories/districts_repository.dart';
 import '../state/app_state.dart';
 import '../state/poi_panel_state.dart';
 import '../state/pois_thumbnails_state.dart';
 import '../state/categories_menu_state.dart';
+import '../services/geo_json_service.dart';
 import '../widgets/poi_thumbnails_layer.dart';
 import '../widgets/map_actions.dart';
 import '../widgets/poi_panel_persistent.dart';
@@ -38,6 +40,7 @@ class MapScreenState extends State<MapScreen> {
   Offset? userMarkerOffset;
   geo.Position? _lastUserPosition;
   MapUpdateType? _pendingUpdate;
+  maplibre.StyleController? mapStyle;
 
   @override
   void initState() {
@@ -95,7 +98,6 @@ class MapScreenState extends State<MapScreen> {
     final visiblePoiState = context.read<PoiThumbnailsState>();
     final thumbnailsController = context.read<PoiThumbnailsController>();
     final poiPanelState = context.read<PoiPanelState>();
-
     final fresh = await poiController.poiRepo.loadPoiById(poi.id);
     final realPoi = fresh ?? poi;
 
@@ -121,7 +123,10 @@ class MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     /*print("Screen size: ${MediaQuery.of(context).size}");*/
+    // TODO print(Theme.of(context).colorScheme.onSecondaryContainer); //🎨 Hex: #101C2B
+
     context.watch<PoiThumbnailsState>();
+    final appState = context.read<AppState>();
 
     return Stack(
       children: [
@@ -146,13 +151,14 @@ class MapScreenState extends State<MapScreen> {
               mapController = controller;
             },
             onEvent: (event) async {
-              /* print("📡 MapEvent: ${event.runtimeType}");*/
+/*               print("📡 MapEvent: ${event.runtimeType}"); */
               final thumbnailsController = context
                   .read<PoiThumbnailsController>();
 
               if (event case maplibre.MapEventStyleLoaded()) {
                 _styleLoaded = true;
                 _requestUpdate(MapUpdateType.styleLoaded);
+                mapStyle = event.style;
               }
 
               if (event case maplibre.MapEventCameraIdle()) {
@@ -184,14 +190,17 @@ class MapScreenState extends State<MapScreen> {
             );
           },
         ),
-
         MapActions(
           onChangeStyle: changeStyle,
           onSelectPoi: selectPoi,
           onLocateMe: _locateMe,
           onRemoveThumbnails: removeAllThumbnails,
+          onToggleAdminView: () {
+            appState.setAdminViewEnabled(!appState.isAdminViewEnabled);
+          },
+          isAdmin: appState.isAdmin,
+          isAdminViewEnabled: appState.isAdminViewEnabled,
         ),
-        // TODO remove name if too many items on screen
         Selector<PoiPanelState, (bool, PointOfInterest?)>(
           selector: (_, state) => (state.isPanelOpen, state.selected),
           builder: (_, tuple, _) {
@@ -206,7 +215,9 @@ class MapScreenState extends State<MapScreen> {
                 ? Align(
                     alignment: Alignment.bottomCenter,
                     child: PersistentPoiPanel(
-                      isAdmin: context.read<AppState>().isAdmin,
+                      isAdminViewEnabled: context
+                          .watch<AppState>()
+                          .isAdminViewEnabled,
                     ),
                   )
                 : const SizedBox.shrink();
@@ -315,11 +326,11 @@ class MapScreenState extends State<MapScreen> {
   void changeStyle() async {
     if (_isChangingStyle) return;
     if (mapController == null) return;
-
+    await addDistrictsLayer(mapController!);
     _isChangingStyle = true;
     _styleLoaded = false;
 
-    styleCounter = styleCounter == 4 ? 1 : styleCounter + 1;
+    /* styleCounter = styleCounter == 4 ? 1 : styleCounter + 1;
     final styleString = switch (styleCounter) {
       1 => "https://stadtschreiber.duckdns.org/styles/basel-vintage/style.json",
       2 => "https://stadtschreiber.duckdns.org/styles/basel-green/style.json",
@@ -328,7 +339,7 @@ class MapScreenState extends State<MapScreen> {
       _ => throw Exception("Invalid styleCounter"),
     };
 
-    mapController!.setStyle(styleString);
+    mapController!.setStyle(styleString); */
     _isChangingStyle = false;
   }
 
@@ -388,4 +399,39 @@ class MapScreenState extends State<MapScreen> {
     state.setAll([]);
     _requestUpdate(MapUpdateType.cameraIdle);
   }
+
+  Future<void> addDistrictsLayer(maplibre.MapController mapController) async {
+    final districts = await DistrictsRepository().loadDistricts();
+
+    mapStyle!.addSource(
+      maplibre.GeoJsonSource(
+        id: 'districts-source',
+        data: getGeoJSONStringFromDistricts(districts),
+      ),
+    );
+
+    final fillstyle = maplibre.FillStyleLayer(
+      id: 'districts-fill',
+      sourceId: 'districts-source',
+      paint: {
+        'fill-color': 'rgba(165, 255, 255, 0.5)',
+        'fill-outline-color': 'rgba(0, 0, 0, 0)',
+      },
+    );
+    mapStyle!.addLayer(fillstyle);
+    /* belowLayerId: 'railway' */
+    mapStyle!.addLayer(
+      maplibre.LineStyleLayer(
+        id: 'districts-outline',
+        sourceId: 'districts-source',
+        paint: {'line-color': 'rgba(255, 0, 0, 0.5)', 'line-width': 2.0},
+      ),
+    );
+    /*     final c = Color.fromRGBO(164, 255, 252, 0);*/
+  }
+    Future<void> removeDistrictsLayer(maplibre.MapController mapController) async {
+      mapStyle!.removeLayer('districts-outline');
+      mapStyle!.removeLayer('districts-fill');
+      
+    }
 }

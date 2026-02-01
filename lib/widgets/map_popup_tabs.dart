@@ -16,8 +16,8 @@ import '../utils/url_utils.dart';
 import '../utils/message_utils.dart';
 
 class MapPopupTabs extends StatefulWidget {
-  final bool isAdmin;
-  const MapPopupTabs({super.key, required this.isAdmin});
+  final bool isAdminViewEnabled;
+  const MapPopupTabs({super.key, required this.isAdminViewEnabled});
 
   @override
   State<MapPopupTabs> createState() => _MapPopupTabsState();
@@ -63,7 +63,8 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
     if (poi == null) {
       return const SizedBox.shrink();
     }
-    final bool isAdmin = widget.isAdmin;
+    final bool isAdminViewEnabled = widget.isAdminViewEnabled;
+
     final tabs = [
       const Tab(
         icon: Tooltip(
@@ -100,7 +101,7 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
         icon: Tooltip(message: "Ratings", child: Icon(Icons.star)),
       ),
     ];
-    if (isAdmin) {
+    if (isAdminViewEnabled) {
       tabs.add(
         const Tab(
           icon: Tooltip(message: "Edit entries", child: Icon(Icons.edit)),
@@ -109,18 +110,19 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
     }
     final pages = [
       _buildFeaturedImageTab(poi),
-      _buildInfoTab(poi, isAdmin),
-      _buildHistoryTab(poi, isAdmin),
-      _buildArticlesTab(poi, isAdmin),
+      _buildInfoTab(poi, isAdminViewEnabled),
+      _buildHistoryTab(poi, isAdminViewEnabled),
+      _buildArticlesTab(poi, isAdminViewEnabled),
       _buildGalleryTab(poi),
       _buildRatingsTab(poi),
     ];
-    if (isAdmin) {
-      pages.add(_buildEditTab(poi, isAdmin));
+
+    if (isAdminViewEnabled) {
+      pages.add(_buildEditTab(poi, isAdminViewEnabled));
     }
 
     return DefaultTabController(
-      length: isAdmin ? 7 : 6,
+      length: isAdminViewEnabled ? 7 : 6,
       child: Column(
         children: [
           TabBar(isScrollable: true, tabs: tabs),
@@ -149,7 +151,7 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
     );
   }
 
-  Widget _buildInfoTab(PointOfInterest poi, bool isAdmin) {
+  Widget _buildInfoTab(PointOfInterest poi, bool isAdminViewEnabled) {
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Stack(
@@ -158,7 +160,7 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
             decoration: InputDecoration(
               labelText: "Name",
               alignLabelWithHint: true,
-              contentPadding: isAdmin
+              contentPadding: isAdminViewEnabled
                   ? const EdgeInsets.fromLTRB(0, 0, 35, 0)
                   : const EdgeInsets.fromLTRB(0, 0, 0, 0),
             ),
@@ -169,7 +171,7 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
     );
   }
 
-  Widget _buildHistoryTab(PointOfInterest poi, bool isAdmin) {
+  Widget _buildHistoryTab(PointOfInterest poi, bool isAdminViewEnabled) {
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Stack(
@@ -181,12 +183,12 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
             decoration: InputDecoration(
               labelText: "Geschichte",
               alignLabelWithHint: true,
-              contentPadding: isAdmin
+              contentPadding: isAdminViewEnabled
                   ? const EdgeInsets.fromLTRB(0, 0, 35, 0)
                   : const EdgeInsets.fromLTRB(0, 0, 0, 0),
             ),
           ),
-          if (isAdmin)
+          if (isAdminViewEnabled)
             Positioned(
               right: 0,
               top: 20,
@@ -216,12 +218,12 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
     );
   }
 
-  Widget _buildArticlesTab(PointOfInterest poi, bool isAdmin) {
+  Widget _buildArticlesTab(PointOfInterest poi, bool isAdminViewEnabled) {
     final articles = poi.articles ?? [];
 
     return EditableList<ArticleEntry>(
       items: articles,
-      isAdmin: isAdmin,
+      isAdminViewEnabled: isAdminViewEnabled,
       onAdd: () async {
         final newEntry = await showDialog<ArticleEntry>(
           context: context,
@@ -320,22 +322,12 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
   bool _saved = false;
   bool _saving = false;
 
-  Widget _buildEditTab(PointOfInterest poi, bool isAdmin) {
-// TODO implement adminViewEnabled Icons.construction_outlined
+  Widget _buildEditTab(PointOfInterest poi, bool isAdminViewEnabled) {
     // ignore: unused_local_variable
-    bool adminViewEnabled = isAdmin;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(12),
       child: Column(
         children: [
-          CheckboxListTile(
-            title: const Text("POI veröffentlicht"),
-            value: isAdmin ? true : false,
-            onChanged: (checked) async {
-              if (checked == null) return;
-              adminViewEnabled = checked;
-            },
-          ),
           TextField(
             controller: featuredImageUrlController,
             decoration: const InputDecoration(labelText: "Featured Image-URL"),
@@ -374,22 +366,28 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
             onPressed: _saving
                 ? null
                 : () async {
-                  final con = context;
+                    final con = context;
                     setState(() {
                       _saving = true;
                     });
 
-                     final url = featuredImageUrlController.text.trim();
-                    
+                    final url = featuredImageUrlController.text.trim();
+
                     if (!isValidUrl(url)) {
-                      showMessage(context, "The URL you entered is not valid. Please try again.");
+                      showMessage(
+                        context,
+                        "The URL you entered is not valid. Please try again.",
+                      );
                       setState(() => _saving = false);
                       return;
                     }
 
                     final exists = await urlExists(url);
                     if (!exists && con.mounted) {
-                      showMessage(con, "The URL you entered is not reachable. Please try again.");
+                      showMessage(
+                        con,
+                        "The URL you entered is not reachable. Please try again.",
+                      );
                       setState(() => _saving = false);
                       return;
                     }
@@ -418,7 +416,6 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
                       }
                     });
                   },
-            // TODO add poi owner
             child: _saving
                 ? const SizedBox(
                     width: 18,

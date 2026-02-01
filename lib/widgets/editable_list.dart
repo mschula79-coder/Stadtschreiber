@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class EditableList<T> extends StatelessWidget {
   final List<T> items;
-  final bool isAdmin;
+  final bool isAdminViewEnabled;
 
   final Future<T?> Function() onAdd;
   final Future<T?> Function(T item) onEdit;
@@ -13,7 +13,7 @@ class EditableList<T> extends StatelessWidget {
   const EditableList({
     super.key,
     required this.items,
-    required this.isAdmin,
+    required this.isAdminViewEnabled,
     required this.onAdd,
     required this.onEdit,
     required this.onDelete,
@@ -24,7 +24,7 @@ class EditableList<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        if (isAdmin)
+        if (isAdminViewEnabled)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: ElevatedButton.icon(
@@ -54,7 +54,7 @@ class EditableList<T> extends StatelessWidget {
                         children: [
                           Expanded(child: itemBuilder(item)),
 
-                          if (isAdmin) ...[
+                          if (isAdminViewEnabled) ...[
                             IconButton(
                               icon: const Icon(Icons.edit),
                               onPressed: () async {

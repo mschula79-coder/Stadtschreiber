@@ -10,6 +10,10 @@ class MapActions extends StatefulWidget {
   final VoidCallback onChangeStyle;
   final VoidCallback onLocateMe;
   final VoidCallback onRemoveThumbnails;
+  final VoidCallback onToggleAdminView;
+  final bool isAdmin =false;
+  final bool isAdminViewEnabled =false;
+
 
   final Future<void> Function(PointOfInterest) onSelectPoi;
 
@@ -19,6 +23,9 @@ class MapActions extends StatefulWidget {
     required this.onSelectPoi,
     required this.onLocateMe,
     required this.onRemoveThumbnails,
+    required this.onToggleAdminView,
+    required bool isAdmin,
+    required bool isAdminViewEnabled,
   });
 
   @override
@@ -33,7 +40,6 @@ class _MapActionsState extends State<MapActions> {
   @override
   Widget build(BuildContext context) {
     final poiController = context.read<PoiController>();
-
     return Positioned(
       bottom: 20,
       right: 20,
@@ -41,7 +47,19 @@ class _MapActionsState extends State<MapActions> {
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          //my location
+          //toggle admin view
+          if (widget.isAdmin)
+            FloatingActionButton(
+              heroTag: "btn6",
+              onPressed: () {
+                widget.onToggleAdminView();
+              },
+              mini: true,
+              child: widget.isAdminViewEnabled
+                  ? const Icon(Icons.construction, color: Colors.blue)
+                  : const Icon(Icons.construction_outlined, color:Colors.grey),
+            ),
+          
           FloatingActionButton(
             heroTag: "btn3",
             onPressed: () {

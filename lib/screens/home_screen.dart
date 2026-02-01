@@ -68,6 +68,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     final isAdmin = profile['is_admin'] ?? false;
     if (!mounted) return;
     context.read<AppState>().setAdmin(isAdmin);
+    context.read<AppState>().setAdminViewEnabled(isAdmin);
+    
     ensureLocationPermission();
   }
 

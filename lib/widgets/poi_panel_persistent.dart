@@ -5,9 +5,9 @@ import '../controllers/poi_controller.dart';
 import '../state/poi_panel_state.dart';
 
 class PersistentPoiPanel extends StatelessWidget {
-  final bool isAdmin;
+  final bool isAdminViewEnabled;
 
-  const PersistentPoiPanel({super.key, required this.isAdmin});
+  const PersistentPoiPanel({super.key, required this.isAdminViewEnabled});
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +51,7 @@ class PersistentPoiPanel extends StatelessWidget {
               ),
             ],
           ),
-          Expanded(child: MapPopupTabs(isAdmin: isAdmin)),
+          Expanded(child: MapPopupTabs(isAdminViewEnabled: isAdminViewEnabled)),
         ],
       ),
     );
