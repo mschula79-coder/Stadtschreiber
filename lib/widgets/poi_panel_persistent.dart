@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'map_popup_tabs.dart';
+import 'poi_panel_tabs.dart';
 import '../controllers/poi_controller.dart';
 import '../state/poi_panel_state.dart';
 
@@ -51,7 +51,7 @@ class PersistentPoiPanel extends StatelessWidget {
               ),
             ],
           ),
-          Expanded(child: MapPopupTabs(isAdminViewEnabled: isAdminViewEnabled)),
+          Expanded(child: PoiPanelTabs(isAdminViewEnabled: isAdminViewEnabled)),
         ],
       ),
     );

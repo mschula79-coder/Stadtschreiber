@@ -15,15 +15,15 @@ import '../widgets/editable_list.dart';
 import '../utils/url_utils.dart';
 import '../utils/message_utils.dart';
 
-class MapPopupTabs extends StatefulWidget {
+class PoiPanelTabs extends StatefulWidget {
   final bool isAdminViewEnabled;
-  const MapPopupTabs({super.key, required this.isAdminViewEnabled});
+  const PoiPanelTabs({super.key, required this.isAdminViewEnabled});
 
   @override
-  State<MapPopupTabs> createState() => _MapPopupTabsState();
+  State<PoiPanelTabs> createState() => _PoiPanelTabsState();
 }
 
-class _MapPopupTabsState extends State<MapPopupTabs> {
+class _PoiPanelTabsState extends State<PoiPanelTabs> {
   late final TextEditingController nameController = TextEditingController();
   late final TextEditingController historyController = TextEditingController();
   late final TextEditingController featuredImageUrlController =
@@ -206,7 +206,7 @@ class _MapPopupTabsState extends State<MapPopupTabs> {
                     await PoiRepository.updatePoi(
                       poi.id,
                       newValue,
-                      poi.featuredImageUrl!,
+                      poi.featuredImageUrl,
                     );
                     await poiController.reloadSelectedPoi();
                   }

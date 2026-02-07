@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../controllers/poi_thumbnails_controller.dart';
 import '../widgets/poi_pin_marker.dart';
 import '../widgets/poi_thumbnail.dart';
+import '../widgets/district_thumbnail.dart';
 import '../models/poi.dart';
 
 class PoiThumbnailsLayer extends StatefulWidget {
@@ -29,6 +30,22 @@ class _PoiThumbnailsLayerState extends State<PoiThumbnailsLayer> {
   Widget build(BuildContext context) {
     final showThumbnails = widget.zoom >= 14.0;
 
+    final screenSize = MediaQuery.of(context).size;
+    
+    int thumbnailCount = 0;
+    
+    widget.controller.poiScreenPositions.forEach((poiId, pos) {
+      if (pos.dx >= 0 &&
+            pos.dx <= screenSize.width &&
+            pos.dy >= 0 &&
+            pos.dy <= screenSize.height)
+      {
+        thumbnailCount++;
+        }
+    });
+
+    final allowLabels = thumbnailCount <= 30;
+
     return Stack(
       // Fix overflow issues with thumbnails at the edges
       clipBehavior: Clip.hardEdge,
@@ -54,13 +71,23 @@ class _PoiThumbnailsLayerState extends State<PoiThumbnailsLayer> {
                 : poiSizes[poi.id] == null
                 ? pos.dy - 24
                 : pos.dy - poiSizes[poi.id]!.height,
-            child: showThumbnails
+            child: poi.categories.contains('districts')
+                ? DistrictThumbnail(
+                    poi: poi,
+                    onSize: (size) {
+                      poiSizes[poi.id] = size;
+                    },
+                    allowLabel: allowLabels,
+                    onTap: () => widget.onTapPoi(poi),
+                  )
+                : showThumbnails && poi.featuredImageUrl!.isNotEmpty
                 ? PoiThumbnail(
                     poi: poi,
                     onTap: () => widget.onTapPoi(poi),
                     onSize: (size) {
                       poiSizes[poi.id] = size;
                     },
+                    allowLabel: allowLabels,
                   )
                 : PinMarker(
                     poi: poi,
@@ -68,6 +95,7 @@ class _PoiThumbnailsLayerState extends State<PoiThumbnailsLayer> {
                     onSize: (size) {
                       poiSizes[poi.id] = size;
                     },
+                    allowLabel: allowLabels,
                   ),
           ),
           // 🔴 Red dot (underneath)

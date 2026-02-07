@@ -1,3 +1,5 @@
+// Districts Thumbnail
+
 import 'package:flutter/material.dart';
 import '../models/poi.dart';
 
@@ -5,8 +7,15 @@ class PoiThumbnail extends StatefulWidget {
   final PointOfInterest poi;
   final VoidCallback? onTap;
   final ValueChanged<Size>? onSize;
+  final bool allowLabel;
 
-  const PoiThumbnail({super.key, required this.poi, this.onTap, this.onSize});
+  const PoiThumbnail({
+    super.key, 
+    required this.poi, 
+    this.onTap, 
+    this.onSize,
+    required this.allowLabel
+  });
 
   @override
   State<PoiThumbnail> createState() => _PoiThumbnailState();
@@ -53,6 +62,8 @@ class _PoiThumbnailState extends State<PoiThumbnail> {
             ),
           ),
           const SizedBox(height: 4),
+          widget.allowLabel
+          ?
           Container(
             constraints: const BoxConstraints(maxWidth: 120),
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -65,7 +76,8 @@ class _PoiThumbnailState extends State<PoiThumbnail> {
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
               overflow: TextOverflow.ellipsis,
             ),
-          ),
+          )
+          : Container()
         ],
       ),
     );

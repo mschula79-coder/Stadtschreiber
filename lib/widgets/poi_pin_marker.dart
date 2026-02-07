@@ -7,11 +7,13 @@ class PinMarker extends StatefulWidget {
   final PointOfInterest poi;
   final VoidCallback onTap;
   final ValueChanged<Size>? onSize;
+  final bool allowLabel;
 
   const PinMarker({
     required this.poi,
     required this.onTap,
     this.onSize,
+    required this.allowLabel,
     super.key,
   });
 
@@ -44,6 +46,8 @@ class _PinMarkerState extends State<PinMarker> {
             size: 24,
           ),
           const SizedBox(width: 4),
+          widget.allowLabel
+          ? 
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
@@ -64,7 +68,8 @@ class _PinMarkerState extends State<PinMarker> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-          ),
+          )
+          : Container()
         ],
       ),
     );

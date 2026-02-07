@@ -56,7 +56,8 @@ class _MapActionsState extends State<MapActions> {
               },
               mini: true,
               child: widget.isAdminViewEnabled
-                  ? const Icon(Icons.construction, color: Colors.blue)
+                  // print(Theme.of(context).colorScheme.onSecondaryContainer); //🎨 Hex: #101C2B
+                  ? const Icon(Icons.construction, color:  Color(0xFF101C2B))
                   : const Icon(Icons.construction_outlined, color:Colors.grey),
             ),
           
@@ -153,7 +154,7 @@ class _MapActionsState extends State<MapActions> {
                                   ? Text(poi.categories.join(", "))
                                   : null,
                               onTap: () async {
-                                await poiController.selectPoi(poi);
+                                await poiController.loadPoiById(poi, poi.categories);
                                 widget.onSelectPoi(poi);
                                 setState(() {
                                   _searchVisible = false;

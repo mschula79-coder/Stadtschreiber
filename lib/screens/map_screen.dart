@@ -31,7 +31,7 @@ class MapScreen extends StatefulWidget {
 class MapScreenState extends State<MapScreen> {
   maplibre.MapController? mapController;
 
-  Future<void> reloadPois() => _loadPois();
+  Future<void> reloadPois() => _loadPoisforSelectedCategories();
   bool _styleLoaded = false;
   bool _isChangingStyle = false;
 
@@ -51,7 +51,7 @@ class MapScreenState extends State<MapScreen> {
     });
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      _loadPois();
+      _loadPoisforSelectedCategories();
     });
     geo.Geolocator.getPositionStream(
       locationSettings: const geo.LocationSettings(
@@ -63,67 +63,9 @@ class MapScreenState extends State<MapScreen> {
     });
   }
 
-  Future<geo.Position?> getCurrentPosition() async {
-    final ok = context.read<AppState>().locationPermission;
-    if (!ok) return null;
-
-    return await geo.Geolocator.getCurrentPosition(
-      locationSettings: const geo.LocationSettings(
-        accuracy: geo.LocationAccuracy.high,
-      ),
-    );
-  }
-
-  Future<void> _loadPois() async {
-    final categoriesMenuState = context.read<CategoriesMenuState>();
-    final poiThumbnailsState = context.read<PoiThumbnailsState>();
-    final thumbnailsController = context.read<PoiThumbnailsController>();
-
-    final pois = await poiRepository.loadPois(
-      categoriesMenuState.selectedValues.toList(),
-    );
-
-    poiThumbnailsState.setAll(pois);
-
-    if (mapController != null) {
-      await thumbnailsController.updatePoiScreenPositions(
-        controller: mapController!,
-        visiblePOIs: poiThumbnailsState.visible,
-      );
-    }
-  }
-
-  Future<void> selectPoi(PointOfInterest poi) async {
-    final poiController = context.read<PoiController>();
-    final visiblePoiState = context.read<PoiThumbnailsState>();
-    final thumbnailsController = context.read<PoiThumbnailsController>();
-    final poiPanelState = context.read<PoiPanelState>();
-    final fresh = await poiController.poiRepo.loadPoiById(poi.id);
-    final realPoi = fresh ?? poi;
-
-    visiblePoiState.add(realPoi);
-
-    if (mapController != null) {
-      await thumbnailsController.updatePoiScreenPositions(
-        controller: mapController!,
-        visiblePOIs: visiblePoiState.visible,
-      );
-    }
-    poiPanelState.selectPoi(poi);
-    /*     poiController.selectPoi(poi);
- */
-  }
-
-  @override
-  void dispose() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     /*print("Screen size: ${MediaQuery.of(context).size}");*/
-    // TODO print(Theme.of(context).colorScheme.onSecondaryContainer); //🎨 Hex: #101C2B
 
     context.watch<PoiThumbnailsState>();
     final appState = context.read<AppState>();
@@ -151,13 +93,13 @@ class MapScreenState extends State<MapScreen> {
               mapController = controller;
             },
             onEvent: (event) async {
-/*               print("📡 MapEvent: ${event.runtimeType}"); */
+              /*               print("📡 MapEvent: ${event.runtimeType}"); */
               final thumbnailsController = context
                   .read<PoiThumbnailsController>();
 
               if (event case maplibre.MapEventStyleLoaded()) {
                 _styleLoaded = true;
-                _requestUpdate(MapUpdateType.styleLoaded);
+                _requestUpdateScreenpositions(MapUpdateType.styleLoaded);
                 mapStyle = event.style;
               }
 
@@ -166,7 +108,7 @@ class MapScreenState extends State<MapScreen> {
 
                 thumbnailsController.setZoom(mapController!.camera!.zoom);
 
-                _requestUpdate(MapUpdateType.cameraIdle);
+                _requestUpdateScreenpositions(MapUpdateType.cameraIdle);
               }
             },
           ),
@@ -182,9 +124,8 @@ class MapScreenState extends State<MapScreen> {
                 final panel = context.read<PoiPanelState>();
                 panel.selectPoi(poi);
                 context.read<PoiController>().selectPoi(poi);
-
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _centerPoiConsideringPanel();
+                  _centerSelectedPoiConsideringPanel();
                 });
               },
             );
@@ -207,7 +148,7 @@ class MapScreenState extends State<MapScreen> {
             final (isPanelOpen, selectedPoi) = tuple;
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (isPanelOpen && selectedPoi != null) {
-                _centerPoiConsideringPanel();
+                _centerSelectedPoiConsideringPanel();
               }
             });
 
@@ -243,11 +184,161 @@ class MapScreenState extends State<MapScreen> {
     );
   }
 
+  @override
+  void dispose() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    super.dispose();
+  }
+
   Future<String> loadStyleJson(String path) async {
     return await rootBundle.loadString(path);
   }
 
-  Future<void> _centerPoiConsideringPanel() async {
+  Future<geo.Position?> getCurrentPosition() async {
+    final ok = context.read<AppState>().locationPermission;
+    if (!ok) return null;
+
+    return await geo.Geolocator.getCurrentPosition(
+      locationSettings: const geo.LocationSettings(
+        accuracy: geo.LocationAccuracy.high,
+      ),
+    );
+  }
+
+  int styleCounter = 1;
+  void changeStyle() async {
+    if (_isChangingStyle) return;
+    if (mapController == null) return;
+    _isChangingStyle = true;
+    _styleLoaded = false;
+
+    styleCounter = styleCounter == 4 ? 1 : styleCounter + 1;
+    final styleString = switch (styleCounter) {
+      1 => "https://stadtschreiber.duckdns.org/styles/basel-vintage/style.json",
+      2 => "https://stadtschreiber.duckdns.org/styles/basel-green/style.json",
+      3 => "https://stadtschreiber.duckdns.org/styles/basel-osm/style.json",
+      4 => "https://stadtschreiber.duckdns.org/styles/basel-blue/style.json",
+      _ => throw Exception("Invalid styleCounter"),
+    };
+
+    mapController!.setStyle(styleString);
+    _isChangingStyle = false;
+  }
+
+  Future<void> _loadPoisforSelectedCategories() async {
+    final categoriesMenuState = context.read<CategoriesMenuState>();
+    final poiThumbnailsState = context.read<PoiThumbnailsState>();
+    final thumbnailsController = context.read<PoiThumbnailsController>();
+
+    final pois = await poiRepository.loadPoisforSelectedCategories(
+      categoriesMenuState.selectedValues.toList(),
+    );
+    List<PointOfInterest> allPois = List.from(pois);
+    List<PointOfInterest> districtPois = [];
+
+    if (categoriesMenuState.selectedValues.contains('districts')) {
+      districtPois = await poiRepository.loadDistrictPois();
+      allPois.addAll(districtPois);
+    }
+    
+    poiThumbnailsState.setAll(allPois);
+
+    if (mapController != null) {
+      await thumbnailsController.updatePoiScreenPositions(
+        controller: mapController!,
+        visiblePOIs: poiThumbnailsState.visible,
+      );
+
+      if (categoriesMenuState.selectedValues.contains('districts')) {
+        await addDistrictsLayer(mapController!);
+        mapController!.moveCamera(zoom: 12.5,center: maplibre.Geographic(lon: 7.59065, lat: 47.55731) );
+        
+      } else {
+        await removeDistrictsLayer(mapController!);
+      }
+    }
+  }
+
+  void removeAllThumbnails() {
+    final state = context.read<PoiThumbnailsState>();
+    state.setAll([]);
+    _requestUpdateScreenpositions(MapUpdateType.cameraIdle);
+  }
+
+  Future<void> addDistrictsLayer(maplibre.MapController mapController) async {
+    final districts = await DistrictsRepository().loadDistricts();
+
+    mapStyle!.addSource(
+      maplibre.GeoJsonSource(
+        id: 'districts-source',
+        data: getGeoJSONStringFromDistricts(districts),
+      ),
+    );
+
+    final fillstyle = maplibre.FillStyleLayer(
+      id: 'districts-fill',
+      sourceId: 'districts-source',
+      paint: {
+        'fill-color': 'rgba(180, 180, 180, 0.3)',
+        'fill-outline-color': 'rgba(0, 0, 0, 0)',
+      },
+    );
+    mapStyle!.addLayer(fillstyle);
+    /* belowLayerId: 'railway' */
+    mapStyle!.addLayer(
+      maplibre.LineStyleLayer(
+        id: 'districts-outline',
+        sourceId: 'districts-source',
+        paint: {'line-color': 'rgba(50, 50, 50, 0.3)', 'line-width': 2.0},
+      ),
+    );
+/*     final c = Color.fromRGBO(0, 153, 255, 0);
+ */  }
+
+  Future<void> removeDistrictsLayer(
+    maplibre.MapController mapController,
+  ) async {
+    mapStyle!.removeLayer('districts-outline');
+    mapStyle!.removeLayer('districts-fill');
+  }
+
+  Future<void> selectPoi(PointOfInterest poi) async {
+    final poiController = context.read<PoiController>();
+    final visiblePoiState = context.read<PoiThumbnailsState>();
+    final thumbnailsController = context.read<PoiThumbnailsController>();
+    final poiPanelState = context.read<PoiPanelState>();
+    final fresh = await poiController.poiRepo.loadPoiById(poi.id, poi.categories);
+    final realPoi = fresh ?? poi;
+
+    visiblePoiState.add(realPoi);
+
+    if (mapController != null) {
+      await thumbnailsController.updatePoiScreenPositions(
+        controller: mapController!,
+        visiblePOIs: visiblePoiState.visible,
+      );
+    }
+    poiPanelState.selectPoi(poi);
+    /*         poiController.loadPoiById(poi);
+ */
+  }
+
+  List<PointOfInterest> searchPois(String query) {
+    final q = query.trim().toLowerCase();
+    final visiblePOIs = context.read<PoiThumbnailsState>().visible;
+
+    return visiblePOIs.where((poi) {
+      final nameMatch = poi.name.toLowerCase().contains(q);
+
+      final categoryMatch = poi.categories.any(
+        (c) => c.toLowerCase().contains(q),
+      );
+
+      return nameMatch || categoryMatch;
+    }).toList();
+  }
+
+  Future<void> _centerSelectedPoiConsideringPanel() async {
     final poiState = context.read<PoiPanelState>();
     final poi = poiState.selected;
     if (poi == null || mapController == null) return;
@@ -279,17 +370,7 @@ class MapScreenState extends State<MapScreen> {
       debugPrint("⚠️ Camera animation cancelled: $e");
     }
 
-    _requestUpdate(MapUpdateType.animationFinished);
-  }
-
-  void _requestUpdate(MapUpdateType type) {
-    _pendingUpdate = type;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // collapse multiple requests into one
-      if (_pendingUpdate == null) return;
-      await _updateAllScreenPositions();
-      _pendingUpdate = null;
-    });
+    _requestUpdateScreenpositions(MapUpdateType.animationFinished);
   }
 
   Future<void> _updateAllScreenPositions() async {
@@ -316,46 +397,20 @@ class MapScreenState extends State<MapScreen> {
 
   void _onPointerMove(PointerMoveEvent event) {
     if (!_styleLoaded || mapController == null) return;
-    _requestUpdate(MapUpdateType.pointerMove);
+    _requestUpdateScreenpositions(MapUpdateType.pointerMove);
     if (context.read<PoiPanelState>().isPanelOpen) {
       context.read<PoiPanelState>().closePanel();
     }
   }
 
-  int styleCounter = 1;
-  void changeStyle() async {
-    if (_isChangingStyle) return;
-    if (mapController == null) return;
-    await addDistrictsLayer(mapController!);
-    _isChangingStyle = true;
-    _styleLoaded = false;
-
-    /* styleCounter = styleCounter == 4 ? 1 : styleCounter + 1;
-    final styleString = switch (styleCounter) {
-      1 => "https://stadtschreiber.duckdns.org/styles/basel-vintage/style.json",
-      2 => "https://stadtschreiber.duckdns.org/styles/basel-green/style.json",
-      3 => "https://stadtschreiber.duckdns.org/styles/basel-osm/style.json",
-      4 => "https://stadtschreiber.duckdns.org/styles/basel-blue/style.json",
-      _ => throw Exception("Invalid styleCounter"),
-    };
-
-    mapController!.setStyle(styleString); */
-    _isChangingStyle = false;
-  }
-
-  List<PointOfInterest> searchPois(String query) {
-    final q = query.trim().toLowerCase();
-    final visiblePOIs = context.read<PoiThumbnailsState>().visible;
-
-    return visiblePOIs.where((poi) {
-      final nameMatch = poi.name.toLowerCase().contains(q);
-
-      final categoryMatch = poi.categories.any(
-        (c) => c.toLowerCase().contains(q),
-      );
-
-      return nameMatch || categoryMatch;
-    }).toList();
+  void _requestUpdateScreenpositions(MapUpdateType type) {
+    _pendingUpdate = type;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // collapse multiple requests into one
+      if (_pendingUpdate == null) return;
+      await _updateAllScreenPositions();
+      _pendingUpdate = null;
+    });
   }
 
   void updateUserLocationOnMap(geo.Position pos) {
@@ -386,52 +441,11 @@ class MapScreenState extends State<MapScreen> {
     }
 
     updateUserLocationOnMap(pos);
-    _requestUpdate(MapUpdateType.animationFinished);
+    _requestUpdateScreenpositions(MapUpdateType.animationFinished);
   }
 
   Future<void> _waitForMapToSettle() async {
     await Future.delayed(Duration.zero); // microtask
     await Future.delayed(const Duration(milliseconds: 16)); // next frame
   }
-
-  void removeAllThumbnails() {
-    final state = context.read<PoiThumbnailsState>();
-    state.setAll([]);
-    _requestUpdate(MapUpdateType.cameraIdle);
-  }
-
-  Future<void> addDistrictsLayer(maplibre.MapController mapController) async {
-    final districts = await DistrictsRepository().loadDistricts();
-
-    mapStyle!.addSource(
-      maplibre.GeoJsonSource(
-        id: 'districts-source',
-        data: getGeoJSONStringFromDistricts(districts),
-      ),
-    );
-
-    final fillstyle = maplibre.FillStyleLayer(
-      id: 'districts-fill',
-      sourceId: 'districts-source',
-      paint: {
-        'fill-color': 'rgba(165, 255, 255, 0.5)',
-        'fill-outline-color': 'rgba(0, 0, 0, 0)',
-      },
-    );
-    mapStyle!.addLayer(fillstyle);
-    /* belowLayerId: 'railway' */
-    mapStyle!.addLayer(
-      maplibre.LineStyleLayer(
-        id: 'districts-outline',
-        sourceId: 'districts-source',
-        paint: {'line-color': 'rgba(255, 0, 0, 0.5)', 'line-width': 2.0},
-      ),
-    );
-    /*     final c = Color.fromRGBO(164, 255, 252, 0);*/
-  }
-    Future<void> removeDistrictsLayer(maplibre.MapController mapController) async {
-      mapStyle!.removeLayer('districts-outline');
-      mapStyle!.removeLayer('districts-fill');
-      
-    }
 }

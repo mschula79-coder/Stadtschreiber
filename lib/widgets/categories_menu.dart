@@ -20,7 +20,6 @@ class CategoriesMenuOverlayContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final categoriesMenuState = context.watch<CategoriesMenuState>();
-
     return SlideTransition(
       position: animation,
       child: Material(

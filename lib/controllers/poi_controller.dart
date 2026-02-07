@@ -8,13 +8,12 @@ class PoiController with ChangeNotifier {
   List<PointOfInterest> pois = [];
   PointOfInterest? selectedPoi;
 
-  Future<void> loadPois(List<String> categories) async {
-    pois = await poiRepo.loadPois(categories);
+  Future<void> loadPoisforSelectedCategories(List<String> categories) async {
+    pois = await poiRepo.loadPoisforSelectedCategories(categories);
     notifyListeners();
   }
-
-  Future<void> selectPoi(PointOfInterest poi) async {
-    final fresh = await poiRepo.loadPoiById(poi.id);
+  Future<void> loadPoiById(PointOfInterest poi, List<String> categories) async {
+    final fresh = await poiRepo.loadPoiById(poi.id, categories);
     selectedPoi = fresh ?? poi;
     notifyListeners();
   }
@@ -27,12 +26,16 @@ class PoiController with ChangeNotifier {
   Future<void> reloadSelectedPoi() async {
     if (selectedPoi == null) return;
 
-    final freshPoi = await poiRepo.loadPoiById(selectedPoi!.id);
+    final freshPoi = await poiRepo.loadPoiById(selectedPoi!.id, selectedPoi?.categories);
 
     if (freshPoi != null) {
       selectedPoi = freshPoi;
       notifyListeners();
     }
+  }
+
+  void selectPoi(PointOfInterest poi) {
+    selectedPoi = poi;
   }
 
   Future<void> toggleCategory({

@@ -1,8 +1,8 @@
 // TODO add poi owner
 // TODO: In Supabase: OSM-ID Check und Import umbauen: siehe Chat: 1. Du importierst OSM‑Daten NICHT per „truncate + insert“
 // TODO remove name if too many items on screen
-// Add Source Attribution  https://flutter-maplibre.pages.dev/docs/ui
-
+// TODO Add Source Attribution  https://flutter-maplibre.pages.dev/docs/ui
+// TODO District center calculation auskommentieren
 
 class ToDo {
   String id;

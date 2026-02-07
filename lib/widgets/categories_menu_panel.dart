@@ -84,7 +84,7 @@ class CategoriesMenuPanel extends StatelessWidget {
       final isChecked = node.value != null && categoriesMenuState.isSelected(node.value!);
       // 2nd level
       return CheckboxListTile(
-        contentPadding: const EdgeInsets.only(top:0, left:20, right: 15),
+        contentPadding: const EdgeInsets.only(top:0, left:4, right: 15),
         value: isChecked,
         onChanged: (checked) {
           if (node.value == null) return;
@@ -93,7 +93,7 @@ class CategoriesMenuPanel extends StatelessWidget {
         secondary: _buildIcon(node),
         controlAffinity: ListTileControlAffinity.leading,
         title: Padding(
-          padding: const EdgeInsets.only(left: 0),
+          padding: const EdgeInsets.only(left: 5),
           child: Text(node.label),
         ),
       );
