@@ -318,7 +318,6 @@ class MapScreenState extends ConsumerState<MapScreen> {
 
       // TODO check double adding
       if (categoriesMenuState.selectedValues.contains('districts')) {
-        mapController.style.
         await addDistrictsLayer(mapController!);
         mapController!.moveCamera(
           zoom: 12.5,
