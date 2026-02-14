@@ -1,45 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
-import 'package:provider/provider.dart';
-
-import '../controllers/poi_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/poi.dart';
+import '../provider/search_provider.dart';
+import '../provider/poi_repository_provider.dart';
+import '../services/debug_service.dart';
+import '../provider/camera_provider.dart';
 
-class MapActions extends StatefulWidget {
+class MapActions extends ConsumerStatefulWidget {
   final VoidCallback onChangeStyle;
   final VoidCallback onLocateMe;
   final VoidCallback onRemoveThumbnails;
   final VoidCallback onToggleAdminView;
-  final bool isAdmin =false;
-  final bool isAdminViewEnabled =false;
+  final bool isAdmin;
+  final bool isAdminViewEnabled;
 
-
-  final Future<void> Function(PointOfInterest) onSelectPoi;
+  final Future<void> Function(PointOfInterest) onTapSearchedPoi;
 
   const MapActions({
     super.key,
     required this.onChangeStyle,
-    required this.onSelectPoi,
+    required this.onTapSearchedPoi,
     required this.onLocateMe,
     required this.onRemoveThumbnails,
     required this.onToggleAdminView,
-    required bool isAdmin,
-    required bool isAdminViewEnabled,
+    required this.isAdmin,
+    required this.isAdminViewEnabled,
   });
 
   @override
-  State<MapActions> createState() => _MapActionsState();
+  ConsumerState<MapActions> createState() => _MapActionsState();
 }
 
-class _MapActionsState extends State<MapActions> {
+class _MapActionsState extends ConsumerState<MapActions> {
   bool _searchVisible = false;
   final TextEditingController _searchController = TextEditingController();
-  List<PointOfInterest> _results = [];
+
+  String _searchQuery = "";
 
   @override
   Widget build(BuildContext context) {
-    final poiController = context.read<PoiController>();
+      final controller = ref.read(poiControllerProvider);
+      final repo = ref.read(poiRepositoryProvider);
+      final camera = ref.read(cameraProvider);
+
+    final searchResults = (_searchVisible && _searchQuery.isNotEmpty)
+    ? ref.watch(searchResultsProvider((query: _searchQuery, searchActive: true, controller: controller, repo: repo, camera: camera)))
+    : const AsyncValue.data([]);
+
+
+    final poiController = ref.read(poiControllerProvider);
     return Positioned(
       bottom: 20,
       right: 20,
@@ -48,19 +59,30 @@ class _MapActionsState extends State<MapActions> {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           //toggle admin view
-          if (widget.isAdmin)
-            FloatingActionButton(
-              heroTag: "btn6",
-              onPressed: () {
-                widget.onToggleAdminView();
-              },
-              mini: true,
-              child: widget.isAdminViewEnabled
-                  // print(Theme.of(context).colorScheme.onSecondaryContainer); //🎨 Hex: #101C2B
-                  ? const Icon(Icons.construction, color:  Color(0xFF101C2B))
-                  : const Icon(Icons.construction_outlined, color:Colors.grey),
-            ),
-          
+          widget.isAdmin
+              ? Column(
+                  children: [
+                    FloatingActionButton(
+                      heroTag: "btn6",
+                      onPressed: () {
+                        widget.onToggleAdminView();
+                      },
+                      mini: true,
+                      child: widget.isAdminViewEnabled
+                          // print(Theme.of(context).colorScheme.onSecondaryContainer); //🎨 Hex: #101C2B
+                          ? const Icon(
+                              Icons.construction,
+                              color: Color(0xFF101C2B),
+                            )
+                          : const Icon(
+                              Icons.construction_outlined,
+                              color: Colors.grey,
+                            ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                )
+              : SizedBox.shrink(),
           FloatingActionButton(
             heroTag: "btn3",
             onPressed: () {
@@ -69,7 +91,7 @@ class _MapActionsState extends State<MapActions> {
             mini: true,
             child: const Icon(Icons.my_location),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           //change style
           FloatingActionButton(
@@ -78,7 +100,7 @@ class _MapActionsState extends State<MapActions> {
             mini: true,
             child: const Icon(Icons.color_lens_outlined),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           //remove thumbnails
           FloatingActionButton(
             heroTag: "btn1",
@@ -89,7 +111,7 @@ class _MapActionsState extends State<MapActions> {
 
             child: const Iconify(Mdi.pin_off_outline, size: 24),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           //search toggle
           Row(
@@ -110,6 +132,7 @@ class _MapActionsState extends State<MapActions> {
                           BoxShadow(color: Colors.black26, blurRadius: 6),
                         ],
                       ),
+
                       child: TextField(
                         controller: _searchController,
                         autofocus: true,
@@ -118,55 +141,93 @@ class _MapActionsState extends State<MapActions> {
                           border: InputBorder.none,
                         ),
                         onChanged: (value) {
-                          poiController.searchRemote(value).then((list) {
-                            if (!mounted) return;
-                            setState(() => _results = list);
-                          });
+                          setState(() => _searchQuery = value);
                         },
                       ),
                     ),
                   // END OF SEARCH FIELD (only visible when toggled)
-                  if (_searchVisible && _results.isNotEmpty)
-                    Container(
-                      width: 220,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: const [
-                          BoxShadow(color: Colors.black26, blurRadius: 6),
-                        ],
-                      ),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxHeight: 5 * 56, // 5 ListTiles, each ~56px high
-                        ),
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: _results.length,
-                          itemBuilder: (context, index) {
-                            final poi = _results[index];
-                            return ListTile(
-                              dense: true,
-                              title: Text(poi.name),
-                              subtitle: poi.categories.isNotEmpty
-                                  ? Text(poi.categories.join(", "))
-                                  : null,
-                              onTap: () async {
-                                await poiController.loadPoiById(poi, poi.categories);
-                                widget.onSelectPoi(poi);
-                                setState(() {
-                                  _searchVisible = false;
-                                  _searchController.clear();
-                                  _results = [];
-                                });
+                  if (_searchVisible)
+                    searchResults.when(
+                      data: (poiresultslist) {
+                        if (poiresultslist.isEmpty) return const SizedBox.shrink();
+
+                        return Container(
+                          width: 220,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: const [
+                              BoxShadow(color: Colors.black26, blurRadius: 6),
+                            ],
+                          ),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxHeight: 5 * 56, // 5 ListTiles
+                            ),
+                            // SEARCH RESULTS LIST
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: poiresultslist.length,
+                              itemBuilder: (context, index) {
+                                final poi = poiresultslist[index];
+                                return ListTile(
+                                  dense: true,
+                                  title: Text(poi.name),
+                                  subtitle: poi.displayAddress != null
+                                      ? Text('${poi.city ?? ''}, ${poi.street ?? ''} ${poi.houseNumber ?? ''}')
+                                      : null,
+                                  onTap: () async {
+                                    
+                                    await poiController.loadAndSelectPoiById(
+                                      poi,
+                                    );
+                                    final fresh = poiController.getSelectedPoi();
+                                    widget.onTapSearchedPoi(fresh!);
+                                    DebugService.log('Poi selected from search results');
+
+                                    setState(() {
+                                      _searchVisible = false;
+                                      _searchController.clear();
+                                    });
+                                  },
+                                );
                               },
-                            );
-                          },
+                            ),
+                          ),
+                        );
+                      },
+                      loading: () => Container(
+                        width: 220,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black26, blurRadius: 6),
+                          ],
                         ),
+                        child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                      error: (err, st) => Container(
+                        width: 220,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black26, blurRadius: 6),
+                          ],
+                        ),
+                        child: Text("Error: $err"),
                       ),
                     ),
+
                   // END OF SEARCH RESULTS DROPDOWN
                 ],
               ),
@@ -176,7 +237,6 @@ class _MapActionsState extends State<MapActions> {
                   setState(() {
                     _searchVisible = !_searchVisible;
                     _searchController.clear();
-                    _results = [];
                   });
                 },
                 mini: true,

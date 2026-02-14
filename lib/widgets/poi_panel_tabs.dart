@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
+import 'package:iconify_flutter/icons/game_icons.dart';
+import 'package:iconify_flutter/icons/maki.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/article_entry.dart';
 import '../models/poi.dart';
+
 import '../controllers/poi_controller.dart';
 import '../repositories/poi_repository.dart';
+import '../widgets/_bool_features_editor_dialog.dart';
+import '../widgets/_string_features_editor_dialog.dart';
 import '../widgets/article_edit_modal.dart';
 import '../widgets/category_node_tile.dart';
 import '../repositories/category_repository.dart';
-import '../widgets/editable_list.dart';
+import '_editable_list.dart';
 import '../utils/url_utils.dart';
 import '../utils/message_utils.dart';
 
@@ -140,6 +145,7 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
           : Image.network(
               poi.featuredImageUrl!,
               fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
               errorBuilder: (context, error, stackTrace) {
                 return const Icon(
                   Icons.broken_image,
@@ -154,17 +160,220 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
   Widget _buildInfoTab(PointOfInterest poi, bool isAdminViewEnabled) {
     return Padding(
       padding: const EdgeInsets.all(12),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          InputDecorator(
-            decoration: InputDecoration(
-              labelText: "Name",
-              alignLabelWithHint: true,
-              contentPadding: isAdminViewEnabled
-                  ? const EdgeInsets.fromLTRB(0, 0, 35, 0)
-                  : const EdgeInsets.fromLTRB(0, 0, 0, 0),
-            ),
-            child: Text(poi.name),
+          Column(
+            children: [
+              // TODO Add info controller and textfield analog to history
+              InputDecorator(
+                decoration: InputDecoration(
+                  labelText: "Beschreibung",
+                  alignLabelWithHint: true,
+                  contentPadding: isAdminViewEnabled
+                      ? const EdgeInsets.fromLTRB(0, 10, 35, 5)
+                      : const EdgeInsets.fromLTRB(0, 10, 0, 5),
+                ),
+              ),
+              InputDecorator(
+                decoration: InputDecoration(
+                  labelText: "Adresse",
+                  alignLabelWithHint: true,
+                  contentPadding: const EdgeInsets.fromLTRB(0, 10, 0, 5),
+                ),
+                child: poi.displayAddress == null
+                    ? Text('')
+                    : Text(
+                        '${poi.city ?? ''}, ${poi.street ?? ''} ${poi.houseNumber ?? ''}',
+                      ),
+              ),
+              // List of links icons
+              Stack(
+                children: [
+                  InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: "Links",
+                      alignLabelWithHint: true,
+                      contentPadding: isAdminViewEnabled
+                          ? const EdgeInsets.fromLTRB(0, 10, 35, 5)
+                          : const EdgeInsets.fromLTRB(0, 10, 0, 5),
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(height: 30, width: 0),
+                        poi.metadata.getWebsiteLink().isNotEmpty
+                            ? InkWell(
+                                onTap: () =>
+                                    openLink(context, poi.metadata.getWebsiteLink()),
+                                child: Row(
+                                  children: [
+                                    Iconify(Mdi.internet, size: 24),
+                                    const SizedBox(width: 10),
+                                  ],
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+
+                        poi.metadata.getGoogleMapsLink().isNotEmpty
+                            ? InkWell(
+                                onTap: () =>
+                                    openLink(context, poi.metadata.getGoogleMapsLink()),
+                                child: Row(
+                                  children: [
+                                    Iconify(Mdi.google_maps, size: 24),
+                                    const SizedBox(width: 10),
+                                  ],
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                        poi.metadata.getOSMLink().isNotEmpty
+                            ? InkWell(
+                                onTap: () =>
+                                    openLink(context, poi.metadata.getOSMLink()),
+                                child: Row(
+                                  children: [
+                                    Iconify(Mdi.map, size: 24),
+                                    const SizedBox(width: 10),
+                                  ],
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                        poi.metadata.getAppleMapsLink().isNotEmpty
+                            ? InkWell(
+                                onTap: () =>
+                                    openLink(context, poi.metadata.getAppleMapsLink()),
+                                child: Row(
+                                  children: [
+                                    Iconify(Mdi.apple, size: 24),
+                                    const SizedBox(width: 10),
+                                  ],
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                        poi.metadata.getWikipediaLink().isNotEmpty
+                            ? InkWell(
+                                onTap: () =>
+                                    openLink(context, poi.metadata.getWikipediaLink()),
+                                child: Row(
+                                  children: [
+                                    Iconify(Mdi.wikipedia, size: 24),
+                                    const SizedBox(width: 10),
+                                  ],
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      ],
+                    ),
+                  ),
+                  // Edit links
+                  if (isAdminViewEnabled)
+                    Positioned(
+                      right: 0,
+                      top: 10,
+                      child: IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () async {
+                          final newLinks =
+                              await showDialog<Map<String, String>>(
+                                context: context,
+                                builder: (_) => StringFeaturesEditorDialog(
+                                  dialogTitle: "Links bearbeiten",
+                                  initialValues: poi.metadata.getLinks(),
+                                ),
+                              );
+                          if (newLinks != null) poi.metadata.setLinks(newLinks);
+                          await PoiRepository.updatePoiDataInSupabase(
+                            poi.id,
+                            poi.history,
+                            poi.featuredImageUrl,
+                            poi.articles,
+                            poi.metadata,
+                          );
+                          await poiController.reloadSelectedPoi();
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          Stack(
+            children: [
+              // List of features icons
+              InputDecorator(
+                decoration: InputDecoration(
+                  labelText: "Features",
+                  alignLabelWithHint: true,
+                  contentPadding: isAdminViewEnabled
+                      ? const EdgeInsets.fromLTRB(0, 5, 35, 5)
+                      : const EdgeInsets.fromLTRB(0, 5, 0, 5),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(height: 30, width: 0),
+                    poi.metadata.notBBQAllowed()
+                        ? Row(
+                            children: [
+                              Iconify(Mdi.fire_off, size: 24),
+                              const SizedBox(width: 10),
+                            ],
+                          )
+                        : const SizedBox.shrink(),
+                    poi.metadata.isWheelchairAccessible()
+                        ? Row(
+                            children: [
+                              Iconify(Mdi.wheelchair_accessibility, size: 24),
+                              const SizedBox(width: 10),
+                            ],
+                          )
+                        : const SizedBox.shrink(),
+                    poi.metadata.hasBenches()
+                        ? Row(
+                            children: [
+                              Iconify(GameIcons.park_bench, size: 24),
+                              const SizedBox(width: 10),
+                            ],
+                          )
+                        : const SizedBox.shrink(),
+                    poi.metadata.hasPicnicTables()
+                        ? Row(
+                            children: [
+                              Iconify(Maki.picnic_site, size: 24),
+                              const SizedBox(width: 10),
+                            ],
+                          )
+                        : const SizedBox.shrink(),
+                  ],
+                ),
+              ),
+              // Edit features
+              if (isAdminViewEnabled)
+                Positioned(
+                  right: 0,
+                  top: 10,
+                  child: IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () async {
+                      final newFeatures = await showDialog<Map<String, bool>>(
+                        context: context,
+                        builder: (_) => BoolFeaturesEditorDialog(
+                          dialogTitle: "Features bearbeiten",
+                          initialFeatures: poi.metadata.getFeatures(),
+                        ),
+                      );
+                      poi.metadata.setFeatures(newFeatures!);
+                      await PoiRepository.updatePoiDataInSupabase(
+                        poi.id,
+                        poi.history,
+                        poi.featuredImageUrl,
+                        poi.articles,
+                        poi.metadata,
+                      );
+                      await poiController.reloadSelectedPoi();
+                    },
+                  ),
+                ),
+            ],
           ),
         ],
       ),
@@ -203,10 +412,12 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                   );
                   if (newValue != null) {
                     historyController.text = newValue;
-                    await PoiRepository.updatePoi(
+                    await PoiRepository.updatePoiDataInSupabase(
                       poi.id,
                       newValue,
                       poi.featuredImageUrl,
+                      poi.articles,
+                      poi.metadata,
                     );
                     await poiController.reloadSelectedPoi();
                   }
@@ -219,7 +430,7 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
   }
 
   Widget _buildArticlesTab(PointOfInterest poi, bool isAdminViewEnabled) {
-    final articles = poi.articles ?? [];
+    final articles = poi.articles;
 
     return EditableList<ArticleEntry>(
       items: articles,
@@ -234,7 +445,13 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
 
         if (newEntry != null) {
           final updated = [...articles, newEntry];
-          await PoiRepository.updatePoiArticles(poi.id, updated);
+          await PoiRepository.updatePoiDataInSupabase(
+            poi.id,
+            poi.history,
+            poi.featuredImageUrl,
+            updated,
+            poi.metadata,
+          );
           await poiController.reloadSelectedPoi();
         }
 
@@ -255,7 +472,13 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
           final index = updated.indexOf(entry);
           updated[index] = updatedEntry;
 
-          await PoiRepository.updatePoiArticles(poi.id, updated);
+          await PoiRepository.updatePoiDataInSupabase(
+            poi.id,
+            poi.history,
+            poi.featuredImageUrl,
+            updated,
+            poi.metadata,
+          );
           await poiController.reloadSelectedPoi();
         }
 
@@ -263,7 +486,13 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
       },
       onDelete: (entry) async {
         final updated = [...articles]..remove(entry);
-        await PoiRepository.updatePoiArticles(poi.id, updated);
+        await PoiRepository.updatePoiDataInSupabase(
+          poi.id,
+          poi.history,
+          poi.featuredImageUrl,
+          updated,
+          poi.metadata,
+        );
         await poiController.reloadSelectedPoi();
       },
       itemBuilder: (entry) {
@@ -392,10 +621,12 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                       return;
                     }
 
-                    await PoiRepository.updatePoi(
+                    await PoiRepository.updatePoiDataInSupabase(
                       poi.id,
-                      historyController.text,
+                      poi.history,
                       featuredImageUrlController.text,
+                      poi.articles,
+                      poi.metadata,
                     );
 
                     if (mounted) {

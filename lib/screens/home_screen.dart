@@ -64,8 +64,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         .from('profiles')
         .select('is_admin')
         .eq('id', userId)
-        .single();
-    final isAdmin = profile['is_admin'] ?? false;
+        .maybeSingle();
+
+    final isAdmin = profile?['is_admin'] ?? false;
+
     if (!mounted) return;
     context.read<AppState>().setAdmin(isAdmin);
     context.read<AppState>().setAdminViewEnabled(isAdmin);

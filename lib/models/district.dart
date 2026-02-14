@@ -1,31 +1,14 @@
 import 'package:maplibre/maplibre.dart';
 import 'package:polylabel/polylabel.dart';
 import 'dart:math' as math;
-import 'article_entry.dart';
 import '../utils/geometry_utils.dart';
-import 'poi.dart';
-
 
 class District {
   final int id;
   final String name;
   final List<List<Geographic>> polygons;
-  late final Geographic location;
 
-  District({required this.id, required this.name, required this.polygons}) {
-    location = _computeDistrictCenter(polygons);
-    
-  }
-
-  Geographic _computeDistrictCenter(List<List<Geographic>> polys) {
-    // Use your centroidOfDistrict() logic here
-    //final c = centroidOfDistrict(this);
-    final c2 = computeDistrictCenter(polys);
-    //print(this.name);
-    //print('Polygon: $polys');
-    //print('DistrictCenter: $c2');
-    return c2;
-  }
+  District({required this.id, required this.name, required this.polygons});
 
   factory District.fromJson(Map<String, dynamic> json) {
     final geom = json['geom'];
@@ -63,22 +46,7 @@ class District {
     return District(id: row['id'], name: row['name'], polygons: polygons);
   }
 
-  PointOfInterest toPoi({
-    String? featuredImageUrl,
-    String? history,
-    List<ArticleEntry>? articles,
-  }) {
-    return PointOfInterest(
-      id: id,
-      name: name,
-      location: location, // centroid
-      categories: ['districts'], // or whatever you want
-      featuredImageUrl: null,
-      history: history,
-      articles: articles,
-    );
-  }
-
+  
   Feature<Polygon> toFeature() {
     final rings = <PositionSeries>[];
 
@@ -114,7 +82,6 @@ class District {
     Geographic? best;
     double bestDistance = -1;
 
-
     for (final ringCoords in polygons) {
       final closed = closeRing(ringCoords);
       final ccw = ensureCCW(closed);
@@ -123,8 +90,6 @@ class District {
 
       final result = polylabel([ring], precision: 1.0);
 
-
-
       if (result.distance > bestDistance) {
         bestDistance = result.distance.toDouble();
         best = Geographic(
@@ -132,7 +97,6 @@ class District {
           lon: result.point.x.toDouble(),
         );
       }
-
     }
 
     if (bestDistance <= 0 || best == null) {

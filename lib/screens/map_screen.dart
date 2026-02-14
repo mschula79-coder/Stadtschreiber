@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:maplibre/maplibre.dart' as maplibre;
 import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/poi_thumbnails_controller.dart';
 import '../controllers/poi_controller.dart';
 import '../controllers/category_controller.dart';
@@ -11,27 +12,29 @@ import '../models/poi.dart';
 import '../repositories/poi_repository.dart';
 import '../repositories/districts_repository.dart';
 import '../state/app_state.dart';
-import '../state/poi_panel_state.dart';
+import '../state/poi_panel_and_selection_state.dart';
 import '../state/pois_thumbnails_state.dart';
 import '../state/categories_menu_state.dart';
+import '../provider/camera_provider.dart';
 import '../services/geo_json_service.dart';
+import '../services/debug_service.dart';
 import '../widgets/poi_thumbnails_layer.dart';
 import '../widgets/map_actions.dart';
 import '../widgets/poi_panel_persistent.dart';
 
 enum MapUpdateType { pointerMove, cameraIdle, animationFinished, styleLoaded }
 
-class MapScreen extends StatefulWidget {
+class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
 
   @override
-  State<MapScreen> createState() => MapScreenState();
+  ConsumerState<MapScreen> createState() => MapScreenState();
 }
 
-class MapScreenState extends State<MapScreen> {
+class MapScreenState extends ConsumerState<MapScreen> {
   maplibre.MapController? mapController;
 
-  Future<void> reloadPois() => _loadPoisforSelectedCategories();
+  Future<void> reloadPois() => _addPoisforSelectedCategories();
   bool _styleLoaded = false;
   bool _isChangingStyle = false;
 
@@ -51,7 +54,7 @@ class MapScreenState extends State<MapScreen> {
     });
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      _loadPoisforSelectedCategories();
+      _addPoisforSelectedCategories();
     });
     geo.Geolocator.getPositionStream(
       locationSettings: const geo.LocationSettings(
@@ -68,7 +71,7 @@ class MapScreenState extends State<MapScreen> {
     /*print("Screen size: ${MediaQuery.of(context).size}");*/
 
     context.watch<PoiThumbnailsState>();
-    final appState = context.read<AppState>();
+    final appState = context.watch<AppState>();
 
     return Stack(
       children: [
@@ -78,8 +81,8 @@ class MapScreenState extends State<MapScreen> {
           onPointerMove: _onPointerMove,
           child: maplibre.MapLibreMap(
             options: maplibre.MapOptions(
-              initCenter: maplibre.Geographic(lon: 7.60132, lat: 47.57118),
-              initZoom: 14,
+              initCenter: maplibre.Geographic(lon: 7.59253, lat: 47.55634),
+              initZoom: 13.67,
               gestures: maplibre.MapGestures(
                 rotate: false,
                 pan: true,
@@ -105,9 +108,11 @@ class MapScreenState extends State<MapScreen> {
 
               if (event case maplibre.MapEventCameraIdle()) {
                 if (mapController == null) return;
-
                 thumbnailsController.setZoom(mapController!.camera!.zoom);
-
+                final pos = mapController!.camera!;
+                ref
+                    .read(cameraProvider.notifier)
+                    .update(pos.center.lat, pos.center.lon, pos.zoom);
                 _requestUpdateScreenpositions(MapUpdateType.cameraIdle);
               }
             },
@@ -120,29 +125,28 @@ class MapScreenState extends State<MapScreen> {
               controller: controller,
               visiblePOIs: visibleState.visible,
               zoom: controller.currentZoom,
+
+              // onTapPoi
               onTapPoi: (poi) {
-                final panel = context.read<PoiPanelState>();
-                panel.selectPoi(poi);
-                context.read<PoiController>().selectPoi(poi);
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _centerSelectedPoiConsideringPanel();
-                });
+                DebugService.log('Poi selected from screen');
+
+                _selectPoiAndOpenPanel(poi);
               },
             );
           },
         ),
         MapActions(
           onChangeStyle: changeStyle,
-          onSelectPoi: selectPoi,
+          onTapSearchedPoi: _addPoiToMapScreen,
           onLocateMe: _locateMe,
-          onRemoveThumbnails: removeAllThumbnails,
+          onRemoveThumbnails: _removeAllThumbnails,
           onToggleAdminView: () {
             appState.setAdminViewEnabled(!appState.isAdminViewEnabled);
           },
           isAdmin: appState.isAdmin,
           isAdminViewEnabled: appState.isAdminViewEnabled,
         ),
-        Selector<PoiPanelState, (bool, PointOfInterest?)>(
+        Selector<PoiPanelAndSelectionState, (bool, PointOfInterest?)>(
           selector: (_, state) => (state.isPanelOpen, state.selected),
           builder: (_, tuple, _) {
             final (isPanelOpen, selectedPoi) = tuple;
@@ -225,46 +229,6 @@ class MapScreenState extends State<MapScreen> {
     _isChangingStyle = false;
   }
 
-  Future<void> _loadPoisforSelectedCategories() async {
-    final categoriesMenuState = context.read<CategoriesMenuState>();
-    final poiThumbnailsState = context.read<PoiThumbnailsState>();
-    final thumbnailsController = context.read<PoiThumbnailsController>();
-
-    final pois = await poiRepository.loadPoisforSelectedCategories(
-      categoriesMenuState.selectedValues.toList(),
-    );
-    List<PointOfInterest> allPois = List.from(pois);
-    List<PointOfInterest> districtPois = [];
-
-    if (categoriesMenuState.selectedValues.contains('districts')) {
-      districtPois = await poiRepository.loadDistrictPois();
-      allPois.addAll(districtPois);
-    }
-    
-    poiThumbnailsState.setAll(allPois);
-
-    if (mapController != null) {
-      await thumbnailsController.updatePoiScreenPositions(
-        controller: mapController!,
-        visiblePOIs: poiThumbnailsState.visible,
-      );
-
-      if (categoriesMenuState.selectedValues.contains('districts')) {
-        await addDistrictsLayer(mapController!);
-        mapController!.moveCamera(zoom: 12.5,center: maplibre.Geographic(lon: 7.59065, lat: 47.55731) );
-        
-      } else {
-        await removeDistrictsLayer(mapController!);
-      }
-    }
-  }
-
-  void removeAllThumbnails() {
-    final state = context.read<PoiThumbnailsState>();
-    state.setAll([]);
-    _requestUpdateScreenpositions(MapUpdateType.cameraIdle);
-  }
-
   Future<void> addDistrictsLayer(maplibre.MapController mapController) async {
     final districts = await DistrictsRepository().loadDistricts();
 
@@ -292,25 +256,38 @@ class MapScreenState extends State<MapScreen> {
         paint: {'line-color': 'rgba(50, 50, 50, 0.3)', 'line-width': 2.0},
       ),
     );
-/*     final c = Color.fromRGBO(0, 153, 255, 0);
- */  }
+    /*     final c = Color.fromRGBO(0, 153, 255, 0);
+ */
+  }
 
   Future<void> removeDistrictsLayer(
     maplibre.MapController mapController,
   ) async {
-    mapStyle!.removeLayer('districts-outline');
-    mapStyle!.removeLayer('districts-fill');
+    try {
+      mapStyle!.removeLayer('districts-outline');
+      mapStyle!.removeLayer('districts-fill');
+    } catch (e) {
+      debugPrint("Layer not found, skipping removal.");
+    }
   }
 
-  Future<void> selectPoi(PointOfInterest poi) async {
-    final poiController = context.read<PoiController>();
+  void _selectPoiAndOpenPanel(PointOfInterest poi) {
+    DebugService.log('MapScreen run _selectPoiAndOpenPanel(poi)');
+
+    final panel = context.read<PoiPanelAndSelectionState>();
+    panel.selectPoiAndOpenPanel(poi);
+    context.read<PoiController>().selectPoi(poi);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _centerSelectedPoiConsideringPanel();
+    });
+  }
+
+  Future<void> _addPoiToMapScreen(PointOfInterest poi) async {
+    DebugService.log('MapScreen run _addPoiToMapScreen(poi)');
     final visiblePoiState = context.read<PoiThumbnailsState>();
     final thumbnailsController = context.read<PoiThumbnailsController>();
-    final poiPanelState = context.read<PoiPanelState>();
-    final fresh = await poiController.poiRepo.loadPoiById(poi.id, poi.categories);
-    final realPoi = fresh ?? poi;
 
-    visiblePoiState.add(realPoi);
+    visiblePoiState.add(poi);
 
     if (mapController != null) {
       await thumbnailsController.updatePoiScreenPositions(
@@ -318,33 +295,54 @@ class MapScreenState extends State<MapScreen> {
         visiblePOIs: visiblePoiState.visible,
       );
     }
-    poiPanelState.selectPoi(poi);
-    /*         poiController.loadPoiById(poi);
- */
+    _selectPoiAndOpenPanel(poi);
   }
 
-  List<PointOfInterest> searchPois(String query) {
-    final q = query.trim().toLowerCase();
-    final visiblePOIs = context.read<PoiThumbnailsState>().visible;
+  Future<void> _addPoisforSelectedCategories() async {
+    final categoriesMenuState = context.read<CategoriesMenuState>();
+    final poiThumbnailsState = context.read<PoiThumbnailsState>();
+    final thumbnailsController = context.read<PoiThumbnailsController>();
 
-    return visiblePOIs.where((poi) {
-      final nameMatch = poi.name.toLowerCase().contains(q);
+    final pois = await poiRepository.loadPoisforSelectedCategories(
+      categoriesMenuState.selectedValues.toList(),
+    );
+    List<PointOfInterest> allPois = List.from(pois);
 
-      final categoryMatch = poi.categories.any(
-        (c) => c.toLowerCase().contains(q),
+    poiThumbnailsState.setAll(allPois);
+
+    if (mapController != null) {
+      await thumbnailsController.updatePoiScreenPositions(
+        controller: mapController!,
+        visiblePOIs: poiThumbnailsState.visible,
       );
 
-      return nameMatch || categoryMatch;
-    }).toList();
+      // TODO check double adding
+      if (categoriesMenuState.selectedValues.contains('districts')) {
+        mapController.style.
+        await addDistrictsLayer(mapController!);
+        mapController!.moveCamera(
+          zoom: 12.5,
+          center: maplibre.Geographic(lon: 7.59065, lat: 47.55731),
+        );
+      } else {
+        await removeDistrictsLayer(mapController!);
+      }
+    }
+  }
+
+  void _removeAllThumbnails() {
+    final state = context.read<PoiThumbnailsState>();
+    state.setAll([]);
+    _requestUpdateScreenpositions(MapUpdateType.cameraIdle);
   }
 
   Future<void> _centerSelectedPoiConsideringPanel() async {
-    final poiState = context.read<PoiPanelState>();
+    final poiState = context.read<PoiPanelAndSelectionState>();
     final poi = poiState.selected;
     if (poi == null || mapController == null) return;
 
     final size = MediaQuery.of(context).size;
-    final panelHeight = 350;
+    final panelHeight = 460;
     final halfWidth = size.width / 2;
 
     final screenTop = mapController!.toLngLat(Offset(halfWidth, 0)).lat;
@@ -398,8 +396,8 @@ class MapScreenState extends State<MapScreen> {
   void _onPointerMove(PointerMoveEvent event) {
     if (!_styleLoaded || mapController == null) return;
     _requestUpdateScreenpositions(MapUpdateType.pointerMove);
-    if (context.read<PoiPanelState>().isPanelOpen) {
-      context.read<PoiPanelState>().closePanel();
+    if (context.read<PoiPanelAndSelectionState>().isPanelOpen) {
+      context.read<PoiPanelAndSelectionState>().closePanel();
     }
   }
 

@@ -1,3 +1,18 @@
+overpass queries
+
+[out:json][timeout:25];
+
+// Basel-Stadt Fläche finden
+area["name"="Basel-Stadt"]["boundary"="administrative"]->.bs;
+
+// Stadtteile (Quartiere) innerhalb Basel-Stadt
+(
+  relation["boundary"="administrative"]["admin_level"="10"](area.bs);
+);
+
+out geom;
+
+
 Map Style:
 red: 
 rgba(255, 189, 189, 0.8)

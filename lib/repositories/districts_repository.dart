@@ -7,7 +7,7 @@ class DistrictsRepository {
   Future<List<District>> loadDistricts() async {
     final response = await supabase
         .from('districts')
-        .select('id, name, geom, label_point, lat, lon');
+        .select('id, name, geom');
 
     final districts = <District>[];
 

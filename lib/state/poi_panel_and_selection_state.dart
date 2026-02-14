@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/poi.dart';
 
-class PoiPanelState extends ChangeNotifier {
+class PoiPanelAndSelectionState extends ChangeNotifier {
   PointOfInterest? selected;
   bool isPanelOpen = false;
 
-  void selectPoi(PointOfInterest poi) {
+  void selectPoiAndOpenPanel(PointOfInterest poi) {
     selected = poi;
     isPanelOpen = true;
     notifyListeners();
