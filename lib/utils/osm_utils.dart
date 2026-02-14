@@ -7,7 +7,7 @@ Future<Map<String, String?>?> fetchStructuredAddressFromOSM(
   double lon,
 ) async {
   final url = Uri.parse(
-    'https://nominatim.openstreetmap.org/reverse?lat=$lat&lon=$lon&format=jsonv2',
+    'https://nominatim.openstreetmap.org/reverse?lat=$lat&lon=$lon&format=jsonv2&addressdetails=1&zoom=30',
   );
 
   final response = await http.get(

@@ -19,6 +19,7 @@ class PointOfInterest {
   final String? district;
   final String? country;
   final String? displayAddress;
+  final String? description;
 
   PointOfInterest({
     required this.id,
@@ -37,6 +38,7 @@ class PointOfInterest {
     this.district,
     this.country,
     this.displayAddress,
+    this.description,
   });
 
   factory PointOfInterest.fromSupabase(Map<String, dynamic> row) {
@@ -80,6 +82,7 @@ class PointOfInterest {
       district: row['district'] as String?,
       country: row['country'] as String?,
       displayAddress: row['display_address'] as String?,
+      description: row['description']
     );
   }
 
@@ -101,6 +104,7 @@ class PointOfInterest {
       'district': district,
       'country': country,
       'display_address': displayAddress,
+      'description': description
     };
   }
 

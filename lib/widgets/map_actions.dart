@@ -41,14 +41,23 @@ class _MapActionsState extends ConsumerState<MapActions> {
 
   @override
   Widget build(BuildContext context) {
-      final controller = ref.read(poiControllerProvider);
-      final repo = ref.read(poiRepositoryProvider);
-      final camera = ref.read(cameraProvider);
+    DebugService.log('Build MapActions');
+
+    final controller = ref.read(poiControllerProvider);
+    final repo = ref.read(poiRepositoryProvider);
+    final camera = ref.read(cameraProvider);
 
     final searchResults = (_searchVisible && _searchQuery.isNotEmpty)
-    ? ref.watch(searchResultsProvider((query: _searchQuery, searchActive: true, controller: controller, repo: repo, camera: camera)))
-    : const AsyncValue.data([]);
-
+        ? ref.watch(
+            searchResultsProvider((
+              query: _searchQuery,
+              searchActive: true,
+              controller: controller,
+              repo: repo,
+              camera: camera,
+            )),
+          )
+        : const AsyncValue.data([]);
 
     final poiController = ref.read(poiControllerProvider);
     return Positioned(
@@ -149,8 +158,9 @@ class _MapActionsState extends ConsumerState<MapActions> {
                   if (_searchVisible)
                     searchResults.when(
                       data: (poiresultslist) {
-                        if (poiresultslist.isEmpty) return const SizedBox.shrink();
-
+                        if (poiresultslist.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
                         return Container(
                           width: 220,
                           margin: const EdgeInsets.only(bottom: 12),
@@ -176,16 +186,20 @@ class _MapActionsState extends ConsumerState<MapActions> {
                                   dense: true,
                                   title: Text(poi.name),
                                   subtitle: poi.displayAddress != null
-                                      ? Text('${poi.city ?? ''}, ${poi.street ?? ''} ${poi.houseNumber ?? ''}')
+                                      ? Text(
+                                          '${poi.city ?? ''}, ${poi.street ?? ''} ${poi.houseNumber ?? ''}',
+                                        )
                                       : null,
                                   onTap: () async {
-                                    
                                     await poiController.loadAndSelectPoiById(
                                       poi,
                                     );
-                                    final fresh = poiController.getSelectedPoi();
+                                    final fresh = poiController
+                                        .getSelectedPoi();
                                     widget.onTapSearchedPoi(fresh!);
-                                    DebugService.log('Poi selected from search results');
+                                    DebugService.log(
+                                      'Poi selected from search results',
+                                    );
 
                                     setState(() {
                                       _searchVisible = false;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:geolocator/geolocator.dart'; 
+import 'package:geolocator/geolocator.dart';
 import 'map_screen.dart';
 
 import '../controllers/categories_menu_controller.dart';
@@ -71,7 +71,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     if (!mounted) return;
     context.read<AppState>().setAdmin(isAdmin);
     context.read<AppState>().setAdminViewEnabled(isAdmin);
-    
+
     ensureLocationPermission();
   }
 
@@ -106,6 +106,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    DebugService.log('Build HomeScreen');
+
     if (categories.isEmpty) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }

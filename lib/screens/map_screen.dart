@@ -69,7 +69,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
   @override
   Widget build(BuildContext context) {
     /*print("Screen size: ${MediaQuery.of(context).size}");*/
-
+    DebugService.log('Build MapScreen');
     context.watch<PoiThumbnailsState>();
     final appState = context.watch<AppState>();
 
@@ -230,6 +230,8 @@ class MapScreenState extends ConsumerState<MapScreen> {
   }
 
   Future<void> addDistrictsLayer(maplibre.MapController mapController) async {
+    DebugService.log('MapScreen addDistrictsLayer');
+
     final districts = await DistrictsRepository().loadDistricts();
 
     mapStyle!.addSource(
@@ -263,6 +265,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
   Future<void> removeDistrictsLayer(
     maplibre.MapController mapController,
   ) async {
+    DebugService.log('MapScreen removeDistrictsLayer');
     try {
       mapStyle!.removeLayer('districts-outline');
       mapStyle!.removeLayer('districts-fill');
@@ -299,6 +302,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
   }
 
   Future<void> _addPoisforSelectedCategories() async {
+    // TODO implement watch for CategoriesMenuState
     final categoriesMenuState = context.read<CategoriesMenuState>();
     final poiThumbnailsState = context.read<PoiThumbnailsState>();
     final thumbnailsController = context.read<PoiThumbnailsController>();
@@ -316,7 +320,6 @@ class MapScreenState extends ConsumerState<MapScreen> {
         visiblePOIs: poiThumbnailsState.visible,
       );
 
-      // TODO check double adding
       if (categoriesMenuState.selectedValues.contains('districts')) {
         await addDistrictsLayer(mapController!);
         mapController!.moveCamera(

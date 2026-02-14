@@ -119,7 +119,7 @@ class PoiController with ChangeNotifier {
     }
 
     DebugService.log('🟡 Hole Adresse für POI ${poi.id} (${poi.name})…');
-
+    // TODO check and add house number
     final address = await fetchStructuredAddressFromOSM(
       poi.location.lat,
       poi.location.lon,
@@ -130,6 +130,7 @@ class PoiController with ChangeNotifier {
     }
 
     /* print('🟢 Adresse von OSM: ${address['display_address']}'); */
+    // DEBUG house number
     await poiRepo.updatePoiAddressInSupabase(poi.id, address);
     /*     print('🟢 Adresse in Supabase gespeichert.'); */
   }

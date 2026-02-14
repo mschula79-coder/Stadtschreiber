@@ -18,7 +18,7 @@ class PoiRepository {
     final response = await supabase
         .from('pois')
         .select(
-          'id, name, lat, lon, geom, categories, featured_image_url, history, articles, metadata, street, house_number, postcode, city, district, country, display_address',
+          'id, name, lat, lon, geom, categories, featured_image_url, history, articles, metadata, street, house_number, postcode, city, district, country, display_address, description',
         )
         .overlaps('categories', selectedCategories)
         .order('name');
@@ -57,6 +57,7 @@ class PoiRepository {
     String? featuredImageUrl,
     List<ArticleEntry> articles,
     PoiMetadata metadata,
+    String? description
   ) async {
     final supabase = Supabase.instance.client;
 
@@ -67,6 +68,7 @@ class PoiRepository {
           'featured_image_url': featuredImageUrl,
           'articles': articles.map((e) => e.toJson()).toList(),
           'metadata': metadata.toJson(),
+          'description': description
         })
         .eq('id', id);
   }
