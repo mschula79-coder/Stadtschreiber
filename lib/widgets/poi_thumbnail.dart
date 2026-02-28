@@ -6,6 +6,7 @@ import '../models/poi.dart';
 class PoiThumbnail extends StatefulWidget {
   final PointOfInterest poi;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;  
   final ValueChanged<Size>? onSize;
   final bool allowLabel;
 
@@ -14,7 +15,8 @@ class PoiThumbnail extends StatefulWidget {
     required this.poi, 
     this.onTap, 
     this.onSize,
-    required this.allowLabel
+    required this.allowLabel,
+    this.onLongPress,
   });
 
   @override
@@ -34,9 +36,10 @@ class _PoiThumbnailState extends State<PoiThumbnail> {
 
   @override
   Widget build(BuildContext context) {
-    final hasPhoto = widget.poi.featuredImageUrl?.isNotEmpty ?? false;
+    final hasPhoto = widget.poi.featuredImageUrl.isNotEmpty;
     return GestureDetector(
       onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -48,7 +51,7 @@ class _PoiThumbnailState extends State<PoiThumbnail> {
               border: Border.all(color: Colors.white, width: 3),
               image: DecorationImage(
                 image: hasPhoto
-                    ? NetworkImage(widget.poi.featuredImageUrl!)
+                    ? NetworkImage(widget.poi.featuredImageUrl)
                     : const AssetImage('assets/icons/placeholder.png'),
                 fit: BoxFit.cover,
               ),

@@ -1,78 +1,109 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:iconify_flutter/icons/game_icons.dart';
 import 'package:iconify_flutter/icons/maki.dart';
-import 'package:provider/provider.dart';
+import 'package:provider/provider.dart' as provider;
+import 'package:stadtschreiber/provider/selected_poi_provider.dart';
+import 'package:stadtschreiber/services/debug_service.dart';
+import 'package:stadtschreiber/state/app_state.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/article_entry.dart';
 import '../models/poi.dart';
 
-import '../controllers/poi_controller.dart';
+import '../repositories/category_repository.dart';
 import '../repositories/poi_repository.dart';
+
+import '../utils/url_utils.dart';
+import '../utils/message_utils.dart';
+
+import '../widgets/_editable_list.dart';
 import '../widgets/_bool_features_editor_dialog.dart';
 import '../widgets/_string_features_editor_dialog.dart';
 import '../widgets/article_edit_modal.dart';
 import '../widgets/category_node_tile.dart';
-import '../repositories/category_repository.dart';
-import '_editable_list.dart';
-import '../utils/url_utils.dart';
-import '../utils/message_utils.dart';
 
-class PoiPanelTabs extends StatefulWidget {
-  final bool isAdminViewEnabled;
-  const PoiPanelTabs({super.key, required this.isAdminViewEnabled});
+class PoiPanelTabs extends ConsumerStatefulWidget {
+  const PoiPanelTabs({super.key});
 
   @override
-  State<PoiPanelTabs> createState() => _PoiPanelTabsState();
+  ConsumerState<PoiPanelTabs> createState() => _PoiPanelTabsState();
 }
 
-class _PoiPanelTabsState extends State<PoiPanelTabs> {
+class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
   late final TextEditingController nameController = TextEditingController();
   late final TextEditingController historyController = TextEditingController();
   late final TextEditingController featuredImageUrlController =
       TextEditingController();
-  late final PoiController poiController;
   late final TextEditingController descriptionController =
       TextEditingController();
+
+  bool _listenerRegistered = false;
+  late final ProviderSubscription<PointOfInterest?> _sub;
 
   @override
   void initState() {
     super.initState();
-
-    poiController = context.read<PoiController>();
-    poiController.addListener(_updateControllers);
-    _updateControllers();
-  }
-
-  void _updateControllers() {
-    final poi = poiController.selectedPoi;
-    if (poi == null) return;
-
-    nameController.text = poi.name;
-    historyController.text = poi.history ?? '';
-    featuredImageUrlController.text = poi.featuredImageUrl ?? '';
-    descriptionController.text = poi.description ?? '';
   }
 
   @override
   void dispose() {
-    poiController.removeListener(_updateControllers);
+    _sub.close();
     nameController.dispose();
     historyController.dispose();
     featuredImageUrlController.dispose();
     descriptionController.dispose();
+    context.read<AppState>().setPoiEditMode(false);
     super.dispose();
+    DebugService.log('Dispose PoiPanelTabs');
   }
 
   @override
   Widget build(BuildContext context) {
-    final poi = context.watch<PoiController>().selectedPoi;
-    if (poi == null) {
+    DebugService.log('Build PoiPanelTabs');
+
+    if (!_listenerRegistered) {
+      _listenerRegistered = true;
+
+      // 1. Listener registrieren
+      _sub = ref.listenManual<PointOfInterest?>(selectedPoiProvider, (
+        prev,
+        next,
+      ) {
+        if (next != null) {
+          setState(() {
+            nameController.text = next.name;
+            historyController.text = next.history ?? '';
+            featuredImageUrlController.text = next.featuredImageUrl;
+            descriptionController.text = next.description ?? '';
+          });
+        }
+      });
+
+      // 2. Initialen Wert manuell setzen
+      final current = ref.read(selectedPoiProvider);
+      if (current != null) {
+        nameController.text = current.name;
+        historyController.text = current.history ?? '';
+        featuredImageUrlController.text = current.featuredImageUrl;
+        descriptionController.text = current.description ?? '';
+        DebugService.log(
+          'Initial values set in PoiPanelTabs Name: ${current.name}',
+        );
+      }
+    }
+
+    final bool isAdminViewEnabled = context
+        .watch<AppState>()
+        .isAdminViewEnabled;
+
+    final selectedPoi = ref.watch(selectedPoiProvider);
+
+    if (selectedPoi == null) {
       return const SizedBox.shrink();
     }
-    final bool isAdminViewEnabled = widget.isAdminViewEnabled;
 
     final tabs = [
       const Tab(
@@ -117,21 +148,34 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
         ),
       );
     }
+    if (isAdminViewEnabled) {
+      tabs.add(
+        const Tab(
+          icon: Tooltip(
+            message: "Edit point of interest",
+            child: Icon(Icons.my_location),
+          ),
+        ),
+      );
+    }
     final pages = [
-      _buildFeaturedImageTab(poi),
-      _buildInfoTab(poi, isAdminViewEnabled),
-      _buildHistoryTab(poi, isAdminViewEnabled),
-      _buildArticlesTab(poi, isAdminViewEnabled),
-      _buildGalleryTab(poi),
-      _buildRatingsTab(poi),
+      _buildFeaturedImageTab(selectedPoi),
+      _buildInfoTab(selectedPoi, isAdminViewEnabled),
+      _buildHistoryTab(selectedPoi, isAdminViewEnabled),
+      _buildArticlesTab(selectedPoi, isAdminViewEnabled),
+      _buildGalleryTab(selectedPoi),
+      _buildRatingsTab(selectedPoi),
     ];
 
     if (isAdminViewEnabled) {
-      pages.add(_buildEditTab(poi, isAdminViewEnabled));
+      pages.add(_buildEditTab(selectedPoi, isAdminViewEnabled));
+    }
+    if (isAdminViewEnabled) {
+      pages.add(_buildPoiEditTab(selectedPoi));
     }
 
     return DefaultTabController(
-      length: isAdminViewEnabled ? 7 : 6,
+      length: tabs.length,
       child: Column(
         children: [
           TabBar(isScrollable: true, tabs: tabs),
@@ -144,10 +188,10 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
   Widget _buildFeaturedImageTab(PointOfInterest poi) {
     return Padding(
       padding: const EdgeInsets.all(12),
-      child: (poi.featuredImageUrl == null || poi.featuredImageUrl!.isEmpty)
+      child: (poi.featuredImageUrl.isEmpty)
           ? const Icon(Icons.image_not_supported, size: 80, color: Colors.grey)
           : Image.network(
-              poi.featuredImageUrl!,
+              poi.featuredImageUrl,
               fit: BoxFit.cover,
               alignment: Alignment.topCenter,
               errorBuilder: (context, error, stackTrace) {
@@ -161,7 +205,7 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
     );
   }
 
-  Widget _buildInfoTab(PointOfInterest poi, bool isAdminViewEnabled) {
+  Widget _buildInfoTab(PointOfInterest selectedPoi, bool isAdminViewEnabled) {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
       child: Column(
@@ -178,15 +222,20 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                   alignLabelWithHint: true,
                   contentPadding: isAdminViewEnabled
                       ? const EdgeInsets.fromLTRB(0, 0, 35, 5)
-                      : const EdgeInsets.fromLTRB(0, 0, 0, 0),
+                      : const EdgeInsets.fromLTRB(0, 10, 0, 5),
                 ),
-                child: Text(descriptionController.text, maxLines: 3),
+                child: SizedBox(
+                  height: 80,
+                  child: SingleChildScrollView(
+                    child: Text(descriptionController.text, softWrap: true),
+                  ),
+                ),
               ),
-              // TODO optimize paddings
+              // Edit button
               if (isAdminViewEnabled)
                 Positioned(
                   right: 0,
-                  top: 10,
+                  top: 5,
                   child: IconButton(
                     icon: const Icon(Icons.edit),
                     onPressed: () async {
@@ -199,14 +248,21 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                       if (newValue != null) {
                         descriptionController.text = newValue;
                         await PoiRepository.updatePoiDataInSupabase(
-                          poi.id,
-                          poi.history,
-                          poi.featuredImageUrl,
-                          poi.articles,
-                          poi.metadata,
+                          selectedPoi.id!,
+                          selectedPoi.name,
+                          selectedPoi.history,
+                          selectedPoi.featuredImageUrl,
+                          selectedPoi.articles,
+                          selectedPoi.metadata,
                           descriptionController.text,
                         );
-                        await poiController.reloadSelectedPoi();
+                        ref
+                            .read(selectedPoiProvider.notifier)
+                            .setPoi(
+                              selectedPoi.cloneWithNewValues(
+                                description: newValue,
+                              ),
+                            );
                       }
                     },
                   ),
@@ -220,10 +276,10 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
               alignLabelWithHint: true,
               contentPadding: const EdgeInsets.fromLTRB(0, 10, 0, 5),
             ),
-            child: poi.displayAddress == null
+            child: selectedPoi.displayAddress == null
                 ? Text('')
                 : Text(
-                    '${poi.city ?? ''}, ${poi.street ?? ''} ${poi.houseNumber ?? ''}',
+                    '${selectedPoi.city ?? ''}, ${selectedPoi.street ?? ''} ${selectedPoi.houseNumber ?? ''}',
                   ),
           ),
           // Stack links editable
@@ -239,12 +295,12 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                 ),
                 child: Row(
                   children: [
-                    SizedBox(height: 30, width: 0),
-                    poi.metadata.getWebsiteLink().isNotEmpty
+                    SizedBox(height: 20, width: 0),
+                    selectedPoi.metadata.getWebsiteLink().isNotEmpty
                         ? InkWell(
                             onTap: () => openLink(
                               context,
-                              poi.metadata.getWebsiteLink(),
+                              selectedPoi.metadata.getWebsiteLink(),
                             ),
                             child: Row(
                               children: [
@@ -255,11 +311,11 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                           )
                         : const SizedBox.shrink(),
 
-                    poi.metadata.getGoogleMapsLink().isNotEmpty
+                    selectedPoi.metadata.getGoogleMapsLink().isNotEmpty
                         ? InkWell(
                             onTap: () => openLink(
                               context,
-                              poi.metadata.getGoogleMapsLink(),
+                              selectedPoi.metadata.getGoogleMapsLink(),
                             ),
                             child: Row(
                               children: [
@@ -269,10 +325,12 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                             ),
                           )
                         : const SizedBox.shrink(),
-                    poi.metadata.getOSMLink().isNotEmpty
+                    selectedPoi.metadata.getOSMLink().isNotEmpty
                         ? InkWell(
-                            onTap: () =>
-                                openLink(context, poi.metadata.getOSMLink()),
+                            onTap: () => openLink(
+                              context,
+                              selectedPoi.metadata.getOSMLink(),
+                            ),
                             child: Row(
                               children: [
                                 Iconify(Mdi.map, size: 24),
@@ -281,11 +339,11 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                             ),
                           )
                         : const SizedBox.shrink(),
-                    poi.metadata.getAppleMapsLink().isNotEmpty
+                    selectedPoi.metadata.getAppleMapsLink().isNotEmpty
                         ? InkWell(
                             onTap: () => openLink(
                               context,
-                              poi.metadata.getAppleMapsLink(),
+                              selectedPoi.metadata.getAppleMapsLink(),
                             ),
                             child: Row(
                               children: [
@@ -295,11 +353,11 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                             ),
                           )
                         : const SizedBox.shrink(),
-                    poi.metadata.getWikipediaLink().isNotEmpty
+                    selectedPoi.metadata.getWikipediaLink().isNotEmpty
                         ? InkWell(
                             onTap: () => openLink(
                               context,
-                              poi.metadata.getWikipediaLink(),
+                              selectedPoi.metadata.getWikipediaLink(),
                             ),
                             child: Row(
                               children: [
@@ -316,7 +374,7 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
               if (isAdminViewEnabled)
                 Positioned(
                   right: 0,
-                  top: 10,
+                  top: 5,
                   child: IconButton(
                     icon: const Icon(Icons.edit),
                     onPressed: () async {
@@ -324,19 +382,26 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                         context: context,
                         builder: (_) => StringFeaturesEditorDialog(
                           dialogTitle: "Links bearbeiten",
-                          initialValues: poi.metadata.getLinks(),
+                          initialValues: selectedPoi.metadata.getLinks(),
                         ),
                       );
-                      if (newLinks != null) poi.metadata.setLinks(newLinks);
+                      // TODO use clone to setLinks and articles and features
+                      if (newLinks != null) {
+                        selectedPoi.metadata.setLinks(newLinks);
+                      }
                       await PoiRepository.updatePoiDataInSupabase(
-                        poi.id,
-                        poi.history,
-                        poi.featuredImageUrl,
-                        poi.articles,
-                        poi.metadata,
-                        poi.description,
+                        selectedPoi.id!,
+                        selectedPoi.name,
+                        selectedPoi.history,
+                        selectedPoi.featuredImageUrl,
+                        selectedPoi.articles,
+                        selectedPoi.metadata,
+                        selectedPoi.description,
                       );
-                      await poiController.reloadSelectedPoi();
+
+                      ref
+                          .read(selectedPoiProvider.notifier)
+                          .setPoi(selectedPoi.cloneWithNewValues());
                     },
                   ),
                 ),
@@ -350,13 +415,13 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                   labelText: "Features",
                   alignLabelWithHint: true,
                   contentPadding: isAdminViewEnabled
-                      ? const EdgeInsets.fromLTRB(0, 5, 35, 5)
-                      : const EdgeInsets.fromLTRB(0, 5, 0, 5),
+                      ? const EdgeInsets.fromLTRB(0, 10, 35, 5)
+                      : const EdgeInsets.fromLTRB(0, 10, 0, 5),
                 ),
                 child: Row(
                   children: [
-                    SizedBox(height: 30, width: 0),
-                    poi.metadata.notBBQAllowed()
+                    SizedBox(height: 20, width: 0),
+                    selectedPoi.metadata.notBBQAllowed()
                         ? Row(
                             children: [
                               Iconify(Mdi.fire_off, size: 24),
@@ -364,7 +429,7 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                             ],
                           )
                         : const SizedBox.shrink(),
-                    poi.metadata.isWheelchairAccessible()
+                    selectedPoi.metadata.isWheelchairAccessible()
                         ? Row(
                             children: [
                               Iconify(Mdi.wheelchair_accessibility, size: 24),
@@ -372,7 +437,7 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                             ],
                           )
                         : const SizedBox.shrink(),
-                    poi.metadata.hasBenches()
+                    selectedPoi.metadata.hasBenches()
                         ? Row(
                             children: [
                               Iconify(GameIcons.park_bench, size: 24),
@@ -380,7 +445,7 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                             ],
                           )
                         : const SizedBox.shrink(),
-                    poi.metadata.hasPicnicTables()
+                    selectedPoi.metadata.hasPicnicTables()
                         ? Row(
                             children: [
                               Iconify(Maki.picnic_site, size: 24),
@@ -395,7 +460,7 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
               if (isAdminViewEnabled)
                 Positioned(
                   right: 0,
-                  top: 10,
+                  top: 5,
                   child: IconButton(
                     icon: const Icon(Icons.edit),
                     onPressed: () async {
@@ -403,19 +468,22 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                         context: context,
                         builder: (_) => BoolFeaturesEditorDialog(
                           dialogTitle: "Features bearbeiten",
-                          initialFeatures: poi.metadata.getFeatures(),
+                          initialFeatures: selectedPoi.metadata.getFeatures(),
                         ),
                       );
-                      poi.metadata.setFeatures(newFeatures!);
+                      selectedPoi.metadata.setFeatures(newFeatures!);
                       await PoiRepository.updatePoiDataInSupabase(
-                        poi.id,
-                        poi.history,
-                        poi.featuredImageUrl,
-                        poi.articles,
-                        poi.metadata,
-                        poi.description,
+                        selectedPoi.id!,
+                        selectedPoi.name,
+                        selectedPoi.history,
+                        selectedPoi.featuredImageUrl,
+                        selectedPoi.articles,
+                        selectedPoi.metadata,
+                        selectedPoi.description,
                       );
-                      await poiController.reloadSelectedPoi();
+                      ref
+                          .read(selectedPoiProvider.notifier)
+                          .setPoi(selectedPoi.cloneWithNewValues());
                     },
                   ),
                 ),
@@ -426,7 +494,10 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
     );
   }
 
-  Widget _buildHistoryTab(PointOfInterest poi, bool isAdminViewEnabled) {
+  Widget _buildHistoryTab(
+    PointOfInterest selectedPoi,
+    bool isAdminViewEnabled,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Stack(
@@ -459,14 +530,19 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                   if (newValue != null) {
                     historyController.text = newValue;
                     await PoiRepository.updatePoiDataInSupabase(
-                      poi.id,
+                      selectedPoi.id!,
+                      selectedPoi.name,
                       newValue,
-                      poi.featuredImageUrl,
-                      poi.articles,
-                      poi.metadata,
-                      poi.description,
+                      selectedPoi.featuredImageUrl,
+                      selectedPoi.articles,
+                      selectedPoi.metadata,
+                      selectedPoi.description,
                     );
-                    await poiController.reloadSelectedPoi();
+                    ref
+                        .read(selectedPoiProvider.notifier)
+                        .setPoi(
+                          selectedPoi.cloneWithNewValues(history: newValue),
+                        );
                   }
                 },
               ),
@@ -476,8 +552,11 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
     );
   }
 
-  Widget _buildArticlesTab(PointOfInterest poi, bool isAdminViewEnabled) {
-    final articles = poi.articles;
+  Widget _buildArticlesTab(
+    PointOfInterest selectedPoi,
+    bool isAdminViewEnabled,
+  ) {
+    final articles = selectedPoi.articles;
 
     return EditableList<ArticleEntry>(
       items: articles,
@@ -493,14 +572,17 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
         if (newEntry != null) {
           final updated = [...articles, newEntry];
           await PoiRepository.updatePoiDataInSupabase(
-            poi.id,
-            poi.history,
-            poi.featuredImageUrl,
+            selectedPoi.id!,
+            selectedPoi.name,
+            selectedPoi.history,
+            selectedPoi.featuredImageUrl,
             updated,
-            poi.metadata,
-            poi.description,
+            selectedPoi.metadata,
+            selectedPoi.description,
           );
-          await poiController.reloadSelectedPoi();
+          ref
+              .read(selectedPoiProvider.notifier)
+              .setPoi(selectedPoi.cloneWithNewValues(articles: updated));
         }
 
         return newEntry;
@@ -521,14 +603,17 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
           updated[index] = updatedEntry;
 
           await PoiRepository.updatePoiDataInSupabase(
-            poi.id,
-            poi.history,
-            poi.featuredImageUrl,
+            selectedPoi.id!,
+            selectedPoi.name,
+            selectedPoi.history,
+            selectedPoi.featuredImageUrl,
             updated,
-            poi.metadata,
-            poi.description,
+            selectedPoi.metadata,
+            selectedPoi.description,
           );
-          await poiController.reloadSelectedPoi();
+          ref
+              .read(selectedPoiProvider.notifier)
+              .setPoi(selectedPoi.cloneWithNewValues(articles: updated));
         }
 
         return updatedEntry;
@@ -536,14 +621,17 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
       onDelete: (entry) async {
         final updated = [...articles]..remove(entry);
         await PoiRepository.updatePoiDataInSupabase(
-          poi.id,
-          poi.history,
-          poi.featuredImageUrl,
+          selectedPoi.id!,
+          selectedPoi.name,
+          selectedPoi.history,
+          selectedPoi.featuredImageUrl,
           updated,
-          poi.metadata,
-          poi.description,
+          selectedPoi.metadata,
+          selectedPoi.description,
         );
-        await poiController.reloadSelectedPoi();
+        ref
+            .read(selectedPoiProvider.notifier)
+            .setPoi(selectedPoi.cloneWithNewValues(articles: updated));
       },
       itemBuilder: (entry) {
         return Padding(
@@ -572,10 +660,10 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
   Widget _buildGalleryTab(PointOfInterest poi) {
     return Padding(
       padding: const EdgeInsets.all(12),
-      child: (poi.featuredImageUrl == null || poi.featuredImageUrl!.isEmpty)
+      child: (poi.featuredImageUrl.isEmpty)
           ? const Icon(Icons.image_not_supported, size: 80, color: Colors.grey)
           : Image.network(
-              poi.featuredImageUrl!,
+              poi.featuredImageUrl,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return const Icon(
@@ -601,7 +689,7 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
   bool _saved = false;
   bool _saving = false;
 
-  Widget _buildEditTab(PointOfInterest poi, bool isAdminViewEnabled) {
+  Widget _buildEditTab(PointOfInterest selectedPoi, bool isAdminViewEnabled) {
     // ignore: unused_local_variable
     return SingleChildScrollView(
       padding: const EdgeInsets.all(12),
@@ -621,7 +709,8 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
           ),
           const SizedBox(height: 8),
 
-          Consumer<CategoryState>(
+          // List of categories with checkboxes
+          provider.Consumer<CategoryState>(
             builder: (context, catState, _) {
               final categories = catState.categories;
 
@@ -633,7 +722,13 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 children: categories
-                    .map((root) => CategoryNodeTile(node: root, poi: poi))
+                    .map(
+                      (root) => CategoryNodeTile(
+                        node: root,
+                        poi: selectedPoi,
+                        ref: ref,
+                      ),
+                    )
                     .toList(),
               );
             },
@@ -672,15 +767,22 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
                     }
 
                     await PoiRepository.updatePoiDataInSupabase(
-                      poi.id,
-                      poi.history,
+                      selectedPoi.id!,
+                      selectedPoi.name,
+                      selectedPoi.history,
                       featuredImageUrlController.text,
-                      poi.articles,
-                      poi.metadata,
-                      poi.description,
+                      selectedPoi.articles,
+                      selectedPoi.metadata,
+                      selectedPoi.description,
                     );
                     if (mounted) {
-                      await poiController.reloadSelectedPoi();
+                      ref
+                          .read(selectedPoiProvider.notifier)
+                          .setPoi(
+                            selectedPoi.cloneWithNewValues(
+                              featuredImageUrl: featuredImageUrlController.text,
+                            ),
+                          );
                     }
                     // Show checkmark
                     setState(() {
@@ -745,6 +847,174 @@ class _PoiPanelTabsState extends State<PoiPanelTabs> {
           ],
         );
       },
+    );
+  }
+
+  // TODO move name field to adminTab or infotab
+
+  // Name with edit button
+  // Toggle for edit mode
+  // Location Point / Label Position
+  // List of Points with delete button
+
+  Widget _buildPoiEditTab(PointOfInterest selectedPoi) {
+    final location = selectedPoi.location;
+    final pts = selectedPoi.getPoints();
+    final pointsList = pts == null
+        ? <String>[]
+        : pts
+              .map(
+                (p) =>
+                    "${p.lat.toStringAsFixed(6)}, ${p.lon.toStringAsFixed(6)}",
+              )
+              .toList();
+
+    final appState = context.watch<AppState>();
+
+    return Column(
+      children: [
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(12),
+            children: [
+              // Name
+              Stack(
+                children: [
+                  TextField(
+                    controller: nameController,
+                    readOnly: true,
+                    maxLines: 1,
+                    decoration: const InputDecoration(
+                      labelText: "Name",
+                      alignLabelWithHint: true,
+                      contentPadding: EdgeInsets.fromLTRB(0, 0, 35, 0),
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    top: 10,
+                    child: IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () async {
+                        final newValue = await _openEditModal(
+                          context,
+                          "Name",
+                          nameController.text,
+                          1,
+                        );
+                        if (newValue != null) {
+                          nameController.text = newValue;
+                          await PoiRepository.updatePoiDataInSupabase(
+                            selectedPoi.id!,
+                            newValue,
+                            selectedPoi.history,
+                            selectedPoi.featuredImageUrl,
+                            selectedPoi.articles,
+                            selectedPoi.metadata,
+                            selectedPoi.description,
+                          );
+                          ref
+                              .read(selectedPoiProvider.notifier)
+                              .setPoi(
+                                selectedPoi.cloneWithNewValues(name: newValue),
+                              );
+                          setState(() {});
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              Text(
+                'Poi = Label Standort: Lat: ${location.lat} Lon: ${location.lon}',
+              ),
+
+              buildGeometryTypeSelector(context),
+
+              const SizedBox(height: 16),
+
+              const Text(
+                'Punkte von 2D Geometrien (tippe lange auf die Karte, um weitere Punkte hinzuzufügen):',
+              ),
+
+              SwitchListTile(
+                title: const Text('Geometrie bearbeiten'),
+                value: appState.isPoiEditMode,
+                onChanged: (newValue) => appState.setPoiEditMode(newValue),
+              ),
+
+              // Punkte-Liste
+              SizedBox(
+                height: 300, // feste Höhe für die EditableList
+                child: EditableList<String>(
+                  items: pointsList,
+                  isAdminViewEnabled: true,
+                  itemBuilder: (entry) {
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 0, 0, 15),
+                      child: Text(entry, style: const TextStyle(fontSize: 16)),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildGeometryTypeSelector(BuildContext context) {
+    final selectedPoi = ref.watch(selectedPoiProvider);
+
+    if (selectedPoi == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Geometrietyp",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+
+        RadioGroup<String>(
+          groupValue: selectedPoi.geometryType,
+          onChanged: (value) {
+            final newPoi = selectedPoi.cloneWithNewValues(geometryType: value!);
+            
+            if (newPoi.isGeometryValid()) {
+              final poiRepository = context.read<PoiRepository>();
+              poiRepository.updatePoiGeomInSupabase(newPoi);
+            }
+            context.read<AppState>().setPoiEditMode(false);
+            ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
+          },
+          child: Column(
+            children: <Widget>[
+              const ListTile(
+                title: Text('Punkt'),
+                leading: Radio<String>(toggleable: true, value: 'point'),
+              ),
+              const ListTile(
+                title: Text('Linie'),
+                leading: Radio<String>(toggleable: true, value: 'linestring'),
+              ),
+              const ListTile(
+                title: Text('Polygon'),
+                leading: Radio<String>(toggleable: true, value: 'polygon'),
+              ),
+              const ListTile(
+                title: Text('MultiPolygon'),
+                leading: Radio<String>(toggleable: true, value: 'multipolygon'),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

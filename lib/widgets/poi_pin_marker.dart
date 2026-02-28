@@ -5,13 +5,15 @@ import '../models/poi.dart';
 
 class PinMarker extends StatefulWidget {
   final PointOfInterest poi;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;  
   final ValueChanged<Size>? onSize;
   final bool allowLabel;
 
   const PinMarker({
     required this.poi,
-    required this.onTap,
+    this.onTap,
+    this.onLongPress,
     this.onSize,
     required this.allowLabel,
     super.key,
@@ -37,6 +39,7 @@ class _PinMarkerState extends State<PinMarker> {
 
     return GestureDetector(
       onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

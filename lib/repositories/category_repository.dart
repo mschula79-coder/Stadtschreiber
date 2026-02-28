@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-
 import '../models/category.dart';
 import '../models/category_dto.dart';
+import '../services/debug_service.dart';
 
 class CategoryRepository {
   Future<List<CategoryNode>> loadCategories() async {
@@ -64,7 +64,6 @@ class CategoryRepository {
           .toList(),
     );
   }
-
 }
 
 class CategoryState extends ChangeNotifier {
@@ -72,6 +71,7 @@ class CategoryState extends ChangeNotifier {
 
   void setCategories(List<CategoryNode> list) {
     categories = list;
+    DebugService.log('CategoryState.setCategories - notifyListeners');
     notifyListeners();
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../services/debug_service.dart';
 
 class CategoriesMenuState extends ChangeNotifier {
   final List<String> selectedValues = [];
@@ -11,6 +12,9 @@ class CategoriesMenuState extends ChangeNotifier {
     } else {
       selectedValues.remove(value);
     }
+    DebugService.log(
+      'CategoriesMenuState.setSelected: $value: $selected - notifyListeners',
+    );
     notifyListeners();
   }
 
@@ -22,11 +26,17 @@ class CategoriesMenuState extends ChangeNotifier {
         selectedValues.remove(value);
       }
     });
+     DebugService.log(
+      'CategoriesMenuState.setMany: $updates - notifyListeners',
+    );
     notifyListeners();
   }
 
   void clear() {
     selectedValues.clear();
+    DebugService.log(
+      'CategoriesMenuState.clear - notifyListeners',
+    );
     notifyListeners();
   }
 }

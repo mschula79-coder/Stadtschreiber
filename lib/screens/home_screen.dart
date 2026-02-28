@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -28,16 +30,19 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       CategoriesMenuController();
   final GlobalKey<MapScreenState> _mapKey = GlobalKey<MapScreenState>();
 
+  late final StreamSubscription _authSub;
+
   @override
   void initState() {
     super.initState();
+
     _categoriesMenuController.initAnimation(this);
 
     _categoriesMenuController.setOnClosed(() {
       _mapKey.currentState?.reloadPois();
     });
 
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       final session = data.session;
       if (session != null) {
         _loadUserProfile(session.user.id);
@@ -76,51 +81,67 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   Future<bool> ensureLocationPermission() async {
-    final con = context.read<AppState>();
+    final appState = context.read<AppState>();
 
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return false;
+    // 1. Check if location services are enabled
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      appState.setLocationPermission(false);
+      return false;
+    }
+
+    // 2. Check current permission
     LocationPermission permission = await Geolocator.checkPermission();
+
+    // 3. Request permission if needed
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
 
-    con.setLocationPermission(true);
+    // 4. Handle deniedForever
+    if (permission == LocationPermission.deniedForever) {
+      appState.setLocationPermission(false);
+      return false;
+    }
 
-    return permission == LocationPermission.always ||
+    // 5. Permission granted?
+    final granted =
+        permission == LocationPermission.always ||
         permission == LocationPermission.whileInUse;
+
+    appState.setLocationPermission(granted);
+    return granted;
   }
 
   @override
   void dispose() {
     _categoriesMenuController.dispose();
+    _authSub.cancel();
     super.dispose();
   }
 
   Future<void> _initCategories() async {
     final loaded = await _categoryRepository.loadCategories();
-    setState(() {
-      categories = loaded;
-    });
+
+    if (!mounted) return;
+    setState(() => categories = loaded);
   }
 
   @override
   Widget build(BuildContext context) {
     DebugService.log('Build HomeScreen');
 
-    if (categories.isEmpty) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
     return Scaffold(
       appBar: MainAppBar(
         filterButtonKey: _filterKey,
         onFilterPressed: toggleCategoryMenuOverlay,
       ),
-      body: Stack(
-        clipBehavior: Clip.hardEdge,
-        children: [MapScreen(key: _mapKey)],
-      ),
+      body: categories.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
+              clipBehavior: Clip.hardEdge,
+              children: [MapScreen(key: _mapKey)],
+            ),
     );
   }
 

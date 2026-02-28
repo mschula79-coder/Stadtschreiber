@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../controllers/poi_thumbnails_controller.dart';
+import '../state/app_state.dart';
+import '../models/poi.dart';
+import '../services/debug_service.dart';
 import '../widgets/poi_pin_marker.dart';
 import '../widgets/poi_thumbnail.dart';
 import '../widgets/district_thumbnail.dart';
-import '../models/poi.dart';
 
 class PoiThumbnailsLayer extends StatefulWidget {
   final PoiThumbnailsController controller;
   final List<PointOfInterest> visiblePOIs;
   final void Function(PointOfInterest poi) onTapPoi;
+  final void Function(PointOfInterest poi) onLongPressPoi;
   final double zoom;
 
   const PoiThumbnailsLayer({
@@ -16,6 +20,7 @@ class PoiThumbnailsLayer extends StatefulWidget {
     required this.controller,
     required this.visiblePOIs,
     required this.onTapPoi,
+    required this.onLongPressPoi,
     required this.zoom,
   });
 
@@ -24,10 +29,15 @@ class PoiThumbnailsLayer extends StatefulWidget {
 }
 
 class _PoiThumbnailsLayerState extends State<PoiThumbnailsLayer> {
+
+  // TODO poiSizes is never set
+
   final Map<int, Size> poiSizes = {};
 
   @override
   Widget build(BuildContext context) {
+        DebugService.log('Build PoiThumbnailsLayer');
+
     final showThumbnails = widget.zoom >= 14.0;
 
     final screenSize = MediaQuery.of(context).size;
@@ -47,7 +57,6 @@ class _PoiThumbnailsLayerState extends State<PoiThumbnailsLayer> {
     final allowLabels = thumbnailCount <= 30;
 
     return Stack(
-      // Fix overflow issues with thumbnails at the edges
       clipBehavior: Clip.hardEdge,
       children: widget.controller.poiScreenPositions.entries.expand((entry) {
         final poiId = entry.key;
@@ -71,29 +80,32 @@ class _PoiThumbnailsLayerState extends State<PoiThumbnailsLayer> {
                 : poiSizes[poi.id] == null
                 ? pos.dy - 24
                 : pos.dy - poiSizes[poi.id]!.height,
-            child: poi.categories.contains('districts')
+            child: poi.categories != null && poi.categories!.contains('districts')
                 ? DistrictThumbnail(
                     poi: poi,
                     onSize: (size) {
-                      poiSizes[poi.id] = size;
+                      poiSizes[poi.id!] = size;
                     },
                     allowLabel: allowLabels,
                     onTap: () => widget.onTapPoi(poi),
+                    onLongPress: () => widget.onLongPressPoi(poi) ,
                   )
-                : showThumbnails && poi.featuredImageUrl!.isNotEmpty
+                : showThumbnails && poi.featuredImageUrl.isNotEmpty && context.watch<AppState>().isPoiEditMode == false
                 ? PoiThumbnail(
                     poi: poi,
                     onTap: () => widget.onTapPoi(poi),
+                    onLongPress: () => widget.onLongPressPoi(poi) ,
                     onSize: (size) {
-                      poiSizes[poi.id] = size;
+                      poiSizes[poi.id!] = size;
                     },
                     allowLabel: allowLabels,
                   )
                 : PinMarker(
                     poi: poi,
                     onTap: () => widget.onTapPoi(poi),
+                    onLongPress: () => widget.onLongPressPoi(poi) ,
                     onSize: (size) {
-                      poiSizes[poi.id] = size;
+                      poiSizes[poi.id!] = size;
                     },
                     allowLabel: allowLabels,
                   ),

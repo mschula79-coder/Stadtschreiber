@@ -6,14 +6,16 @@ import '../models/poi.dart';
 
 class DistrictThumbnail extends StatefulWidget {
   final PointOfInterest poi;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final ValueChanged<Size>? onSize;
   final bool allowLabel;
 
 
   const DistrictThumbnail({
     required this.poi,
-    required this.onTap,
+    this.onTap,
+    this.onLongPress,
     this.onSize,
     required this.allowLabel,
     super.key,
@@ -39,6 +41,7 @@ class _DistrictThumbnailState extends State<DistrictThumbnail> {
 
     return GestureDetector(
       onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

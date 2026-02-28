@@ -1,15 +1,15 @@
 import 'package:stadtschreiber/models/poi_metadata.dart';
+import 'package:stadtschreiber/services/debug_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:maplibre/maplibre.dart';
 
 import '../models/poi.dart';
 import '../models/article_entry.dart';
+import '../utils/osm_utils.dart';
 
 class PoiRepository {
   final supabase = Supabase.instance.client;
 
-  // ------------------------------------------------------------
-  // 1. POIs nach Kategorien laden
-  // ------------------------------------------------------------
   Future<List<PointOfInterest>> loadPoisforSelectedCategories(
     List<String> selectedCategories,
   ) async {
@@ -18,7 +18,7 @@ class PoiRepository {
     final response = await supabase
         .from('pois')
         .select(
-          'id, name, lat, lon, geom, categories, featured_image_url, history, articles, metadata, street, house_number, postcode, city, district, country, display_address, description',
+          'id, name, lat, lon, categories, featured_image_url, history, articles, metadata, street, house_number, postcode, city, district, country, display_address, description, geom_area, osm_id',
         )
         .overlaps('categories', selectedCategories)
         .order('name');
@@ -28,16 +28,29 @@ class PoiRepository {
         .toList();
   }
 
-  // ------------------------------------------------------------
-  // 2. Neuen POI speichern
-  // ------------------------------------------------------------
-  Future<void> saveNewPoiToSupabase(PointOfInterest poi) async {
-    await supabase.from('pois').insert(poi.toMap());
+  Future<PointOfInterest> saveOSMPoiToSupabase(PointOfInterest poi) async {
+    poi.newPoi = true;
+    poi.id = null;
+
+    final map = poi.toMap(); 
+    map.remove('id');
+
+    final result = await supabase
+        .from('pois')
+        .insert(map)
+        .select()
+        .single();
+
+    poi.id = result['id'] as int;
+    DebugService.log('neuer POI gespeichert: $result');
+
+    return poi;
   }
 
-  // ------------------------------------------------------------
-  // 3. Kategorien eines POIs aktualisieren
-  // ------------------------------------------------------------
+  Future<void> deletePoi(int id) async {
+    await supabase.from('pois').delete().eq('id', id);
+  }
+
   Future<void> updatePoiCategories({
     required int poiId,
     required List<String> categories,
@@ -48,34 +61,46 @@ class PoiRepository {
         .eq('id', poiId);
   }
 
-  // ------------------------------------------------------------
-  // 4. POI-Daten aktualisieren (History, Image, Articles, Metadata)
-  // ------------------------------------------------------------
   static Future<void> updatePoiDataInSupabase(
     int id,
+    String? name,
     String? history,
     String? featuredImageUrl,
     List<ArticleEntry> articles,
     PoiMetadata metadata,
-    String? description
+    String? description,
   ) async {
     final supabase = Supabase.instance.client;
 
     await supabase
         .from('pois')
         .update({
+          'name': name,
           'history': history,
           'featured_image_url': featuredImageUrl,
           'articles': articles.map((e) => e.toJson()).toList(),
           'metadata': metadata.toJson(),
-          'description': description
+          'description': description,
         })
         .eq('id', id);
   }
 
-  // ------------------------------------------------------------
-  // 5. POI nach ID laden
-  // ------------------------------------------------------------
+  Future<void> updatePoiGeomInSupabase(PointOfInterest poi) async {
+    final supabase = Supabase.instance.client;
+    await supabase
+        .from('pois')
+        .update({
+          'geom_area': poi.geomArea,
+          'lat': poi.location.lat,
+          'lon': poi.location.lon,
+        })
+        .eq('id', poi.id!);
+
+    DebugService.log(
+      'updatePoiGeomInSupabase name: $poi.name geom_area: $poi.geomArea label_location: $poi.location',
+    );
+  }
+
   Future<PointOfInterest?> loadPoiById(int id) async {
     final result = await supabase
         .from('pois')
@@ -87,6 +112,7 @@ class PoiRepository {
     return PointOfInterest.fromSupabase(result);
   }
 
+  // TODO !! show all button, do not save to db, flag customDataChanged, search for buildings
   Future<List<PointOfInterest>> searchPois(
     String query,
     double lat,
@@ -100,23 +126,27 @@ class PoiRepository {
     );
     print("TEST RPC RESULT:");
     print(result); */
-
-    final response = await supabase.rpc(
-      'pois_search_with_distance_and_address',
-      params: {'q': query, 'lat_input': lat, 'lon_input': lon},
-    );
-
-    final pois = response.map<PointOfInterest>((row) {
-      final poi = PointOfInterest.fromSupabase(row);
-      return poi;
-    }).toList();
-
-    
-
-    /*final PointOfInterest firstpoi = list.first;
-     print("FIRST POI: ${firstpoi.toString()}"); */
-
-    return pois;
+    if (query.startsWith('nearby')) {
+      final cleanedQuery = query.substring('nearby'.length).trim();
+      final osmResult = await searchNearbyOverpass(
+        query: cleanedQuery,
+        lat: lat,
+        lon: lon,
+      );
+      return osmResult.map<PointOfInterest>((row) {
+        return PointOfInterest.fromOverpass(row);
+      }).toList();
+    } else {
+      final response = await supabase.rpc(
+        'pois_search_with_distance_and_address',
+        params: {'q': query, 'lat_input': lat, 'lon_input': lon},
+      );
+      final pois = response.map<PointOfInterest>((row) {
+        final poi = PointOfInterest.fromSupabase(row);
+        return poi;
+      }).toList();
+      return pois;
+    }
   }
 
   Future<void> updatePoiAddressInSupabase(
@@ -135,5 +165,44 @@ class PoiRepository {
           'display_address': address['display_address'],
         })
         .eq('id', id);
+  }
+
+  Future<PointOfInterest> newPoi(Geographic location) async {
+    final supabase = Supabase.instance.client;
+
+    final result = await supabase
+        .from('pois')
+        .insert({
+          'name': 'newPOI',
+          'lat': location.lat,
+          'lon': location.lon,
+        })
+        .select()
+        .single();
+    final newId = result['id'];
+
+    return PointOfInterest(
+      id: newId,
+      name: 'newPOI',
+      location: location,
+      featuredImageUrl: '',
+      categories: [],
+      articles: [],
+      metadata: PoiMetadata(),
+      geometryType: 'point',
+      newPoi: true,
+    );
+  }
+
+  /// Check if a POI with the given OSM ID already exists in the database and load it if it does.
+  Future<PointOfInterest?> loadPoiByOSMId(int osmId) async {
+    final result = await supabase
+        .from('pois')
+        .select()
+        .eq('osm_id', osmId)
+        .maybeSingle();
+
+    if (result == null) return null;
+    return PointOfInterest.fromSupabase(result);
   }
 }

@@ -10,7 +10,7 @@ import 'repositories/poi_repository.dart';
 import 'screens/auth_gate.dart';
 import 'state/app_state.dart';
 import 'state/categories_menu_state.dart';
-import 'state/poi_panel_and_selection_state.dart';
+import 'state/poi_panel_state.dart';
 import 'state/pois_thumbnails_state.dart';
 
 void main() async {
@@ -39,7 +39,7 @@ void main() async {
 
           provider.ChangeNotifierProvider(create: (_) => CategoriesMenuState()),
           provider.ChangeNotifierProvider(create: (_) => AppState()),
-          provider.ChangeNotifierProvider(create: (_) => PoiPanelAndSelectionState()),
+          provider.ChangeNotifierProvider(create: (_) => PoiPanelState()),
           provider.ChangeNotifierProvider(create: (_) => PoiThumbnailsState()),
           provider.ChangeNotifierProvider(
             create: (_) => PoiThumbnailsController(),
