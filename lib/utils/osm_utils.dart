@@ -59,7 +59,6 @@ Future<List<dynamic>> searchNearbyOverpass({
   required double lon,
   required String query,
 }) async {
-
   final box = createViewbox(lat, lon, 100);
 
   final south = box['bottom'];
@@ -81,6 +80,49 @@ Future<List<dynamic>> searchNearbyOverpass({
         node["place"]["name"]($south,$west,$north,$east);
         way["place"]["name"]($south,$west,$north,$east);
         relation["place"]["name"]($south,$west,$north,$east);
+      );
+      out center;
+      """;
+
+  final url = Uri.parse("https://overpass-api.de/api/interpreter");
+
+  final response = await http.post(
+    url,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "User-Agent": "StadtschreiberApp/1.0 (Basel)",
+    },
+    body: {"data": overpassQuery},
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception("Overpass error: ${response.statusCode}");
+  }
+
+  final json = jsonDecode(response.body);
+
+  return json["elements"] ?? [];
+}
+
+Future<List<dynamic>> searchNearbyOverpassBuildings({
+  required double lat,
+  required double lon,
+  required String query,
+}) async {
+  final box = createViewbox(lat, lon, 100);
+
+  final south = box['bottom'];
+  final west = box['left'];
+  final north = box['top'];
+  final east = box['right'];
+
+  // Overpass Query
+  final overpassQuery =
+      """
+      [out:json][timeout:25];
+      (
+        way["building"]($south,$west,$north,$east);
+        relation["building"]($south,$west,$north,$east);
       );
       out center;
       """;

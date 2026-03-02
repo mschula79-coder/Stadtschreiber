@@ -15,7 +15,7 @@ import '../repositories/poi_repository.dart';
 import '../repositories/districts_repository.dart';
 import '../state/app_state.dart';
 import '../state/poi_panel_state.dart';
-import '../state/pois_thumbnails_state.dart';
+import '../state/poi_thumbnails_state.dart';
 import '../state/categories_menu_state.dart';
 import '../services/geo_json_service.dart';
 import '../services/debug_service.dart';
@@ -112,6 +112,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
       DebugService.log('SelectedPoi: $selectedPoi.name');
     }
     context.watch<PoiThumbnailsState>();
+    final poiThumbnailsState = context.read<PoiThumbnailsState>();
     final appState = context.watch<AppState>();
     final poiPanelState = context.read<PoiPanelState>();
 
@@ -163,6 +164,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
                   // Long press on map without poi edit mode -> create new poi
                   if (!appState.isPoiEditMode) {
                     if (appState.isAdmin) {
+                      poiPanelState.closePanel();
                       final newPoi = await poiRepository.newPoi(event.point);
                       _addPoiToMapScreen(newPoi);
 
@@ -285,30 +287,50 @@ class MapScreenState extends ConsumerState<MapScreen> {
           ),
         ),
 
-        Consumer2<PoiThumbnailsController, PoiThumbnailsState>(
-          builder: (context, controller, visibleState, _) {
-            return PoiThumbnailsLayer(
-              controller: controller,
-              visiblePOIs: visibleState.visible,
-              zoom: controller.currentZoom,
+        appState.isPoiEditMode
+            ? Positioned(
+                bottom: 20,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      appState.setPoiEditMode(false);
+                      final poi = ref
+                          .read(selectedPoiProvider)!
+                          .cloneWithNewValues();
+                      ref.read(selectedPoiProvider.notifier).setPoi(poi);
 
-              // onTapPoi
-              onTapPoi: (poi) {
-                DebugService.log('Poi selected from screen');
-                _selectPoiAndOpenPanel(poi);
-              },
-              onLongPressPoi: (poi) {
-                DebugService.log('onLongPressPoi');
-                appState.setPoiEditMode(true);
-                final poiController = context.read<PoiController>();
-                poiController.setDraggingPoi(poi);
-              },
-            );
-          },
-        ),
+                      ref.read(selectedPoiProvider.notifier).clear();
+                    },
+                    child: Text('Edit Mode beenden'),
+                  ),
+                ),
+              )
+            : Consumer2<PoiThumbnailsController, PoiThumbnailsState>(
+                builder: (context, controller, visibleState, _) {
+                  return PoiThumbnailsLayer(
+                    controller: controller,
+                    visiblePOIs: visibleState.visible,
+                    zoom: controller.currentZoom,
+
+                    // onTapPoi
+                    onTapPoi: (poi) {
+                      DebugService.log('Poi selected from screen');
+                      _selectPoiAndOpenPanel(poi);
+                    },
+                    onLongPressPoi: (poi) {
+                      DebugService.log('onLongPressPoi');
+                      final poiController = context.read<PoiController>();
+                      poiController.setDraggingPoi(poi);
+                    },
+                  );
+                },
+              ),
         MapActions(
           onChangeStyle: changeStyle,
           onTapSearchedPoi: _addPoiToMapScreen,
+          onShowAllResults: _addPoiListToMapScreen,
           onLocateMe: _locateMe,
           onRemoveThumbnails: _removeAllThumbnails,
           onToggleAdminView: () {
@@ -318,14 +340,19 @@ class MapScreenState extends ConsumerState<MapScreen> {
           isAdminViewEnabled: appState.isAdminViewEnabled,
         ),
         // PoiPanel
-        Selector<PoiPanelState, bool>(
-          selector: (_, panel) => (panel.isPanelOpen),
-          builder: (_, isPanelOpen, _) {
-            return isPanelOpen
-                ? Align(alignment: Alignment.bottomCenter, child: PoiPanel())
-                : const SizedBox.shrink();
-          },
-        ),
+        appState.isPoiEditMode
+            ? const SizedBox.shrink()
+            : Selector<PoiPanelState, bool>(
+                selector: (_, panel) => (panel.isPanelOpen),
+                builder: (_, isPanelOpen, _) {
+                  return isPanelOpen
+                      ? Align(
+                          alignment: Alignment.bottomCenter,
+                          child: PoiPanel(),
+                        )
+                      : const SizedBox.shrink();
+                },
+              ),
 
         // My Location Blue Dot
         if (userMarkerOffset != null)
@@ -344,7 +371,6 @@ class MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
           ),
-        // PoiEdits TODO Drag Hinweis und Status und Poi Name anzeigen
         Consumer<PoiController>(
           builder: (_, controller, _) {
             return controller.isDraggingPoi
@@ -364,7 +390,8 @@ class MapScreenState extends ConsumerState<MapScreen> {
                           );
 
                           if (confirmed) {
-                            controller.deletePoi(selectedPoi!);
+                            poiThumbnailsState.removePoi(selectedPoi!);
+                            controller.deletePoi(selectedPoi);
                             appState.setPoiEditMode(false);
                             ref.read(selectedPoiProvider.notifier).clear();
 
@@ -686,8 +713,10 @@ NEWPOI
   Future<void> updatePoiPointsData(PointOfInterest poi) async {
     DebugService.log('MapScreen updatePoiPointsData');
 
-    final newGeoJson = poi.getPointsGeoJson()!;
-    mapStyle!.updateGeoJsonSource(id: 'poi-points-source', data: newGeoJson);
+    final newGeoJson = poi.getPointsGeoJson();
+    if (newGeoJson != null) {
+      mapStyle!.updateGeoJsonSource(id: 'poi-points-source', data: newGeoJson);
+    }
   }
 
   Future<void> removePoiPointsLayer() async {
@@ -738,6 +767,27 @@ NEWPOI
     _selectPoiAndOpenPanel(completedPoi);
   }
 
+  /// completes poi data, adds poi to visible pois in PoiThumbnailsState, updates screen positions and opens the panel for the poi
+  Future<void> _addPoiListToMapScreen(List<PointOfInterest> pois) async {
+    DebugService.log('MapScreen run _addPoiToMapScreen(poi)');
+    final visiblePoiState = context.read<PoiThumbnailsState>();
+    final thumbnailsController = context.read<PoiThumbnailsController>();
+    final poiController = context.read<PoiController>();
+
+    for (final poi in pois) {
+      final completedPoi = await poiController.completePoi(poi);
+      visiblePoiState.add(completedPoi);
+    }
+
+    if (mapController != null) {
+      visiblePoiState.removeAll();
+      await thumbnailsController.updatePoiScreenPositions(
+        controller: mapController!,
+        visiblePOIs: visiblePoiState.visible,
+      );
+    }
+  }
+
   Future<void> _addPoisforSelectedCategories() async {
     if (!mounted) return;
     final categoriesMenuState = context.read<CategoriesMenuState>();
@@ -771,7 +821,7 @@ NEWPOI
 
   void _removeAllThumbnails() {
     final state = context.read<PoiThumbnailsState>();
-    // TODO context.read<CategoriesMenuState>().setSelected();
+    context.read<CategoriesMenuState>().clear();
     state.setAll([]);
     _requestUpdateScreenpositions(MapUpdateType.cameraIdle);
   }
@@ -781,15 +831,15 @@ NEWPOI
   Future<void> _centerSelectedPoiConsideringPanel(PointOfInterest poi) async {
     if (mapController == null) return;
 
-    final size = MediaQuery.of(context).size;
-    final halfWidth = size.width / 2;
+    final screenSize = MediaQuery.of(context).size;
+    final halfWidth = screenSize.width / 2;
 
     final screenTop = mapController!.toLngLat(Offset(halfWidth, 0)).lat;
     final screenBottom = mapController!
-        .toLngLat(Offset(halfWidth, size.height))
+        .toLngLat(Offset(halfWidth, screenSize.height))
         .lat;
     final mapScreenBottom = mapController!
-        .toLngLat(Offset(halfWidth, (size.height + panelHeight) / 2))
+        .toLngLat(Offset(halfWidth, (screenSize.height - panelHeight)))
         .lat;
 
     final distanceMapCentertoScreenCenter =
@@ -802,6 +852,9 @@ NEWPOI
           lon: poi.location.x,
         ),
         nativeDuration: const Duration(milliseconds: 200),
+      );
+      DebugService.log(
+        "_centerSelectedPoiConsideringPanel: Camera animated considering panel height: $panelHeight, screen: $screenSize, distanceMapCentertoScreenCenter: $distanceMapCentertoScreenCenter",
       );
     } catch (e) {
       DebugService.log(

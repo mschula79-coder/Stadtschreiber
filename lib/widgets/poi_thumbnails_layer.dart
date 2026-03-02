@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../controllers/poi_thumbnails_controller.dart';
-import '../state/app_state.dart';
 import '../models/poi.dart';
 import '../services/debug_service.dart';
 import '../widgets/poi_pin_marker.dart';
@@ -30,28 +28,25 @@ class PoiThumbnailsLayer extends StatefulWidget {
 
 class _PoiThumbnailsLayerState extends State<PoiThumbnailsLayer> {
 
-  // TODO poiSizes is never set
-
   final Map<int, Size> poiSizes = {};
 
   @override
   Widget build(BuildContext context) {
-        DebugService.log('Build PoiThumbnailsLayer');
+    DebugService.log('Build PoiThumbnailsLayer');
 
     final showThumbnails = widget.zoom >= 14.0;
 
     final screenSize = MediaQuery.of(context).size;
-    
+
     int thumbnailCount = 0;
-    
+
     widget.controller.poiScreenPositions.forEach((poiId, pos) {
       if (pos.dx >= 0 &&
-            pos.dx <= screenSize.width &&
-            pos.dy >= 0 &&
-            pos.dy <= screenSize.height)
-      {
+          pos.dx <= screenSize.width &&
+          pos.dy >= 0 &&
+          pos.dy <= screenSize.height) {
         thumbnailCount++;
-        }
+      }
     });
 
     final allowLabels = thumbnailCount <= 30;
@@ -69,47 +64,53 @@ class _PoiThumbnailsLayerState extends State<PoiThumbnailsLayer> {
         final poi = matching.first;
 
         return [
-          Positioned(
-            left: showThumbnails
-                ? poiSizes[poi.id] == null
+          poi.categories != null && poi.categories!.contains('districts')
+              // District Thumbnail
+              ? Positioned(
+                  left: pos.dx - 10,
+                  top: pos.dy - 12,
+                  child: DistrictThumbnail(
+                    poi: poi,
+                    onSize: (size) {
+                      poiSizes[poi.id!] = size;
+                    },
+                    allowLabel: allowLabels,
+                    onTap: () => widget.onTapPoi(poi),
+                    onLongPress: () => widget.onLongPressPoi(poi),
+                  ),
+                )
+              // Regular Poi Thumbnail
+              : showThumbnails && poi.featuredImageUrl.isNotEmpty
+              ? 
+                Positioned(
+                  left: poiSizes[poi.id] == null
                       ? pos.dx - 50
-                      : pos.dx - poiSizes[poi.id]!.width / 2.5
-                : pos.dx - 10,
-            top: showThumbnails
-                ? pos.dy - 24
-                : poiSizes[poi.id] == null
-                ? pos.dy - 24
-                : pos.dy - poiSizes[poi.id]!.height,
-            child: poi.categories != null && poi.categories!.contains('districts')
-                ? DistrictThumbnail(
-                    poi: poi,
-                    onSize: (size) {
-                      poiSizes[poi.id!] = size;
-                    },
-                    allowLabel: allowLabels,
-                    onTap: () => widget.onTapPoi(poi),
-                    onLongPress: () => widget.onLongPressPoi(poi) ,
-                  )
-                : showThumbnails && poi.featuredImageUrl.isNotEmpty && context.watch<AppState>().isPoiEditMode == false
-                ? PoiThumbnail(
+                      : pos.dx - poiSizes[poi.id]!.width / 2.5,
+                  top: poiSizes[poi.id] == null
+                      ? pos.dy - 24
+                      : pos.dy - poiSizes[poi.id]!.height / 2,
+                  child: PoiThumbnail(
                     poi: poi,
                     onTap: () => widget.onTapPoi(poi),
-                    onLongPress: () => widget.onLongPressPoi(poi) ,
-                    onSize: (size) {
-                      poiSizes[poi.id!] = size;
-                    },
-                    allowLabel: allowLabels,
-                  )
-                : PinMarker(
-                    poi: poi,
-                    onTap: () => widget.onTapPoi(poi),
-                    onLongPress: () => widget.onLongPressPoi(poi) ,
+                    onLongPress: () => widget.onLongPressPoi(poi),
                     onSize: (size) {
                       poiSizes[poi.id!] = size;
                     },
                     allowLabel: allowLabels,
                   ),
-          ),
+                )
+              // Pin Marker (without thumbnail)
+              : Positioned(
+                  left: pos.dx - 10,
+                  top: pos.dy - 24,
+                  child: PinMarker(
+                    poi: poi,
+                    onTap: () => widget.onTapPoi(poi),
+                    onLongPress: () => widget.onLongPressPoi(poi),
+                    allowLabel: allowLabels,
+                  ),
+                ),
+
           // 🔴 Red dot (underneath)
           /* Positioned(
             left: pos.dx - 4,

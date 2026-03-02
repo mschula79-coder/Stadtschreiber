@@ -13,6 +13,12 @@ class PoiThumbnailsState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void removePoi(PointOfInterest poi) {
+    visible.removeWhere((p) => p.id == poi.id);
+    DebugService.log('PoiThumbnailsState.removePoi $poi.name - notifyListeners');
+    notifyListeners();
+  }
+
   void setAll(List<PointOfInterest> pois) {
     visible
       ..clear()
@@ -20,4 +26,12 @@ class PoiThumbnailsState extends ChangeNotifier {
     DebugService.log('PoiThumbnailsState.setAll: $pois.length - notifyListeners ');
     notifyListeners();
   }
+
+  void removeAll() {
+    visible.clear();
+    DebugService.log('PoiThumbnailsState.removeAll - notifyListeners ');
+    notifyListeners();
+  }
+
+
 }

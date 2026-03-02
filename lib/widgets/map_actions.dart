@@ -8,8 +8,6 @@ import '../provider/poi_repository_provider.dart';
 import '../services/debug_service.dart';
 import '../provider/camera_provider.dart';
 
-// TODO Debug Polygon addition and dragging
-
 class MapActions extends ConsumerStatefulWidget {
   final VoidCallback onChangeStyle;
   final VoidCallback onLocateMe;
@@ -17,8 +15,8 @@ class MapActions extends ConsumerStatefulWidget {
   final VoidCallback onToggleAdminView;
   final bool isAdmin;
   final bool isAdminViewEnabled;
-
   final Future<void> Function(PointOfInterest) onTapSearchedPoi;
+  final Future<void> Function(List<PointOfInterest>) onShowAllResults;
 
   const MapActions({
     super.key,
@@ -29,6 +27,7 @@ class MapActions extends ConsumerStatefulWidget {
     required this.onToggleAdminView,
     required this.isAdmin,
     required this.isAdminViewEnabled,
+    required this.onShowAllResults,
   });
 
   @override
@@ -59,57 +58,119 @@ class _MapActionsState extends ConsumerState<MapActions> {
               camera: camera,
             )),
           )
-        : const AsyncValue.data([]);
+        : const AsyncValue<List<PointOfInterest>>.data([]);
+
 
     return Stack(
-      children: [   
+      children: [
         Positioned(
           top: 20,
           right: 20,
-          child: 
-            //search row
-            Row(
-              children: [
-                // SEARCH RESULTS DROPDOWN
-                Column(
-                  children: [
-                    // SEARCH FIELD (only visible when toggled)
-                    if (_searchVisible)
-                      Container(
-                        width: 220,
-                        padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
-                        margin: const EdgeInsets.fromLTRB(0, 0, 4, 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: const [
-                            BoxShadow(color: Colors.black26, blurRadius: 6),
-                          ],
-                        ),
-
-                        child: TextField(
-                          controller: _searchController,
-                          autofocus: true,
-                          decoration: const InputDecoration(
-                            hintText: "Search POIs…",
-                            border: InputBorder.none,
+          child:
+              //search row
+              Row(
+                children: [
+                  // SEARCH RESULTS DROPDOWN
+                  Column(
+                    children: [
+                      // SEARCH FIELD (only visible when toggled)
+                      if (_searchVisible)
+                        Container(
+                          width: 220,
+                          padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
+                          margin: const EdgeInsets.fromLTRB(0, 0, 4, 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: const [
+                              BoxShadow(color: Colors.black26, blurRadius: 6),
+                            ],
                           ),
-                          onChanged: (value) {
-                            setState(() => _searchQuery = value);
-                          },
+
+                          child: TextField(
+                            controller: _searchController,
+                            autofocus: true,
+                            decoration: const InputDecoration(
+                              hintText: "Search POIs…",
+                              border: InputBorder.none,
+                            ),
+                            onChanged: (value) {
+                              setState(() => _searchQuery = value);
+                            },
+                          ),
                         ),
-                      ),
-                    // END OF SEARCH FIELD (only visible when toggled)
-                    if (_searchVisible)
-                      searchResults.when(
-                        data: (poiresultslist) {
-                          if (poiresultslist.isEmpty) {
-                            return const SizedBox.shrink();
-                          }
-                          return Container(
+                      // END OF SEARCH FIELD (only visible when toggled)
+                      if (_searchVisible)
+                        searchResults.when(
+                          data: (poiresultslist) {
+                            if (poiresultslist.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+                            return Container(
+                              width: 220,
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxHeight: 5 * 56, // 5 ListTiles
+                                ),
+                                // SEARCH RESULTS LIST
+                                child: Column(
+                                  children: [
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      itemCount: poiresultslist.length,
+                                      itemBuilder: (context, index) {
+                                        final poi = poiresultslist[index];
+                                        return ListTile(
+                                          dense: true,
+                                          title: Text(poi.name),
+                                          subtitle: poi.displayAddress != null
+                                              ? Text(
+                                                  '${poi.city ?? ''}, ${poi.street ?? ''} ${poi.houseNumber ?? ''}',
+                                                )
+                                              : null,
+                                          onTap: () {
+                                            widget.onTapSearchedPoi(poi);
+                                            DebugService.log(
+                                              'Poi selected from search results',
+                                            );
+
+                                            setState(() {
+                                              _searchVisible = false;
+                                              _searchController.clear();
+                                            });
+                                          },
+                                        );
+                                      },
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        widget.onShowAllResults(poiresultslist);
+                                      },
+                                      child: const Text(
+                                        "Show all results on map",
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                          loading: () => Container(
                             width: 220,
                             margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(4),
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(8),
@@ -117,88 +178,41 @@ class _MapActionsState extends ConsumerState<MapActions> {
                                 BoxShadow(color: Colors.black26, blurRadius: 6),
                               ],
                             ),
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxHeight: 5 * 56, // 5 ListTiles
-                              ),
-                              // SEARCH RESULTS LIST
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: poiresultslist.length,
-                                itemBuilder: (context, index) {
-                                  final poi = poiresultslist[index];
-                                  return ListTile(
-                                    dense: true,
-                                    title: Text(poi.name),
-                                    subtitle: poi.displayAddress != null
-                                        ? Text(
-                                            '${poi.city ?? ''}, ${poi.street ?? ''} ${poi.houseNumber ?? ''}',
-                                          )
-                                        : null,
-                                    onTap: ()  {
-                                      widget.onTapSearchedPoi(poi);
-                                      DebugService.log(
-                                        'Poi selected from search results',
-                                      );
-
-                                      setState(() {
-                                        _searchVisible = false;
-                                        _searchController.clear();
-                                      });
-                                    },
-                                  );
-                                },
-                              ),
+                            child: const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
-                          );
-                        },
-                        loading: () => Container(
-                          width: 220,
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: const [
-                              BoxShadow(color: Colors.black26, blurRadius: 6),
-                            ],
                           ),
-                          child: const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                          error: (err, st) => Container(
+                            width: 220,
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: const [
+                                BoxShadow(color: Colors.black26, blurRadius: 6),
+                              ],
+                            ),
+                            child: Text("Error: $err"),
                           ),
                         ),
-                        error: (err, st) => Container(
-                          width: 220,
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: const [
-                              BoxShadow(color: Colors.black26, blurRadius: 6),
-                            ],
-                          ),
-                          child: Text("Error: $err"),
-                        ),
-                      ),
 
-                    // END OF SEARCH RESULTS DROPDOWN
-                  ],
-                ),
-                FloatingActionButton(
-                  heroTag: "SearchToggle",
-                  onPressed: () {
-                    setState(() {
-                      _searchVisible = !_searchVisible;
-                      _searchController.clear();
-                    });
-                  },
-                  mini: true,
-                  child: Icon(_searchVisible ? Icons.close : Icons.search),
-                ),
-              ],
-            ),
-          
+                      // END OF SEARCH RESULTS DROPDOWN
+                    ],
+                  ),
+                  FloatingActionButton(
+                    heroTag: "SearchToggle",
+                    onPressed: () {
+                      setState(() {
+                        _searchVisible = !_searchVisible;
+                        _searchController.clear();
+                      });
+                    },
+                    mini: true,
+                    child: Icon(_searchVisible ? Icons.close : Icons.search),
+                  ),
+                ],
+              ),
         ),
 
         // MAP ACTIONS BUTTONS

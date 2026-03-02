@@ -47,8 +47,6 @@ class PoiController with ChangeNotifier {
   }
 
   void setDraggingPoi(PointOfInterest poi) {
-    // TODO showTrash and dragging info = true;
-    // isOverTrash = false;
 
     _dragPoi = poi;
     DebugService.log(
@@ -63,7 +61,6 @@ class PoiController with ChangeNotifier {
     notifyListeners();
   }
 
-  // TODO clearSelection, clearfrom loaded poi
   void deletePoi(PointOfInterest poi) {
     poiRepo.deletePoi(poi.id!);
     DebugService.log('PoiController.deletePoi $poi.name - notifyListeners');
@@ -83,7 +80,6 @@ class PoiController with ChangeNotifier {
       final freshExisting = await poiRepo.loadPoiByOSMId(poi.osmId!);
       if (freshExisting == null) {
         final freshNew = await poiRepo.saveOSMPoiToSupabase(poi);
-        // TODO handling of visiblePois
         pois.add(freshNew);
         return freshNew;
       } else {
@@ -173,16 +169,13 @@ class PoiController with ChangeNotifier {
   }
 
   Future<void> ensurePoiHasAddress(PointOfInterest poi) async {
-    final hasAddress =
-        (poi.displayAddress != null && poi.displayAddress!.isNotEmpty) ||
-        (poi.street != null && poi.street!.isNotEmpty);
 
-    if (hasAddress) {
+    if (poi.houseNumber != null && poi.houseNumber!.isNotEmpty) {
       return;
     }
 
     DebugService.log('🟡 Hole Adresse für POI ${poi.id} (${poi.name})…');
-    // TODO check and add house number
+    
     final address = await fetchStructuredAddressFromOSM(
       poi.location.lat,
       poi.location.lon,
@@ -192,21 +185,8 @@ class PoiController with ChangeNotifier {
       return;
     }
 
-    /* print('🟢 Adresse von OSM: ${address['display_address']}'); */
-    // DEBUG house number
     await poiRepo.updatePoiAddressInSupabase(poi.id!, address);
-    /*     print('🟢 Adresse in Supabase gespeichert.'); */
   }
-
-  /* Future<List<PointOfInterest>> searchRemote(
-    String query,
-    double lat,
-    double lon,
-  ) async {
-    print("🟣 searchRemote() CALLED with query='$query'");
-    if (query.isEmpty) return [];
-    return await poiRepo.searchPois(query.trimRight(), lat, lon);
-  } */
 
   Future<int?> findPoiPointIndexAtGeoPosition(
     List<maplibre.Geographic> points,

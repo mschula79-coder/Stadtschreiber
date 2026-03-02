@@ -1,4 +1,5 @@
 import 'package:maplibre/maplibre.dart';
+import 'package:stadtschreiber/models/image_entry.dart';
 import 'package:stadtschreiber/services/debug_service.dart';
 import 'dart:convert';
 import '../models/article_entry.dart';
@@ -26,8 +27,7 @@ class PointOfInterest {
   String geometryType; // 'point' | 'linestring' | 'polygon' | 'multipolygon',
   final int? osmId;
   bool newPoi = false;
-  // TODO implement hasUnsavedChanges
-  bool hasUnsavedChanges = false;
+  final List<ImageEntry> images;
 
   PointOfInterest({
     required this.id,
@@ -51,6 +51,7 @@ class PointOfInterest {
     this.geometryType = 'point',
     this.osmId,
     required newPoi,
+    required this.images,
   });
 
   factory PointOfInterest.fromSupabase(Map<String, dynamic> row) {
@@ -100,6 +101,9 @@ class PointOfInterest {
           (row['geom_area']?['type'] as String?)?.toLowerCase() ?? 'point',
       osmId: row['osm_id'] as int?,
       newPoi: false,
+      images: (row['images'] as List<dynamic>)
+          .map((e) => ImageEntry.fromJson(e))
+          .toList(),
     );
   }
 
@@ -126,14 +130,13 @@ class PointOfInterest {
     int? osmId,
     bool? newPoi,
     bool? hasUnsavedChanges,
+    List<ImageEntry>? images,
   }) {
     DebugService.log("Cloning POI with new values: id=$id, name=$name");
 
     if (geometryType == 'polygon') {
       closePolygonIfNeeded();
     }
-
-    
 
     return PointOfInterest(
       id: id ?? this.id,
@@ -163,7 +166,8 @@ class PointOfInterest {
       geometryType: geometryType ?? this.geometryType,
       osmId: osmId ?? this.osmId,
       newPoi: newPoi ?? this.newPoi,
-    )..hasUnsavedChanges = hasUnsavedChanges ?? this.hasUnsavedChanges;
+      images: images ?? this.images,
+    );
   }
 
   /// Creates map from POI values
@@ -187,6 +191,7 @@ class PointOfInterest {
       'description': description,
       'geom_area': geomArea,
       'osm_id': osmId,
+      'images': images.map((e) => e.toJson()).toList(),
     };
   }
 
@@ -436,11 +441,11 @@ class PointOfInterest {
 
       osmId: json['id'],
       newPoi: true,
+      images: []
     );
   }
 }
 
-// TODO add messages for invalid geometry
 extension PoiGeometryValidation on PointOfInterest {
   bool isGeometryValid() {
     final points = getPoints();

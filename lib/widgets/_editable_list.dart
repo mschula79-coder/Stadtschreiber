@@ -24,6 +24,8 @@ class EditableList<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(0),
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
       children: [
         if (onAdd != null && isAdminViewEnabled)
           Padding(

@@ -1,3 +1,4 @@
+import 'package:stadtschreiber/models/image_entry.dart';
 import 'package:stadtschreiber/models/poi_metadata.dart';
 import 'package:stadtschreiber/services/debug_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -18,7 +19,7 @@ class PoiRepository {
     final response = await supabase
         .from('pois')
         .select(
-          'id, name, lat, lon, categories, featured_image_url, history, articles, metadata, street, house_number, postcode, city, district, country, display_address, description, geom_area, osm_id',
+          'id, name, lat, lon, categories, featured_image_url, history, articles, metadata, street, house_number, postcode, city, district, country, display_address, description, geom_area, osm_id, images',
         )
         .overlaps('categories', selectedCategories)
         .order('name');
@@ -32,14 +33,10 @@ class PoiRepository {
     poi.newPoi = true;
     poi.id = null;
 
-    final map = poi.toMap(); 
+    final map = poi.toMap();
     map.remove('id');
 
-    final result = await supabase
-        .from('pois')
-        .insert(map)
-        .select()
-        .single();
+    final result = await supabase.from('pois').insert(map).select().single();
 
     poi.id = result['id'] as int;
     DebugService.log('neuer POI gespeichert: $result');
@@ -61,28 +58,38 @@ class PoiRepository {
         .eq('id', poiId);
   }
 
-  static Future<void> updatePoiDataInSupabase(
-    int id,
+  static Future<void> updatePoiDataInSupabase({
+    required int id,
     String? name,
     String? history,
     String? featuredImageUrl,
-    List<ArticleEntry> articles,
-    PoiMetadata metadata,
+    List<ArticleEntry>? articles,
+    PoiMetadata? metadata,
     String? description,
-  ) async {
+    List<ImageEntry>? images,
+  }) async {
     final supabase = Supabase.instance.client;
 
-    await supabase
-        .from('pois')
-        .update({
-          'name': name,
-          'history': history,
-          'featured_image_url': featuredImageUrl,
-          'articles': articles.map((e) => e.toJson()).toList(),
-          'metadata': metadata.toJson(),
-          'description': description,
-        })
-        .eq('id', id);
+    // Dynamische Update-Map
+    final Map<String, dynamic> updateData = {};
+
+    if (name != null) updateData['name'] = name;
+    if (history != null) updateData['history'] = history;
+    if (featuredImageUrl != null) {
+      updateData['featured_image_url'] = featuredImageUrl;
+    }
+    if (articles != null) {
+      updateData['articles'] = articles.map((e) => e.toJson()).toList();
+    }
+    if (metadata != null) updateData['metadata'] = metadata.toJson();
+    if (description != null) updateData['description'] = description;
+    if (images != null) {
+      updateData['images'] = images.map((e) => e.toJson()).toList();
+    }
+
+    if (updateData.isEmpty) return; // nichts zu tun
+
+    await supabase.from('pois').update(updateData).eq('id', id);
   }
 
   Future<void> updatePoiGeomInSupabase(PointOfInterest poi) async {
@@ -112,20 +119,11 @@ class PoiRepository {
     return PointOfInterest.fromSupabase(result);
   }
 
-  // TODO !! show all button, do not save to db, flag customDataChanged, search for buildings
   Future<List<PointOfInterest>> searchPois(
     String query,
     double lat,
     double lon,
   ) async {
-    /*print("🟢 searchPois() CALLED");
-
-    final result = await supabase.rpc(
-      'pois_search_with_distance_and_address',
-      params: {'q': 'erle', 'lat_input': 47.55634, 'lon_input': 7.59253},
-    );
-    print("TEST RPC RESULT:");
-    print(result); */
     if (query.startsWith('nearby')) {
       final cleanedQuery = query.substring('nearby'.length).trim();
       final osmResult = await searchNearbyOverpass(
@@ -133,18 +131,30 @@ class PoiRepository {
         lat: lat,
         lon: lon,
       );
-      return osmResult.map<PointOfInterest>((row) {
+      final List<PointOfInterest> pois = osmResult.map<PointOfInterest>((row) {
         return PointOfInterest.fromOverpass(row);
       }).toList();
+      return pois;
+    }
+    if (query.startsWith('nearby buildings')) {
+      final cleanedQuery = query.substring('nearby buildings'.length).trim();
+      final osmResult = await searchNearbyOverpassBuildings(
+        query: cleanedQuery,
+        lat: lat,
+        lon: lon,
+      );
+      final List<PointOfInterest> pois = osmResult.map<PointOfInterest>((row) {
+        return PointOfInterest.fromOverpass(row);
+      }).toList();
+      return pois;
     } else {
       final response = await supabase.rpc(
         'pois_search_with_distance_and_address',
         params: {'q': query, 'lat_input': lat, 'lon_input': lon},
       );
-      final pois = response.map<PointOfInterest>((row) {
-        final poi = PointOfInterest.fromSupabase(row);
-        return poi;
-      }).toList();
+      final List<PointOfInterest> pois = response
+          .map<PointOfInterest>((row) => PointOfInterest.fromSupabase(row))
+          .toList();
       return pois;
     }
   }
@@ -172,11 +182,7 @@ class PoiRepository {
 
     final result = await supabase
         .from('pois')
-        .insert({
-          'name': 'newPOI',
-          'lat': location.lat,
-          'lon': location.lon,
-        })
+        .insert({'name': 'newPOI', 'lat': location.lat, 'lon': location.lon})
         .select()
         .single();
     final newId = result['id'];
@@ -191,6 +197,7 @@ class PoiRepository {
       metadata: PoiMetadata(),
       geometryType: 'point',
       newPoi: true,
+      images: []
     );
   }
 
