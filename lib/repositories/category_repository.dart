@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/category.dart';
@@ -19,13 +20,13 @@ class CategoryRepository {
       for (var c in catListRaw) c['id'] as String: CategoryDto.fromJson(c),
     };
 
-    final relationsRaw = await supabase
+    final parentChildRelationsRaw = await supabase
         .from('category_relations')
         .select('parent_id, child_id');
 
     final Map<String, List<String>> childrenMap = {};
 
-    for (var r in relationsRaw) {
+    for (var r in parentChildRelationsRaw) {
       final parent = r['parent_id'];
       final child = r['child_id'];
 
@@ -33,7 +34,9 @@ class CategoryRepository {
       childrenMap[parent]!.add(child);
     }
 
-    final allChildren = relationsRaw.map((r) => r['child_id']).toSet();
+    final allChildren = parentChildRelationsRaw
+        .map((r) => r['child_id'])
+        .toSet();
     final rootIds = categories.keys.where((id) => !allChildren.contains(id));
 
     final roots = rootIds
@@ -56,13 +59,33 @@ class CategoryRepository {
     final childIds = childrenMap[id] ?? [];
 
     return CategoryNode(
+      id: dto.id,
       label: dto.name,
       value: dto.slug,
       icon: icon,
       children: childIds
           .map((childId) => _buildNode(childId, categories, childrenMap))
           .toList(),
+      ratingCriteria: [],
     );
+  }
+
+  Future<List<RatingCriterionDTO>> loadCriteriaForCategory(
+    String categoryId,
+  ) async {
+    final supabase = Supabase.instance.client;
+
+    final response = await supabase
+        .from('category_rating_criteria_relations')
+        .select('global_rating_criteria(*)')
+        .eq('category_id', categoryId)
+        .order('position');
+
+    return response
+        .map(
+          (row) => RatingCriterionDTO.fromJson(row['global_rating_criteria']),
+        )
+        .toList();
   }
 }
 

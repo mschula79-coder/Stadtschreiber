@@ -3,26 +3,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:maplibre/maplibre.dart' as maplibre;
-import 'package:provider/provider.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' hide Consumer;
-import '../controllers/poi_thumbnails_controller.dart';
-import '../controllers/poi_controller.dart';
-import '../controllers/category_controller.dart';
-import '../models/poi.dart';
-import '../provider/camera_provider.dart';
-import '../provider/selected_poi_provider.dart';
-import '../repositories/poi_repository.dart';
-import '../repositories/districts_repository.dart';
-import '../state/app_state.dart';
-import '../state/poi_panel_state.dart';
-import '../state/poi_thumbnails_state.dart';
-import '../state/categories_menu_state.dart';
-import '../services/geo_json_service.dart';
-import '../services/debug_service.dart';
-import '../widgets/_confirm_box.dart';
-import '../widgets/poi_thumbnails_layer.dart';
-import '../widgets/map_actions.dart';
-import '../widgets/poi_panel.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:stadtschreiber/models/poi.dart';
+import 'package:stadtschreiber/provider/address_lookup_queue_provider.dart';
+import 'package:stadtschreiber/provider/app_state_provider.dart';
+import 'package:stadtschreiber/provider/categories_menu_provider.dart';
+import 'package:stadtschreiber/provider/categories_provider.dart';
+import 'package:stadtschreiber/provider/poi_drag_provider.dart';
+import 'package:stadtschreiber/provider/poi_marker_positions_provider.dart';
+import 'package:stadtschreiber/provider/poi_repository_provider.dart';
+import 'package:stadtschreiber/provider/poi_service_provider.dart';
+import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
+import 'package:stadtschreiber/provider/visible_pois_provider.dart';
+import 'package:stadtschreiber/provider/camera_provider.dart';
+import 'package:stadtschreiber/provider/selected_poi_provider.dart';
+import 'package:stadtschreiber/repositories/districts_repository.dart';
+import 'package:stadtschreiber/services/geo_json_service.dart';
+import 'package:stadtschreiber/services/debug_service.dart';
+import 'package:stadtschreiber/state/app_state.dart';
+import 'package:stadtschreiber/widgets/modal_confirm_box.dart';
+import 'package:stadtschreiber/widgets/poi_thumbnails_layer.dart';
+import 'package:stadtschreiber/widgets/map_actions.dart';
+import 'package:stadtschreiber/widgets/poi_panel.dart';
 
 enum MapUpdateType { pointerMove, cameraIdle, animationFinished, styleLoaded }
 
@@ -38,15 +41,15 @@ class MapScreenState extends ConsumerState<MapScreen> {
 
   bool _styleLoaded = false;
   bool _isChangingStyle = false;
+  bool _poiListenerRegistered = false;
 
-  final poiRepository = PoiRepository();
+  Future<void> reloadPoisForSelectedCategories() =>
+      _addPoisforSelectedCategories();
 
   Offset? userMarkerOffset;
   geo.Position? _lastUserPosition;
   MapUpdateType? _pendingUpdate;
   maplibre.StyleController? mapStyle;
-
-  late VoidCallback _editModeListener;
 
   @override
   void initState() {
@@ -54,14 +57,17 @@ class MapScreenState extends ConsumerState<MapScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<CategoryController>().loadCategories();
+      ref.read(categoriesProvider.notifier).loadCategories();
     });
+
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      DebugService.log('addPostFrameCallback');
       if (!mounted) return;
       _addPoisforSelectedCategories();
     });
+
     geo.Geolocator.getPositionStream(
       locationSettings: const geo.LocationSettings(
         accuracy: geo.LocationAccuracy.high,
@@ -70,19 +76,6 @@ class MapScreenState extends ConsumerState<MapScreen> {
     ).listen((pos) {
       updateUserLocationOnMap(pos);
     });
-
-    _editModeListener = () {
-      final poi = ref.read(selectedPoiProvider);
-      if (poi == null) return;
-
-      if (context.read<AppState>().isPoiEditMode) {
-        addPoiPointsLayer(poi);
-      } else {
-        removePoiPointsLayer();
-      }
-    };
-
-    context.read<AppState>().addListener(_editModeListener);
   }
 
   @override
@@ -90,410 +83,423 @@ class MapScreenState extends ConsumerState<MapScreen> {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
     _poiSub.close();
-    context.read<AppState>().removeListener(_editModeListener);
   }
-
-  Future<void> reloadPois() => _addPoisforSelectedCategories();
-
-  bool _poiListenerRegistered = false;
 
   @override
   Widget build(BuildContext context) {
-    /*print("Screen size: ${MediaQuery.of(context).size}");*/
-    DebugService.log('Build MapScreen');
+    final appState = ref.watch(appStateProvider);
+    final poiRepository = ref.read(poiRepositoryProvider);
+    final dragPoiNotifier = ref.read(dragPoiProvider.notifier);
+    final user = ref.watch(supabaseUserStateProvider);
+
+    final isPoiEditMode = appState.isPoiEditMode;
+    final isAdminViewEnabled = appState.isAdminViewEnabled;
+
+    final selectedPoi = ref.watch(selectedPoiProvider);
+    final hasSelectedPoi = selectedPoi != null;
+    final bool isDraggingPoi = dragPoiNotifier.isDraggingPoi();
+    final bool isDraggingPoiPoint = dragPoiNotifier.isDraggingPoiPoint();
+
+    final bool showPoiPanel =
+        hasSelectedPoi && !isPoiEditMode && !isDraggingPoi;
+
+    DebugService.log(
+      'Build MapScreen Screen size: ${MediaQuery.of(context).size}\n isPoiEditMode: $isPoiEditMode\nisAdminViewEnabled: $isAdminViewEnabled\nhasSelectedPoi: $hasSelectedPoi\nshowPoiPanel: $showPoiPanel\nisDraggingPoi: $isDraggingPoi\nisDraggingPoiPoint: $isDraggingPoiPoint',
+    );
 
     if (!_poiListenerRegistered) {
       _poiListenerRegistered = true;
-      _registerSelectedPoiListener();
+      _selectedPoiListenerForGeoUpdate();
     }
 
-    final selectedPoi = ref.watch(selectedPoiProvider);
+    // isPoiEditmode => add points layer
     if (selectedPoi != null) {
       DebugService.log('SelectedPoi: $selectedPoi.name');
+
+      ref.listen<AppStateData>(appStateProvider, (previous, next) {
+        debugPrint('AppStateData changed: $previous → $next');
+
+        if (next.isPoiEditMode &&
+            (previous == null || !previous.isPoiEditMode)) {
+          addPoiPointsLayer(selectedPoi);
+        }
+        if (!next.isPoiEditMode &&
+            previous != null &&
+            !previous.isPoiEditMode) {
+          removePoiPointsLayer();
+        }
+      });
     }
-    context.watch<PoiThumbnailsState>();
-    final poiThumbnailsState = context.read<PoiThumbnailsState>();
-    final appState = context.watch<AppState>();
-    final poiPanelState = context.read<PoiPanelState>();
 
-    return Stack(
-      children: [
-        // MapLibreMap
-        Listener(
-          behavior: HitTestBehavior.opaque,
-          onPointerMove: _onPointerMove,
-          child: maplibre.MapLibreMap(
-            options: maplibre.MapOptions(
-              initCenter: maplibre.Geographic(lon: 7.59253, lat: 47.55634),
-              initZoom: 13.67,
-              gestures: maplibre.MapGestures(
-                rotate: false,
-                pan: true,
-                zoom: true,
-                pitch: false,
+    if (user.loading) {
+      return Center(child: CircularProgressIndicator());
+    } else {
+      return Stack(
+        children: [
+          // MapLibreMap
+          Listener(
+            behavior: HitTestBehavior.opaque,
+            onPointerMove: _onPointerMove,
+            child: maplibre.MapLibreMap(
+              options: maplibre.MapOptions(
+                initCenter: maplibre.Geographic(lon: 7.59253, lat: 47.55634),
+                initZoom: 13.67,
+                gestures: maplibre.MapGestures(
+                  rotate: false,
+                  pan: true,
+                  zoom: true,
+                  pitch: false,
+                ),
+                initStyle:
+                    'https://stadtschreiber.duckdns.org/styles/basel-vintage/style.json',
               ),
-              initStyle:
-                  'https://stadtschreiber.duckdns.org/styles/basel-vintage/style.json',
-            ),
-            onMapCreated: (controller) async {
-              mapController = controller;
-            },
-            onEvent: (event) async {
-              DebugService.log('Event: $event.runtimeType');
+              onMapCreated: (controller) async {
+                mapController = controller;
+              },
+              onEvent: (event) async {
+                DebugService.log('Event: $event.runtimeType');
+                // check for double events and add break if necessary
+                switch (event) {
+                  // TODO double click funktioniert nicht??
+                  case maplibre.MapEventDoubleClick():
+                    ref.read(selectedPoiProvider.notifier).clear();
 
-              final thumbnailsController = context
-                  .read<PoiThumbnailsController>();
-              final poiController = context.read<PoiController>();
+                  case maplibre.MapEventStyleLoaded():
+                    _styleLoaded = true;
+                    _requestUpdateScreenpositions(MapUpdateType.styleLoaded);
+                    mapStyle = event.style;
 
-              switch (event) {
-                case maplibre.MapEventDoubleClick():
-                  poiPanelState.closePanel();
-                  context.read<AppState>().setPoiEditMode(false);
-                  ref.read(selectedPoiProvider.notifier).clear();
+                  // Create new poi, add or start dragging point of existing poi
+                  // TODO Ask to create new poi
+                  case maplibre.MapEventLongClick(
+                    point: maplibre.Geographic(),
+                    screenPoint: Offset(),
+                  ):
+                    // Long press on map without poi edit mode -> create new poi
+                    if (!isPoiEditMode) {
+                      if (user.isAdmin) {
+                        final newPoi = await poiRepository.newPoi(event.point);
+                        _addPoiToMapScreen(newPoi);
 
-                case maplibre.MapEventStyleLoaded():
-                  _styleLoaded = true;
-                  _requestUpdateScreenpositions(MapUpdateType.styleLoaded);
-                  mapStyle = event.style;
-
-                // Create new poi, add or start dragging point of existing poi
-                case maplibre.MapEventLongClick(
-                  point: maplibre.Geographic(),
-                  screenPoint: Offset(),
-                ):
-                  // Long press on map without poi edit mode -> create new poi
-                  if (!appState.isPoiEditMode) {
-                    if (appState.isAdmin) {
-                      poiPanelState.closePanel();
-                      final newPoi = await poiRepository.newPoi(event.point);
-                      _addPoiToMapScreen(newPoi);
-
-                      DebugService.log(
-                        'MapEventLongClick: Created new POI at ${event.point}, id: ${newPoi.id}, opening panel and enabling edit mode',
-                      );
-                    }
-                    // start dragging / add new point
-                  } else {
-                    List<maplibre.Geographic> points =
-                        selectedPoi!.getPoints() ?? [];
-
-                    final pointIndex = await poiController
-                        .findPoiPointIndexAtGeoPosition(
-                          points,
-                          event.point,
-                          mapController!,
+                        DebugService.log(
+                          'MapEventLongClick: Created new POI at ${event.point}, id: ${newPoi.id}, opening panel and enabling edit mode',
                         );
-
-                    // Punkt wurde getroffen → Drag starten, Geometrie wird erst beim Loslassen aktualisiert
-                    if (pointIndex != null) {
-                      DebugService.log(
-                        'MapEventLongClick: Long press on POI point, index $pointIndex, starting drag',
-                      );
-                      poiController.setDraggingPoiPoint(
-                        selectedPoi,
-                        pointIndex,
-                      );
-                      poiPanelState.closePanel();
-                    }
-                    // no point hit -> add new point and update geometry immediately, no dragging
-                    else {
-                      final newPoi = selectedPoi.cloneWithNewValues();
-
-                      DebugService.log(
-                        'MapEventLongClick: Long press on POI point, adding new point',
-                      );
-                      if (newPoi.geometryType == "Polygon") {
-                        newPoi.insertPointIntoPolygon(points, event.point);
-                      } else {
-                        points.add(event.point);
                       }
+                      // start dragging / add new point
+                    } else {
+                      List<maplibre.Geographic> points =
+                          selectedPoi!.getPoints() ?? [];
 
-                      newPoi.setPoints(points);
-                      newPoi.closePolygonIfNeeded();
-
-                      if (newPoi.isGeometryValid()) {
-                        await poiRepository.updatePoiGeomInSupabase(newPoi);
-                      }
-
-                      ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
-                    }
-                  }
-                // Ende MapEventLongClick()
-
-                case maplibre.MapEventMoveCamera(camera: maplibre.MapCamera()):
-                  if (poiController.isDraggingPoiPoint) {
-                    maplibre.MapGestures.none();
-
-                    final poi = poiController.dragPoiPoint!;
-                    final index = poiController.dragPoiPointIndex!;
-
-                    final points = poi.getPoints()!;
-                    points[index] = event.camera.center;
-
-                    poi.setPoints(points);
-                    ref
-                        .read(selectedPoiProvider.notifier)
-                        .setPoi(poi.cloneWithNewValues());
-                  }
-                  if (poiController.isDraggingPoi) {
-                    maplibre.MapGestures.none();
-
-                    final poi = poiController.dragPoi!;
-
-                    final point = event.camera.center;
-                    poi.location = point;
-                    ref
-                        .read(selectedPoiProvider.notifier)
-                        .setPoi(poi.cloneWithNewValues());
-                  }
-
-                case maplibre.MapEventCameraIdle():
-                  if (mapController == null) return;
-                  // Refresh poi geometry
-                  if (poiController.isDraggingPoiPoint) {
-                    final poi = poiController.dragPoiPoint!;
-
-                    poi.closePolygonIfNeeded();
-                    if (poi.isGeometryValid()) {
-                      await poiRepository.updatePoiGeomInSupabase(poi);
-                    }
-
-                    ref
-                        .read(selectedPoiProvider.notifier)
-                        .setPoi(poi.cloneWithNewValues());
-
-                    poiController.unsetDraggingPoiPoint();
-                    poiPanelState.openPanel();
-                    maplibre.MapGestures.all();
-                  }
-                  // Refresh poi location
-                  if (poiController.isDraggingPoi) {
-                    final poi = poiController.dragPoi!;
-                    await poiRepository.updatePoiGeomInSupabase(poi);
-                    poiController.unsetDraggingPoi();
-                    maplibre.MapGestures.all();
-                  }
-
-                  thumbnailsController.setZoom(mapController!.camera!.zoom);
-                  final pos = mapController!.camera!;
-                  ref
-                      .read(cameraProvider.notifier)
-                      .update(pos.center.lat, pos.center.lon, pos.zoom);
-                  _requestUpdateScreenpositions(MapUpdateType.cameraIdle);
-
-                default:
-              }
-            },
-          ),
-        ),
-
-        appState.isPoiEditMode
-            ? Positioned(
-                bottom: 20,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      appState.setPoiEditMode(false);
-                      final poi = ref
-                          .read(selectedPoiProvider)!
-                          .cloneWithNewValues();
-                      ref.read(selectedPoiProvider.notifier).setPoi(poi);
-
-                      ref.read(selectedPoiProvider.notifier).clear();
-                    },
-                    child: Text('Edit Mode beenden'),
-                  ),
-                ),
-              )
-            : Consumer2<PoiThumbnailsController, PoiThumbnailsState>(
-                builder: (context, controller, visibleState, _) {
-                  return PoiThumbnailsLayer(
-                    controller: controller,
-                    visiblePOIs: visibleState.visible,
-                    zoom: controller.currentZoom,
-
-                    // onTapPoi
-                    onTapPoi: (poi) {
-                      DebugService.log('Poi selected from screen');
-                      _selectPoiAndOpenPanel(poi);
-                    },
-                    onLongPressPoi: (poi) {
-                      DebugService.log('onLongPressPoi');
-                      final poiController = context.read<PoiController>();
-                      poiController.setDraggingPoi(poi);
-                    },
-                  );
-                },
-              ),
-        MapActions(
-          onChangeStyle: changeStyle,
-          onTapSearchedPoi: _addPoiToMapScreen,
-          onShowAllResults: _addPoiListToMapScreen,
-          onLocateMe: _locateMe,
-          onRemoveThumbnails: _removeAllThumbnails,
-          onToggleAdminView: () {
-            appState.setAdminViewEnabled(!appState.isAdminViewEnabled);
-          },
-          isAdmin: appState.isAdmin,
-          isAdminViewEnabled: appState.isAdminViewEnabled,
-        ),
-        // PoiPanel
-        appState.isPoiEditMode
-            ? const SizedBox.shrink()
-            : Selector<PoiPanelState, bool>(
-                selector: (_, panel) => (panel.isPanelOpen),
-                builder: (_, isPanelOpen, _) {
-                  return isPanelOpen
-                      ? Align(
-                          alignment: Alignment.bottomCenter,
-                          child: PoiPanel(),
-                        )
-                      : const SizedBox.shrink();
-                },
-              ),
-
-        // My Location Blue Dot
-        if (userMarkerOffset != null)
-          Positioned(
-            left: userMarkerOffset!.dx - 8,
-            top: userMarkerOffset!.dy - 8,
-            child: Opacity(
-              opacity: 0.5,
-              child: Container(
-                width: 16,
-                height: 16,
-                decoration: const BoxDecoration(
-                  color: Colors.blue,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ),
-        Consumer<PoiController>(
-          builder: (_, controller, _) {
-            return controller.isDraggingPoi
-                ? Positioned(
-                    top: 20,
-                    left: 0,
-                    right: 0,
-
-                    child: Center(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          final appState = context.read<AppState>();
-                          final confirmed = await confirmBox(
-                            context,
-                            'Willst du den Point of Interest wirklich löschen?',
-                            'Achtung',
+                      final pointIndex = await ref
+                          .read(poiServiceProvider)
+                          .findPoiPointIndexAtGeoPosition(
+                            points,
+                            event.point,
+                            mapController!,
                           );
 
-                          if (confirmed) {
-                            poiThumbnailsState.removePoi(selectedPoi!);
-                            controller.deletePoi(selectedPoi);
-                            appState.setPoiEditMode(false);
-                            ref.read(selectedPoiProvider.notifier).clear();
+                      // Punkt wurde getroffen → Drag starten, Geometrie wird erst beim Loslassen aktualisiert
+                      if (pointIndex != null) {
+                        DebugService.log(
+                          'MapEventLongClick: Long press on POI point, index $pointIndex, starting drag',
+                        );
+                        dragPoiNotifier.startDraggingPoiPoint(
+                          selectedPoi,
+                          pointIndex,
+                        );
+                        mapController!.moveCamera(center: event.point);
+                      }
+                      // no point hit -> add new point and update geometry immediately, no dragging
+                      else {
+                        final newPoi = selectedPoi.cloneWithNewValues();
 
-                            controller.unsetDraggingPoi();
-                          }
-                        },
-                        child: Icon(
-                          Icons.delete,
-                          color: Colors.black,
-                          size: 32,
-                        ),
-                      ),
+                        DebugService.log(
+                          'MapEventLongClick: Long press on POI point, adding new point',
+                        );
+                        if (newPoi.geometryType == "Polygon") {
+                          newPoi.insertPointIntoPolygon(points, event.point);
+                        } else {
+                          points.add(event.point);
+                        }
+
+                        newPoi.setPoints(points);
+                        newPoi.closePolygonIfNeeded();
+
+                        if (newPoi.isGeometryValid()) {
+                          await poiRepository.updatePoiGeomInSupabase(newPoi);
+                        }
+
+                        ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
+                      }
+                    }
+                  // Ende MapEventLongClick()
+
+                  case maplibre.MapEventMoveCamera(
+                    camera: maplibre.MapCamera(),
+                  ):
+                    if (isDraggingPoiPoint) {
+                      maplibre.MapGestures.none();
+                      final dragPoi = dragPoiNotifier.dragPoi();
+                      final index = ref
+                          .read(dragPoiProvider)
+                          .dragPoiPointIndex!;
+
+                      final points = dragPoi!.getPoints()!;
+                      points[index] = event.camera.center;
+
+                      dragPoi.setPoints(points);
+                      ref
+                          .read(selectedPoiProvider.notifier)
+                          .setPoi(dragPoi.cloneWithNewValues());
+                    }
+                    // TODO Debug - Button prüfen, Panel schliesst nicht.
+                    if (isDraggingPoi) {
+                      maplibre.MapGestures.none();
+
+                      final poi = dragPoiNotifier.dragPoi();
+
+                      final point = event.camera.center;
+                      poi!.location = point;
+                      ref
+                          .read(selectedPoiProvider.notifier)
+                          .setPoi(poi.cloneWithNewValues());
+                    }
+
+                  case maplibre.MapEventCameraIdle():
+                    if (mapController == null) return;
+                    // Refresh poi geometry
+                    if (isDraggingPoiPoint) {
+                      final poi = dragPoiNotifier.dragPoi()!;
+
+                      poi.closePolygonIfNeeded();
+                      if (poi.isGeometryValid()) {
+                        await poiRepository.updatePoiGeomInSupabase(poi);
+                      }
+                      dragPoiNotifier.stopDraggingPoiPoint();
+                      ref
+                          .read(selectedPoiProvider.notifier)
+                          .setPoi(poi.cloneWithNewValues());
+                      maplibre.MapGestures.all();
+                    }
+                    // Refresh poi location
+                    if (isDraggingPoi) {
+                      final poi = dragPoiNotifier.dragPoi();
+                      await poiRepository.updatePoiGeomInSupabase(poi!);
+                      dragPoiNotifier.stopDraggingPoi();
+                      maplibre.MapGestures.all();
+                    }
+
+                    final pos = mapController!.camera!;
+                    ref
+                        .read(cameraProvider.notifier)
+                        .update(pos.center.lat, pos.center.lon, pos.zoom);
+                    _requestUpdateScreenpositions(MapUpdateType.cameraIdle);
+
+                  default:
+                }
+              },
+              children: [
+                maplibre.SourceAttribution(
+                  showMapLibre: true,
+                  alignment: Alignment.bottomLeft,
+                ),
+              ],
+            ),
+          ),
+          isPoiEditMode
+              // Button Edit Mode beenden anzeigen
+              ? Positioned(
+                  bottom: 20,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        ref
+                            .read(appStateProvider.notifier)
+                            .setPoiEditMode(false);
+                        final poi = ref
+                            .read(selectedPoiProvider)!
+                            .cloneWithNewValues();
+                        ref.read(selectedPoiProvider.notifier).setPoi(poi);
+
+                        ref.read(selectedPoiProvider.notifier).clear();
+                      },
+                      child: Text('Edit Mode beenden'),
                     ),
-                  )
-                : controller.isDraggingPoiPoint
-                // Show trash button when dragging a point
-                ? Stack(
-                    children: [
-                      Positioned(
-                        top: 20,
-                        left: 0,
-                        right: 0,
+                  ),
+                )
+              // !poiEditMode: Icon anzeigen
+              : PoiThumbnailsLayer(
+                  // onTapPoi
+                  onTapPoi: (poi) {
+                    DebugService.log('Poi selected from screen');
+                    _selectPoi(poi);
+                  },
+                ),
 
-                        child: Center(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              final confirmed = await confirmBox(
-                                context,
-                                'Willst du den Punkt wirklich löschen?',
-                                'Achtung',
-                              );
-                              if (confirmed) {
-                                final index = controller.dragPoiPointIndex!;
-                                final pts = List<maplibre.Geographic>.from(
-                                  selectedPoi!.getPoints()!,
-                                );
-                                pts.removeAt(index);
+          MapActions(
+            onChangeStyle: changeStyle,
+            onTapSearchedPoi: _addPoiToMapScreen,
+            onShowAllResults: _addPoiListToMapScreen,
+            onLocateMe: _locateMe,
+            onRemoveThumbnails: () {
+              ref.read(categoriesMenuProvider.notifier).clear();
+              ref.read(visiblePoisProvider.notifier).setAll([]);
+              _requestUpdateScreenpositions(MapUpdateType.cameraIdle);
+            },
 
-                                final newPoi = selectedPoi.cloneWithNewValues();
-                                newPoi.setPoints(pts);
+            isAdmin: user.isAdmin,
+            isAdminViewEnabled: isAdminViewEnabled,
+          ),
 
-                                newPoi.closePolygonIfNeeded();
+          // PoiPanel anzeigen, wenn hasSelectedPoi !& isPoiEditMode
+          showPoiPanel
+              ? Align(
+                  alignment: Alignment.bottomCenter,
+                  child: PoiPanel(
+                    selectedPoi: selectedPoi,
+                    onToggleAdminView: () {
+                      ref
+                          .read(appStateProvider.notifier)
+                          .setAdminViewEnabled(!isAdminViewEnabled);
+                    },
+                    onStartDraggingPoi: () {
+                      dragPoiNotifier.startDraggingPoi(selectedPoi);
+                      mapController!.moveCamera(center: selectedPoi.location);
+                    },
+                  ),
+                )
+              : const SizedBox.shrink(),
 
-                                DebugService.log(
-                                  'Deleting point at index $index, new points: ${newPoi.getPoints()}',
-                                );
+          // My Location Blue Dot
+          if (userMarkerOffset != null)
+            Positioned(
+              left: userMarkerOffset!.dx - 8,
+              top: userMarkerOffset!.dy - 8,
+              child: Opacity(
+                opacity: 0.5,
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: const BoxDecoration(
+                    color: Colors.blue,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ),
+          if (isDraggingPoi)
+            // Papierkorb
+            Positioned(
+              top: 20,
+              left: 0,
+              right: 0,
 
-                                ref
-                                    .read(selectedPoiProvider.notifier)
-                                    .setPoi(newPoi);
+              child: Center(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final confirmed = await confirmBox(
+                      context,
+                      'Willst du den Point of Interest wirklich löschen?',
+                      'Achtung',
+                    );
 
-                                if (newPoi.isGeometryValid()) {
-                                  await poiRepository.updatePoiGeomInSupabase(
-                                    newPoi,
-                                  );
-                                }
+                    if (confirmed) {
+                      ref
+                          .read(visiblePoisProvider.notifier)
+                          .removePoi(selectedPoi!);
+                      poiRepository.deletePoi(selectedPoi.id);
+                      ref.read(appStateProvider.notifier).setPoiEditMode(false);
+                      ref.read(selectedPoiProvider.notifier).clear();
 
-                                controller.unsetDraggingPoiPoint();
+                      dragPoiNotifier.stopDraggingPoi();
+                    }
+                  },
+                  child: Icon(Icons.delete, color: Colors.black, size: 32),
+                ),
+              ),
+            ),
+          if (isDraggingPoiPoint)
+            // Show trash button when dragging a point
+            Stack(
+              children: [
+                Positioned(
+                  top: 20,
+                  left: 0,
+                  right: 0,
 
-                                maplibre.MapGestures.all();
-                              }
-                            },
-                            child: Icon(
-                              Icons.delete,
-                              color: Colors.black,
-                              size: 32,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 20,
-                        left: 0,
-                        right: 0,
-                        child: Center(
-                          child: Text(
-                            'Bewege die Karte, um den Punkt neu zu positionieren. Beim loslassen wird die Änderung gespeichert.',
-                            style: TextStyle(color: Colors.black, fontSize: 12),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                : const SizedBox.shrink();
-          },
-        ),
-      ],
-    );
+                  child: Center(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final confirmed = await confirmBox(
+                          context,
+                          'Willst du den Punkt wirklich löschen?',
+                          'Achtung',
+                        );
+                        if (confirmed) {
+                          final index = ref
+                              .read(dragPoiProvider)
+                              .dragPoiPointIndex;
+                          final pts = List<maplibre.Geographic>.from(
+                            selectedPoi!.getPoints()!,
+                          );
+                          pts.removeAt(index!);
+
+                          final newPoi = selectedPoi.cloneWithNewValues();
+                          newPoi.setPoints(pts);
+
+                          newPoi.closePolygonIfNeeded();
+
+                          DebugService.log(
+                            'Deleting point at index $index, new points: ${newPoi.getPoints()}',
+                          );
+
+                          ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
+
+                          if (newPoi.isGeometryValid()) {
+                            await poiRepository.updatePoiGeomInSupabase(newPoi);
+                          }
+
+                          dragPoiNotifier.stopDraggingPoiPoint();
+
+                          maplibre.MapGestures.all();
+                        }
+                      },
+                      child: Icon(Icons.delete, color: Colors.black, size: 32),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 20,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Text(
+                      'Bewege die Karte, um den Punkt neu zu positionieren. Beim loslassen wird die Änderung gespeichert.',
+                      style: TextStyle(color: Colors.black, fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      );
+    }
   }
 
   late ProviderSubscription<PointOfInterest?> _poiSub;
 
-  void _registerSelectedPoiListener() {
+  void _selectedPoiListenerForGeoUpdate() {
     _poiSub = ref.listenManual<PointOfInterest?>(selectedPoiProvider, (
       prev,
       next,
     ) async {
+      // Poi de-selected
       if (next == null) {
         removePoiGeometrieLayer();
-        removePoiPointsLayer();
-        context.read<AppState>().setPoiEditMode(false);
+        ref.read(appStateProvider.notifier).setPoiEditMode(false);
         return;
       }
 
@@ -507,19 +513,22 @@ class MapScreenState extends ConsumerState<MapScreen> {
         '_registerSelectedPoiListener: Selected POI changed, checking geometry changes. Prev: ${prev?.getGeoJsonGeometry()}, Next: ${next.getGeoJsonGeometry()}, comparison result: ${prev?.getGeoJsonGeometry() == next.getGeoJsonGeometry()}',
       );
       if (prev?.getGeoJsonGeometry() != next.getGeoJsonGeometry()) {
-        updatePoiGeometrieData(next);
+        updateMapGeometrieData(next);
         updatePoiPointsData(next);
       }
 
       // 4. Update thumbnails
-      if (mapController != null) {
-        final thumbnailsController = context.read<PoiThumbnailsController>();
-        final visiblePOIs = context.read<PoiThumbnailsState>().visible;
+      debugPrint(
+        '_selectedPoiListenerForGeoUpdate: Attempting updatePositions; mapController=${mapController != null}, visiblePoisCount=${ref.read(visiblePoisProvider).visible.length}',
+      );
 
-        await thumbnailsController.updatePoiScreenPositions(
-          controller: mapController!,
-          visiblePOIs: visiblePOIs,
-        );
+      if (mapController != null) {
+        await ref
+            .read(poiMarkerPositionProvider.notifier)
+            .updatePositions(
+              controller: mapController!,
+              visiblePois: ref.read(visiblePoisProvider).visible,
+            );
       }
     });
   }
@@ -529,7 +538,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
   }
 
   Future<geo.Position?> getCurrentPosition() async {
-    final ok = context.read<AppState>().locationPermission;
+    final ok = ref.read(appStateProvider).locationPermission;
     if (!ok) return null;
 
     return await geo.Geolocator.getCurrentPosition(
@@ -610,12 +619,11 @@ NEWPOI
 
   Future<void> addPoiGeometrieLayer(PointOfInterest poi) async {
     DebugService.log('MapScreen addPoiGeometrieLayer');
-    try {
-      mapStyle!.removeLayer('poi-geom-fill');
-      mapStyle!.removeLayer('poi-geom-fill-outline');
-      mapStyle!.removeLayer('poi-geom-line');
-      mapStyle!.removeSource('poi-geom-source');
-    } catch (_) {}
+
+    _safeRemoveLayer('poi-geom-fill');
+    _safeRemoveLayer('poi-geom-fill-outline');
+    _safeRemoveLayer('poi-geom-line');
+    _safeRemoveSource('poi-geom-source');
 
     final geojson = poi.getGeoJsonGeometry();
     mapStyle!.addSource(
@@ -651,7 +659,7 @@ NEWPOI
     }
   }
 
-  Future<void> updatePoiGeometrieData(PointOfInterest selectedPoi) async {
+  Future<void> updateMapGeometrieData(PointOfInterest selectedPoi) async {
     final newGeoJson = selectedPoi.getGeoJsonGeometry();
 
     mapStyle!.updateGeoJsonSource(id: 'poi-geom-source', data: newGeoJson);
@@ -676,10 +684,8 @@ NEWPOI
   }
 
   Future<void> addPoiPointsLayer(PointOfInterest poi) async {
-    try {
-      mapStyle!.removeLayer('poi-points');
-      mapStyle!.removeSource('poi-points-source');
-    } catch (_) {}
+    _safeRemoveLayer('poi-points');
+    _safeRemoveSource('poi-points-source');
 
     final points = poi.getPoints();
     if (points == null || points.isEmpty) return;
@@ -721,12 +727,9 @@ NEWPOI
 
   Future<void> removePoiPointsLayer() async {
     DebugService.log('MapScreen removePoiPointsLayer');
-    try {
-      mapStyle!.removeLayer('poi-points-fill');
-      mapStyle!.removeSource('poi-points-source');
-    } catch (e) {
-      DebugService.log("Layer not found, skipping removal.");
-    }
+
+    _safeRemoveLayer('poi-points-fill');
+    _safeRemoveSource('poi-points-source');
 
     mapController!.moveCamera(
       center: mapController!.camera!.center,
@@ -734,15 +737,12 @@ NEWPOI
     );
   }
 
-  /// sets selectedPoi in PoiController and opens the panel in PoiPanelState and adds the geometry layer for the selected poi (if poi has geometry)
-  void _selectPoiAndOpenPanel(PointOfInterest poi) {
-    DebugService.log('MapScreen run _selectPoiAndOpenPanel(poi)');
-
-    final panel = context.read<PoiPanelState>();
+  /// sets selectedPoi in dragPoiNotifier and opens the panel in PoiPanelState and adds the geometry layer for the selected poi (if poi has geometry)
+  void _selectPoi(PointOfInterest poi) {
+    DebugService.log('MapScreen run _selectPoi(poi)');
 
     ref.read(selectedPoiProvider.notifier).setPoi(poi);
 
-    panel.openPanel();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _centerSelectedPoiConsideringPanel(poi);
     });
@@ -752,62 +752,75 @@ NEWPOI
   /// completes poi data, adds poi to visible pois in PoiThumbnailsState, updates screen positions and opens the panel for the poi
   Future<void> _addPoiToMapScreen(PointOfInterest poi) async {
     DebugService.log('MapScreen run _addPoiToMapScreen(poi)');
-    final visiblePoiState = context.read<PoiThumbnailsState>();
-    final thumbnailsController = context.read<PoiThumbnailsController>();
-    final poiController = context.read<PoiController>();
-    final completedPoi = await poiController.completePoi(poi);
-    visiblePoiState.add(completedPoi);
+
+    final poiService = ref.read(poiServiceProvider);
+    final completedPoi = await poiService.checkForDuplicates(poi);
+
+    ref.read(visiblePoisProvider.notifier).setAll([completedPoi]);
+
+    debugPrint(
+      '_addPoiToMapScreen: Attempting updatePositions; mapController=${mapController != null}, visiblePoisCount=${ref.read(visiblePoisProvider).visible.length}',
+    );
 
     if (mapController != null) {
-      await thumbnailsController.updatePoiScreenPositions(
-        controller: mapController!,
-        visiblePOIs: visiblePoiState.visible,
-      );
+      await ref
+          .read(poiMarkerPositionProvider.notifier)
+          .updatePositions(
+            controller: mapController!,
+            visiblePois: ref.read(visiblePoisProvider).visible,
+          );
     }
-    _selectPoiAndOpenPanel(completedPoi);
+    _selectPoi(completedPoi);
   }
 
   /// completes poi data, adds poi to visible pois in PoiThumbnailsState, updates screen positions and opens the panel for the poi
   Future<void> _addPoiListToMapScreen(List<PointOfInterest> pois) async {
     DebugService.log('MapScreen run _addPoiToMapScreen(poi)');
-    final visiblePoiState = context.read<PoiThumbnailsState>();
-    final thumbnailsController = context.read<PoiThumbnailsController>();
-    final poiController = context.read<PoiController>();
+
+    final visiblePoiStateNotifier = ref.read(visiblePoisProvider.notifier);
+
+    final poiService = ref.read(poiServiceProvider);
 
     for (final poi in pois) {
-      final completedPoi = await poiController.completePoi(poi);
-      visiblePoiState.add(completedPoi);
+      final checkedPoi = await poiService.checkForDuplicates(poi);
+      ref.read(addressLookupQueueProvider.notifier).enqueue(checkedPoi);
+      // TODO POI IN SEARCHRESULTS TAUSCHEN SOBALD ADRESSE GELADEN
+      visiblePoiStateNotifier.add(checkedPoi);
     }
 
+    debugPrint(
+      '_addPoiListToMapScreen: Attempting updatePositions; mapController=${mapController != null}, visiblePoisCount=${ref.read(visiblePoisProvider).visible.length}',
+    );
+
     if (mapController != null) {
-      visiblePoiState.removeAll();
-      await thumbnailsController.updatePoiScreenPositions(
-        controller: mapController!,
-        visiblePOIs: visiblePoiState.visible,
-      );
+      visiblePoiStateNotifier.setAll(pois);
+      await ref
+          .read(poiMarkerPositionProvider.notifier)
+          .updatePositions(
+            controller: mapController!,
+            visiblePois: ref.read(visiblePoisProvider).visible,
+          );
     }
   }
 
   Future<void> _addPoisforSelectedCategories() async {
     if (!mounted) return;
-    final categoriesMenuState = context.read<CategoriesMenuState>();
-    final poiThumbnailsState = context.read<PoiThumbnailsState>();
-    final thumbnailsController = context.read<PoiThumbnailsController>();
 
-    final pois = await poiRepository.loadPoisforSelectedCategories(
-      categoriesMenuState.selectedValues.toList(),
-    );
-    List<PointOfInterest> allPois = List.from(pois);
-
-    poiThumbnailsState.setAll(allPois);
+    final pois = await ref.read(poisForSelectedCategoriesProvider.future);
+    ref.read(visiblePoisProvider.notifier).setAll(pois);
 
     if (mapController != null) {
-      await thumbnailsController.updatePoiScreenPositions(
-        controller: mapController!,
-        visiblePOIs: poiThumbnailsState.visible,
-      );
+      await ref
+          .read(poiMarkerPositionProvider.notifier)
+          .updatePositions(
+            controller: mapController!,
+            visiblePois: ref.read(visiblePoisProvider).visible,
+          );
 
-      if (categoriesMenuState.selectedValues.contains('districts')) {
+      if (ref
+          .read(categoriesMenuProvider)
+          .selectedValues
+          .contains('districts')) {
         await addDistrictsLayer();
         mapController!.moveCamera(
           zoom: 12.5,
@@ -817,13 +830,6 @@ NEWPOI
         await removeDistrictsLayer();
       }
     }
-  }
-
-  void _removeAllThumbnails() {
-    final state = context.read<PoiThumbnailsState>();
-    context.read<CategoriesMenuState>().clear();
-    state.setAll([]);
-    _requestUpdateScreenpositions(MapUpdateType.cameraIdle);
   }
 
   final panelHeight = 460;
@@ -869,17 +875,22 @@ NEWPOI
     if (!mounted || mapController == null) return;
 
     // capture everything BEFORE async
-    final thumbnailsController = context.read<PoiThumbnailsController>();
-    final visiblePOIs = context.read<PoiThumbnailsState>().visible;
+    final visiblePOIs = ref.read(visiblePoisProvider).visible;
     final lastUserPos = _lastUserPosition;
 
     await _waitForMapToSettle();
 
+    debugPrint(
+      '_updateAllScreenPositions: Attempting updatePositions; mapController=${mapController != null}, visiblePoisCount=${ref.read(visiblePoisProvider).visible.length}',
+    );
+
     if (visiblePOIs.isNotEmpty) {
-      await thumbnailsController.updatePoiScreenPositions(
-        controller: mapController!,
-        visiblePOIs: visiblePOIs,
-      );
+      await ref
+          .read(poiMarkerPositionProvider.notifier)
+          .updatePositions(
+            controller: mapController!,
+            visiblePois: visiblePOIs,
+          );
     }
 
     if (lastUserPos != null) {
@@ -890,7 +901,6 @@ NEWPOI
   void _onPointerMove(PointerMoveEvent event) {
     if (!_styleLoaded || mapController == null) return;
     _requestUpdateScreenpositions(MapUpdateType.pointerMove);
-    if (context.read<PoiPanelState>().isPanelOpen) {}
   }
 
   void _requestUpdateScreenpositions(MapUpdateType type) {
@@ -937,5 +947,23 @@ NEWPOI
   Future<void> _waitForMapToSettle() async {
     await Future.delayed(Duration.zero); // microtask
     await Future.delayed(const Duration(milliseconds: 16)); // next frame
+  }
+
+  void _safeRemoveLayer(String id) {
+    try {
+      mapStyle?.removeLayer(id);
+      DebugService.log("Removed layer: $id");
+    } catch (e) {
+      DebugService.log("ERROR removing layer '$id': $e");
+    }
+  }
+
+  void _safeRemoveSource(String id) {
+    try {
+      mapStyle?.removeSource(id);
+      DebugService.log("Removed source: $id");
+    } catch (e) {
+      DebugService.log("ERROR removing source '$id': $e");
+    }
   }
 }

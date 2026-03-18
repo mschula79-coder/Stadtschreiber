@@ -29,27 +29,28 @@ class PoiRepository {
         .toList();
   }
 
+  // TODO combine with New Poi
   Future<PointOfInterest> saveOSMPoiToSupabase(PointOfInterest poi) async {
     poi.newPoi = true;
-    poi.id = null;
+    poi.id = '-1';
 
     final map = poi.toMap();
     map.remove('id');
 
     final result = await supabase.from('pois').insert(map).select().single();
 
-    poi.id = result['id'] as int;
+    poi.id = result['id'] as String;
     DebugService.log('neuer POI gespeichert: $result');
 
     return poi;
   }
 
-  Future<void> deletePoi(int id) async {
+  Future<void> deletePoi(String id) async {
     await supabase.from('pois').delete().eq('id', id);
   }
 
   Future<void> updatePoiCategories({
-    required int poiId,
+    required String poiId,
     required List<String> categories,
   }) async {
     await supabase
@@ -58,8 +59,34 @@ class PoiRepository {
         .eq('id', poiId);
   }
 
+  Future<PointOfInterest> updatePoiCategory({
+    required PointOfInterest poi,
+    required String category,
+    required bool enabled,
+  }) async {
+    // IMMER neue Liste erzeugen
+    final newCategories = <String>[...(poi.categories ?? [])];
+
+    if (enabled) {
+      if (!newCategories.contains(category)) {
+        newCategories.add(category);
+      }
+    } else {
+      newCategories.remove(category);
+    }
+
+    // Supabase speichern
+    await supabase
+        .from('pois')
+        .update({'categories': newCategories})
+        .eq('id', poi.id);
+
+    // neues POI-Objekt zurückgeben
+    return poi.cloneWithNewValues(categories: newCategories);
+  }
+
   static Future<void> updatePoiDataInSupabase({
-    required int id,
+    required String id,
     String? name,
     String? history,
     String? featuredImageUrl,
@@ -92,6 +119,7 @@ class PoiRepository {
     await supabase.from('pois').update(updateData).eq('id', id);
   }
 
+  // TODO Combine with updateData
   Future<void> updatePoiGeomInSupabase(PointOfInterest poi) async {
     final supabase = Supabase.instance.client;
     await supabase
@@ -101,14 +129,14 @@ class PoiRepository {
           'lat': poi.location.lat,
           'lon': poi.location.lon,
         })
-        .eq('id', poi.id!);
+        .eq('id', poi.id);
 
     DebugService.log(
       'updatePoiGeomInSupabase name: $poi.name geom_area: $poi.geomArea label_location: $poi.location',
     );
   }
 
-  Future<PointOfInterest?> loadPoiById(int id) async {
+  Future<PointOfInterest?> loadPoiById(String id) async {
     final result = await supabase
         .from('pois')
         .select()
@@ -159,8 +187,9 @@ class PoiRepository {
     }
   }
 
+  // TODO change to updateData
   Future<void> updatePoiAddressInSupabase(
-    int id,
+    String id,
     Map<String, String?> address,
   ) async {
     await supabase
@@ -177,6 +206,7 @@ class PoiRepository {
         .eq('id', id);
   }
 
+  // Combine with newOSMPoi, combine with check duplicate?
   Future<PointOfInterest> newPoi(Geographic location) async {
     final supabase = Supabase.instance.client;
 
@@ -197,11 +227,12 @@ class PoiRepository {
       metadata: PoiMetadata(),
       geometryType: 'point',
       newPoi: true,
-      images: []
+      images: [],
     );
   }
 
   /// Check if a POI with the given OSM ID already exists in the database and load it if it does.
+  // TODO Combine with loadPoiById
   Future<PointOfInterest?> loadPoiByOSMId(int osmId) async {
     final result = await supabase
         .from('pois')

@@ -1,7 +1,6 @@
 
 import '../models/poi.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../controllers/poi_controller.dart';
 import '../repositories/poi_repository.dart';
 import '../state/camera_state.dart';
 
@@ -11,7 +10,6 @@ final searchResultsProvider = FutureProvider.autoDispose
       ({
         String query,
         bool searchActive,
-        PoiController controller,
         PoiRepository repo,
         CameraState camera,
       })

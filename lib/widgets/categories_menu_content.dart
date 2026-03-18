@@ -1,25 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:iconify_flutter/icons/tabler.dart';
-import '../state/categories_menu_state.dart';
+import 'package:stadtschreiber/provider/categories_menu_provider.dart';
+import 'package:stadtschreiber/provider/categories_provider.dart';
 
 import '../models/category.dart';
 
-class CategoriesMenuPanel extends StatelessWidget {
-  final List<CategoryNode> categories;
-  final CategoriesMenuState categoriesMenuState;
+class CategoriesMenuContent extends ConsumerWidget {
   final VoidCallback onClose;
 
-  const CategoriesMenuPanel({
-    super.key,
-    required this.categories,
-    required this.categoriesMenuState,
-    required this.onClose,
-  });
+  const CategoriesMenuContent({super.key, required this.onClose});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categories = ref.watch(categoriesProvider).categories;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -39,7 +36,7 @@ class CategoriesMenuPanel extends StatelessWidget {
               "Karteninhalte",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            
+
             /* CheckboxListTile(
               contentPadding: const EdgeInsets.only(left: 4, top: 5, right: 15),
               value: filterState.selectedValues.isEmpty
@@ -70,7 +67,7 @@ class CategoriesMenuPanel extends StatelessWidget {
                 }
               },
             ), */
-            ...categories.map((node) => _buildCategoryNode(context, node)),
+            ...categories.map((node) => _buildCategoryNode(context, ref, node)),
           ],
         ),
       ),
@@ -79,16 +76,25 @@ class CategoriesMenuPanel extends StatelessWidget {
 
   // ---------- category tree ----------
 
-  Widget _buildCategoryNode(BuildContext context, CategoryNode node) {
+  Widget _buildCategoryNode(
+    BuildContext context,
+    WidgetRef ref,
+    CategoryNode node,
+  ) {
+    final categoryCheckboxesState = ref.watch(categoriesMenuProvider);
+
     if (node.isLeaf) {
-      final isChecked = node.value != null && categoriesMenuState.isSelected(node.value!);
+      final isChecked =
+          node.value != null && categoryCheckboxesState.isSelected(node.value!);
       // 2nd level
       return CheckboxListTile(
-        contentPadding: const EdgeInsets.only(top:0, left:4, right: 15),
+        contentPadding: const EdgeInsets.only(top: 0, left: 4, right: 15),
         value: isChecked,
         onChanged: (checked) {
           if (node.value == null) return;
-          categoriesMenuState.setSelected(node.value!, checked ?? false);
+          ref
+              .read(categoriesMenuProvider.notifier)
+              .setSelected(node.value!, checked ?? false);
         },
         secondary: _buildIcon(node),
         controlAffinity: ListTileControlAffinity.leading,
@@ -106,7 +112,7 @@ class CategoriesMenuPanel extends StatelessWidget {
         .toList();
 
     final checkedChildren = allDescendantLeaves
-        .where((v) => categoriesMenuState.isSelected(v))
+        .where((v) => categoryCheckboxesState.isSelected(v))
         .length;
 
     bool? parentChecked;
@@ -136,14 +142,18 @@ class CategoriesMenuPanel extends StatelessWidget {
             onChanged: (checked) {
               if (checked == true) {
                 for (final value in directLeafChildren) {
-                  if (!categoriesMenuState.isSelected(value)) {
-                    categoriesMenuState.setSelected(value, true);
+                  if (!categoryCheckboxesState.isSelected(value)) {
+                    ref
+                        .read(categoriesMenuProvider.notifier)
+                        .setSelected(value, true);
                   }
                 }
               } else {
                 for (final value in directLeafChildren) {
-                  if (categoriesMenuState.isSelected(value)) {
-                    categoriesMenuState.setSelected(value, false);
+                  if (categoryCheckboxesState.isSelected(value)) {
+                    ref
+                        .read(categoriesMenuProvider.notifier)
+                        .setSelected(value, false);
                   }
                 }
               }
@@ -157,7 +167,7 @@ class CategoriesMenuPanel extends StatelessWidget {
             ],
           ),
           children: node.children
-              .map((child) => _buildCategoryNode(context, child))
+              .map((child) => _buildCategoryNode(context, ref, child))
               .toList(),
         ),
       ),
@@ -204,7 +214,7 @@ class CategoriesMenuPanel extends StatelessWidget {
       case "basketball_court":
         return Icons.sports_basketball;
       case "tennis_court":
-        return Icons.sports_tennis; 
+        return Icons.sports_tennis;
       default:
         return Icons.help_outline;
     }
@@ -240,3 +250,10 @@ class CategoriesMenuPanel extends StatelessWidget {
     return result;
   }
 }
+
+// OPTIMIZE
+
+/* final categoryCheckboxesState = ref.watch(
+  categoriesMenuProvider.select((s) => s),
+);
+ */

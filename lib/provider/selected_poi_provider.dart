@@ -4,6 +4,7 @@ import '../models/poi.dart';
 final selectedPoiProvider =
     NotifierProvider<SelectedPoiNotifier, PointOfInterest?>(
       SelectedPoiNotifier.new,
+      name: 'selectedPoiProvider'
     );
 
 class SelectedPoiNotifier extends Notifier<PointOfInterest?> {

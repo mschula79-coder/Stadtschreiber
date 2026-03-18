@@ -1,7 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../widgets/_message_box.dart';
+import '../widgets/modal_message_box.dart';
 
 bool isValidUrl(String url) {
   final uri = Uri.tryParse(url);

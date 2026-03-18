@@ -8,7 +8,7 @@ import '../models/poi_metadata.dart';
 class PointOfInterest {
   final String name;
   Geographic location;
-  int? id;
+  String id;
   final List<String>? categories;
   final String featuredImageUrl;
   final String? history;
@@ -108,7 +108,7 @@ class PointOfInterest {
   }
 
   PointOfInterest cloneWithNewValues({
-    int? id,
+    String? id,
     String? name,
     Geographic? location,
     List<String>? categories,
@@ -116,6 +116,7 @@ class PointOfInterest {
     String? history,
     List<ArticleEntry>? articles,
     PoiMetadata? metadata,
+    Map<String, String?>? address,
     double? distance,
     String? street,
     String? houseNumber,
@@ -136,6 +137,25 @@ class PointOfInterest {
 
     if (geometryType == 'polygon') {
       closePolygonIfNeeded();
+    }
+
+    // DEBUG NEW ADDRESS CODE
+    if (address != null) {
+      final parsedStreet = address['street'];
+      final parsedHouseNumber = address['house_number'];
+      final parsedPostcode = address['postcode'];
+      final parsedCity = address['city'];
+      final parsedDistrict = address['district'];
+      final parsedCountry = address['country'];
+      final parsedDisplayAddress = address['display_address'];
+
+      street = parsedStreet ?? street;
+      houseNumber = parsedHouseNumber ?? houseNumber;
+      postcode = parsedPostcode ?? postcode;
+      city = parsedCity ?? city;
+      district = parsedDistrict ?? district;
+      country = parsedCountry ?? country;
+      displayAddress = parsedDisplayAddress ?? displayAddress;
     }
 
     return PointOfInterest(
@@ -403,7 +423,7 @@ class PointOfInterest {
     final lon = json['lon'] ?? json['center']?['lon'];
 
     return PointOfInterest(
-      id: -1,
+      id: '-1',
       name: tags['name'] ?? 'Unbenannt',
       featuredImageUrl: '',
       location: Geographic(lat: lat?.toDouble(), lon: lon?.toDouble()),
@@ -441,7 +461,7 @@ class PointOfInterest {
 
       osmId: json['id'],
       newPoi: true,
-      images: []
+      images: [],
     );
   }
 }

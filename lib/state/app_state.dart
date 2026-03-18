@@ -1,41 +1,31 @@
-import 'package:flutter/material.dart';
-import '../services/debug_service.dart';
+class AppStateData {
+  final bool isAdminViewEnabled;
+  final bool isPoiEditMode;
+  final bool locationPermission;
 
-class AppState extends ChangeNotifier {
-  bool _isAdmin = false;
-  bool _isAdminViewEnabled = false;
-  bool _locationPermission = false;
-  bool get isAdmin => _isAdmin;
-  bool get locationPermission => _locationPermission;
-  bool _isPoiEditMode = false;
+  const AppStateData({
+    required this.isAdminViewEnabled,
+    required this.isPoiEditMode,
+    required this.locationPermission,
+  });
 
-  void setAdmin(bool value) {
-    _isAdmin = value;
-    DebugService.log('AppState.setAdmin: $_isAdmin - notifyListeners');
-    notifyListeners();
+  AppStateData copyWith({
+    bool? isAdmin,
+    bool? isAdminViewEnabled,
+    bool? isPoiEditMode,
+    bool? locationPermission,
+    String? username
+  }) {
+    return AppStateData(
+      isAdminViewEnabled: isAdminViewEnabled ?? this.isAdminViewEnabled,
+      isPoiEditMode: isPoiEditMode ?? this.isPoiEditMode,
+      locationPermission: locationPermission ?? this.locationPermission,
+    );
   }
 
-  bool get isAdminViewEnabled => _isAdminViewEnabled;
-
-  void setAdminViewEnabled(bool value) {
-    _isAdminViewEnabled = value;
-        DebugService.log('AppState.setAdminViewEnabled: $_isAdminViewEnabled - notifyListeners');
-
-    notifyListeners();
-  }
-
-  void setPoiEditMode(bool value) {
-    _isPoiEditMode = value;
-    DebugService.log('AppState.setPoiEditMode: $_isPoiEditMode - notifyListeners');
-
-    notifyListeners();
-  }
-
-  bool get isPoiEditMode => _isPoiEditMode;
-
-  void setLocationPermission(bool value) {
-    _locationPermission = value;
-    DebugService.log('AppState.setLocationPermission: $_locationPermission - notifyListeners');
-    notifyListeners();
-  }
+  static const initial = AppStateData(
+    isAdminViewEnabled: false,
+    isPoiEditMode: false,
+    locationPermission: false,
+  );
 }

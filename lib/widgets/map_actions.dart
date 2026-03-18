@@ -12,7 +12,6 @@ class MapActions extends ConsumerStatefulWidget {
   final VoidCallback onChangeStyle;
   final VoidCallback onLocateMe;
   final VoidCallback onRemoveThumbnails;
-  final VoidCallback onToggleAdminView;
   final bool isAdmin;
   final bool isAdminViewEnabled;
   final Future<void> Function(PointOfInterest) onTapSearchedPoi;
@@ -24,7 +23,6 @@ class MapActions extends ConsumerStatefulWidget {
     required this.onTapSearchedPoi,
     required this.onLocateMe,
     required this.onRemoveThumbnails,
-    required this.onToggleAdminView,
     required this.isAdmin,
     required this.isAdminViewEnabled,
     required this.onShowAllResults,
@@ -44,7 +42,6 @@ class _MapActionsState extends ConsumerState<MapActions> {
   Widget build(BuildContext context) {
     DebugService.log('Build MapActions');
 
-    final controller = ref.read(poiControllerProvider);
     final repo = ref.read(poiRepositoryProvider);
     final camera = ref.read(cameraProvider);
 
@@ -53,13 +50,11 @@ class _MapActionsState extends ConsumerState<MapActions> {
             searchResultsProvider((
               query: _searchQuery,
               searchActive: true,
-              controller: controller,
               repo: repo,
               camera: camera,
             )),
           )
         : const AsyncValue<List<PointOfInterest>>.data([]);
-
 
     return Stack(
       children: [
@@ -223,31 +218,6 @@ class _MapActionsState extends ConsumerState<MapActions> {
             mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              //toggle admin view
-              widget.isAdmin
-                  ? Column(
-                      children: [
-                        FloatingActionButton(
-                          heroTag: "btn6",
-                          onPressed: () {
-                            widget.onToggleAdminView();
-                          },
-                          mini: true,
-                          child: widget.isAdminViewEnabled
-                              // print(Theme.of(context).colorScheme.onSecondaryContainer); //🎨 Hex: #101C2B
-                              ? const Icon(
-                                  Icons.construction,
-                                  color: Color(0xFF101C2B),
-                                )
-                              : const Icon(
-                                  Icons.construction_outlined,
-                                  color: Colors.grey,
-                                ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                    )
-                  : SizedBox.shrink(),
               // Goto current location
               FloatingActionButton(
                 heroTag: "btn3",

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Steuert das Verhalten des Overlay Widget (Animation, GestureDetector)
 class CategoriesMenuController {
   OverlayEntry? _entry;
   AnimationController? _animationController;
@@ -20,7 +21,10 @@ class CategoriesMenuController {
         );
   }
 
-  Animation<Offset> get animation => _animation!;
+Animation<Offset> get animation {
+  assert(_animation != null, 'Call show() before accessing animation');
+  return _animation!;
+}
 
   void show({
     required BuildContext context,
@@ -28,9 +32,10 @@ class CategoriesMenuController {
     required TickerProvider vsync,
     required Widget Function(Animation<Offset> anim) builder,
   }) {
-    initAnimation(vsync);
-
+    
     if (_entry != null) return;
+
+    initAnimation(vsync);
 
     final RenderBox button =
         buttonKey.currentContext!.findRenderObject() as RenderBox;
@@ -71,7 +76,7 @@ class CategoriesMenuController {
 
   void hide() {
     if (_entry == null) return;
-    
+
     final entry = _entry;
     _entry = null;
 
@@ -115,7 +120,7 @@ class CategoriesMenuController {
     _entry = null;
   }
 
-  void setOnClosed(VoidCallback callback) { 
-    onClosed = callback; 
+  void setOnClosed(VoidCallback callback) {
+    onClosed = callback;
   }
 }
