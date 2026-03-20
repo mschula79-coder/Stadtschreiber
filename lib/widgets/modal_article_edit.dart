@@ -4,11 +4,13 @@ import '../models/article_entry.dart';
 class ArticleEditModal extends StatefulWidget {
   final String initialTitle;
   final String initialUrl;
+  final String initialSource;
 
   const ArticleEditModal({
     super.key,
     required this.initialTitle,
     required this.initialUrl,
+    required this.initialSource,
   });
 
   @override
@@ -18,35 +20,39 @@ class ArticleEditModal extends StatefulWidget {
 class _ArticleEditModalState extends State<ArticleEditModal> {
   late final TextEditingController _titleController;
   late final TextEditingController _urlController;
+  late final TextEditingController _sourceController;
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.initialTitle);
     _urlController = TextEditingController(text: widget.initialUrl);
+    _sourceController = TextEditingController(text: widget.initialSource);
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _urlController.dispose();
+    _sourceController.dispose();
     super.dispose();
   }
 
   void _save() {
     final title = _titleController.text.trim();
     final url = _urlController.text.trim();
+    final source = _sourceController.text.trim();
 
     if (title.isEmpty || url.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Titel und URL dürfen nicht leer sein")),
+        const SnackBar(content: Text("Titel, URL und Quelle dürfen nicht leer sein")),
       );
       return;
     }
 
     Navigator.pop(
       context,
-      ArticleEntry(title: title, url: url),
+      ArticleEntry(title: title, url: url, source: source),
     );
   }
 
@@ -71,6 +77,14 @@ class _ArticleEditModalState extends State<ArticleEditModal> {
             controller: _urlController,
             decoration: const InputDecoration(
               labelText: "URL",
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _sourceController,
+            decoration: const InputDecoration(
+              labelText: "Quelle",
               border: OutlineInputBorder(),
             ),
           ),

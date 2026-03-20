@@ -715,7 +715,6 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
     bool isAdminViewEnabled,
   ) {
     final articles = selectedPoi.articles;
-
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -728,7 +727,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                 context: context,
                 barrierDismissible: false,
                 builder: (_) =>
-                    const ArticleEditModal(initialTitle: "", initialUrl: ""),
+                    const ArticleEditModal(initialTitle: "", initialUrl: "", initialSource: ''),
               );
 
               if (newEntry != null) {
@@ -751,6 +750,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                 builder: (_) => ArticleEditModal(
                   initialTitle: entry.title,
                   initialUrl: entry.url,
+                  initialSource: entry.source,
                 ),
               );
 
