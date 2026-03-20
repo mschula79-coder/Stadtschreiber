@@ -1,4 +1,5 @@
 import 'package:maplibre/maplibre.dart';
+import 'package:stadtschreiber/models/history_entry.dart';
 import 'package:stadtschreiber/models/image_entry.dart';
 import 'package:stadtschreiber/services/debug_service.dart';
 import 'dart:convert';
@@ -11,7 +12,7 @@ class PointOfInterest {
   String id;
   final List<String>? categories;
   final String featuredImageUrl;
-  final String? history;
+  final List<HistoryEntry> historyEntries;
   final List<ArticleEntry> articles;
   final PoiMetadata metadata;
   final double? distance;
@@ -35,7 +36,7 @@ class PointOfInterest {
     required this.location,
     required this.categories,
     required this.featuredImageUrl,
-    this.history,
+    required this.historyEntries,
     required this.articles,
     required this.metadata,
     this.distance,
@@ -64,7 +65,12 @@ class PointOfInterest {
           ? row['featured_image_url']
           : '',
 
-      history: row['history'],
+      historyEntries:
+          (row['history'] as List<dynamic>)
+              .map((e) => HistoryEntry.fromJson(e))
+              .toList()
+            ..sort((a, b) => a.start.compareTo(b.start)),
+
       articles: (row['articles'] as List<dynamic>)
           .map((e) => ArticleEntry.fromJson(e))
           .toList(),
@@ -113,7 +119,7 @@ class PointOfInterest {
     Geographic? location,
     List<String>? categories,
     String? featuredImageUrl,
-    String? history,
+    List<HistoryEntry>? historyEntries,
     List<ArticleEntry>? articles,
     PoiMetadata? metadata,
     Map<String, String?>? address,
@@ -158,6 +164,9 @@ class PointOfInterest {
       displayAddress = parsedDisplayAddress ?? displayAddress;
     }
 
+    final sortedHistory = (historyEntries ?? this.historyEntries).toList()
+      ..sort((a, b) => a.start.compareTo(b.start));
+
     return PointOfInterest(
       id: id ?? this.id,
       name: name ?? this.name,
@@ -166,7 +175,7 @@ class PointOfInterest {
           categories ??
           (this.categories != null ? List.from(this.categories!) : null),
       featuredImageUrl: featuredImageUrl ?? this.featuredImageUrl,
-      history: history ?? this.history,
+      historyEntries: sortedHistory,
       articles: articles ?? List<ArticleEntry>.from(this.articles),
       metadata: metadata ?? this.metadata,
       distance: distance ?? this.distance,
@@ -199,7 +208,7 @@ class PointOfInterest {
       'lon': location.lon,
       'categories': categories,
       'featured_image_url': featuredImageUrl,
-      'history': history,
+      'history': historyEntries.map((e) => e.toJson()).toList(),
       'articles': articles.map((e) => e.toJson()).toList(),
       'street': street,
       'house_number': houseNumber,
@@ -439,7 +448,7 @@ class PointOfInterest {
         tags['place'],
         tags['highway'],
       ].whereType<String>().toList(),
-
+      historyEntries: [],
       articles: [],
       metadata: PoiMetadata(attributes: json),
 

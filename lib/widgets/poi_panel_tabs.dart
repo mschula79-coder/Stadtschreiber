@@ -4,6 +4,7 @@ import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:iconify_flutter/icons/game_icons.dart';
 import 'package:iconify_flutter/icons/maki.dart';
+import 'package:stadtschreiber/models/history_entry.dart';
 import 'package:stadtschreiber/models/image_entry.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
@@ -15,6 +16,7 @@ import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/services/debug_service.dart';
+import 'package:stadtschreiber/widgets/modal_history_edit.dart';
 import 'package:stadtschreiber/widgets/modal_image_edit.dart';
 import 'package:stadtschreiber/widgets/poi_photo_gallery_modal.dart';
 import 'package:stadtschreiber/widgets/poi_rating_editor_dialog.dart';
@@ -50,7 +52,6 @@ class PoiPanelTabs extends ConsumerStatefulWidget {
 
 class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
   late final TextEditingController nameController = TextEditingController();
-  late final TextEditingController historyController = TextEditingController();
   late final TextEditingController featuredImageUrlController =
       TextEditingController();
   late final TextEditingController descriptionController =
@@ -70,7 +71,6 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
   void dispose() {
     _sub.close();
     nameController.dispose();
-    historyController.dispose();
     featuredImageUrlController.dispose();
     descriptionController.dispose();
     super.dispose();
@@ -96,7 +96,6 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
         if (next != null) {
           setState(() {
             nameController.text = next.name;
-            historyController.text = next.history ?? '';
             featuredImageUrlController.text = next.featuredImageUrl;
             descriptionController.text = next.description ?? '';
           });
@@ -107,7 +106,6 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
       final current = ref.read(selectedPoiProvider);
       if (current != null) {
         nameController.text = current.name;
-        historyController.text = current.history ?? '';
         featuredImageUrlController.text = current.featuredImageUrl;
         descriptionController.text = current.description ?? '';
         DebugService.log(
@@ -122,12 +120,6 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
       ),
       const Tab(
         icon: Tooltip(
-          message: "Featured Image",
-          child: Icon(Icons.photo_outlined),
-        ),
-      ),
-      const Tab(
-        icon: Tooltip(
           message: "Photo Gallery",
           child: Iconify(
             Mdi.image_multiple_outline,
@@ -136,6 +128,10 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
           ),
         ),
       ),
+      const Tab(
+        icon: Tooltip(message: "Ratings", child: Icon(Icons.star)),
+      ),
+
       const Tab(
         icon: Tooltip(
           message: "History",
@@ -148,19 +144,14 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
           child: Iconify(Mdi.book_open_blank_variant, size: 24),
         ),
       ),
-
-      const Tab(
-        icon: Tooltip(message: "Ratings", child: Icon(Icons.star)),
-      ),
     ];
 
     final pages = [
       _buildInfoTab(widget.selectedPoi, isAdminViewEnabled),
-      _buildFeaturedImageTab(widget.selectedPoi, isAdminViewEnabled),
       _buildGalleryTab(widget.selectedPoi, isAdminViewEnabled),
+      _buildRatingsTab(widget.selectedPoi),
       _buildHistoryTab(widget.selectedPoi, isAdminViewEnabled),
       _buildArticlesTab(widget.selectedPoi, isAdminViewEnabled),
-      _buildRatingsTab(widget.selectedPoi),
     ];
 
     return LayoutBuilder(
@@ -171,93 +162,12 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
           length: tabs.length,
           child: Column(
             children: [
-              TabBar(isScrollable: true, tabs: tabs),
+              TabBar(
+                isScrollable: true,
+                tabs: tabs,
+                tabAlignment: TabAlignment.start,
+              ),
               Expanded(child: TabBarView(children: pages)),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildFeaturedImageTab(
-    PointOfInterest selectedPoi,
-    bool isAdminViewEnabled,
-  ) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        DebugService.log("Featured Image TAB constraints: $constraints");
-
-        return Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            children: [
-              // Featured image url
-              isAdminViewEnabled
-                  ? Stack(
-                      children: [
-                        TextField(
-                          controller: featuredImageUrlController,
-                          readOnly: true,
-                          maxLines: 1,
-                          decoration: const InputDecoration(
-                            labelText: "Featured Image-URL",
-                            alignLabelWithHint: true,
-                            contentPadding: EdgeInsets.fromLTRB(0, 0, 35, 0),
-                          ),
-                        ),
-
-                        Positioned(
-                          right: 0,
-                          top: 10,
-                          child: IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () async {
-                              final newValue = await _openEditModal(
-                                context,
-                                "Featured Image-URL",
-                                featuredImageUrlController.text,
-                                1,
-                              );
-                              if (newValue != null) {
-                                featuredImageUrlController.text = newValue;
-                                await PoiRepository.updatePoiDataInSupabase(
-                                  id: selectedPoi.id,
-                                  featuredImageUrl: newValue,
-                                );
-                                ref
-                                    .read(selectedPoiProvider.notifier)
-                                    .setPoi(
-                                      selectedPoi.cloneWithNewValues(
-                                        featuredImageUrl: newValue,
-                                      ),
-                                    );
-                                setState(() {});
-                              }
-                            },
-                          ),
-                        ),
-                      ],
-                    )
-                  : SizedBox.shrink(),
-              (selectedPoi.featuredImageUrl.isEmpty)
-                  ? const Icon(
-                      Icons.image_not_supported,
-                      size: 80,
-                      color: Colors.grey,
-                    )
-                  : Image.network(
-                      selectedPoi.featuredImageUrl,
-                      fit: BoxFit.cover,
-                      alignment: Alignment.topCenter,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.broken_image,
-                          size: 80,
-                          color: Colors.grey,
-                        );
-                      },
-                    ),
             ],
           ),
         );
@@ -685,50 +595,116 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
     PointOfInterest selectedPoi,
     bool isAdminViewEnabled,
   ) {
+    final historyEntries = selectedPoi.historyEntries;
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Stack(
         children: [
-          TextField(
-            controller: historyController,
-            readOnly: true,
-            maxLines: 20,
-            decoration: InputDecoration(
-              labelText: "Geschichte",
-              alignLabelWithHint: true,
-              contentPadding: isAdminViewEnabled
-                  ? const EdgeInsets.fromLTRB(0, 0, 35, 0)
-                  : const EdgeInsets.fromLTRB(0, 0, 0, 0),
-            ),
-          ),
-          if (isAdminViewEnabled)
-            Positioned(
-              right: 0,
-              top: 20,
-              child: IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () async {
-                  final newValue = await _openEditModal(
-                    context,
-                    "Geschichte",
-                    historyController.text,
-                    10,
-                  );
-                  if (newValue != null) {
-                    historyController.text = newValue;
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                SizedBox(height: 16),
+                EditableList<HistoryEntry>(
+                  items: historyEntries,
+                  isAdminViewEnabled: isAdminViewEnabled,
+                  onAdd: () async {
+                    final newEntry = await showDialog<HistoryEntry>(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (_) => const HistoryEditModal(
+                        initialStart: "",
+                        initialEnd: "",
+                        initialDescription: "",
+                      ),
+                    );
+
+                    if (newEntry != null) {
+                      final updated = [...historyEntries, newEntry];
+                      await PoiRepository.updatePoiDataInSupabase(
+                        id: selectedPoi.id,
+                        historyEntries: updated,
+                      );
+                      ref
+                          .read(selectedPoiProvider.notifier)
+                          .setPoi(
+                            selectedPoi.cloneWithNewValues(
+                              historyEntries: updated,
+                            ),
+                          );
+                    }
+
+                    return newEntry;
+                  },
+                  onEdit: (entry) async {
+                    final updatedEntry = await showDialog<HistoryEntry>(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (_) => HistoryEditModal(
+                        initialStart: entry.rawStart,
+                        initialEnd: entry.rawEnd,
+                        initialDescription: entry.description,
+                      ),
+                    );
+
+                    if (updatedEntry != null) {
+                      final updated = [...historyEntries];
+                      final index = updated.indexOf(entry);
+                      updated[index] = updatedEntry;
+
+                      await PoiRepository.updatePoiDataInSupabase(
+                        id: selectedPoi.id,
+                        historyEntries: updated,
+                      );
+                      ref
+                          .read(selectedPoiProvider.notifier)
+                          .setPoi(
+                            selectedPoi.cloneWithNewValues(
+                              historyEntries: updated,
+                            ),
+                          );
+                    }
+
+                    return updatedEntry;
+                  },
+                  onDelete: (entry) async {
+                    final updated = [...historyEntries]..remove(entry);
                     await PoiRepository.updatePoiDataInSupabase(
                       id: selectedPoi.id,
-                      history: newValue,
+                      historyEntries: updated,
                     );
                     ref
                         .read(selectedPoiProvider.notifier)
                         .setPoi(
-                          selectedPoi.cloneWithNewValues(history: newValue),
+                          selectedPoi.cloneWithNewValues(
+                            historyEntries: updated,
+                          ),
                         );
-                  }
-                },
-              ),
+                  },
+                  itemBuilder: (entry) {
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: entry.getLabel(),
+                          alignLabelWithHint: true,
+                          contentPadding: EdgeInsets.fromLTRB(0, 0, 20, 10),
+                          border:
+                              UnderlineInputBorder(), // oder OutlineInputBorder()
+                        ),
+                        child: Text(
+                          entry.description,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
+          ),
         ],
       ),
     );
@@ -740,87 +716,94 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
   ) {
     final articles = selectedPoi.articles;
 
-    return EditableList<ArticleEntry>(
-      items: articles,
-      isAdminViewEnabled: isAdminViewEnabled,
-      onAdd: () async {
-        final newEntry = await showDialog<ArticleEntry>(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) =>
-              const ArticleEditModal(initialTitle: "", initialUrl: ""),
-        );
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          SizedBox(height: 16),
+          EditableList<ArticleEntry>(
+            items: articles,
+            isAdminViewEnabled: isAdminViewEnabled,
+            onAdd: () async {
+              final newEntry = await showDialog<ArticleEntry>(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) =>
+                    const ArticleEditModal(initialTitle: "", initialUrl: ""),
+              );
 
-        if (newEntry != null) {
-          final updated = [...articles, newEntry];
-          await PoiRepository.updatePoiDataInSupabase(
-            id: selectedPoi.id,
-            articles: updated,
-          );
-          ref
-              .read(selectedPoiProvider.notifier)
-              .setPoi(selectedPoi.cloneWithNewValues(articles: updated));
-        }
+              if (newEntry != null) {
+                final updated = [...articles, newEntry];
+                await PoiRepository.updatePoiDataInSupabase(
+                  id: selectedPoi.id,
+                  articles: updated,
+                );
+                ref
+                    .read(selectedPoiProvider.notifier)
+                    .setPoi(selectedPoi.cloneWithNewValues(articles: updated));
+              }
 
-        return newEntry;
-      },
-      onEdit: (entry) async {
-        final updatedEntry = await showDialog<ArticleEntry>(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => ArticleEditModal(
-            initialTitle: entry.title,
-            initialUrl: entry.url,
-          ),
-        );
-
-        if (updatedEntry != null) {
-          final updated = [...articles];
-          final index = updated.indexOf(entry);
-          updated[index] = updatedEntry;
-
-          await PoiRepository.updatePoiDataInSupabase(
-            id: selectedPoi.id,
-            articles: updated,
-          );
-          ref
-              .read(selectedPoiProvider.notifier)
-              .setPoi(selectedPoi.cloneWithNewValues(articles: updated));
-        }
-
-        return updatedEntry;
-      },
-      onDelete: (entry) async {
-        final updated = [...articles]..remove(entry);
-        await PoiRepository.updatePoiDataInSupabase(
-          id: selectedPoi.id,
-          articles: updated,
-        );
-        ref
-            .read(selectedPoiProvider.notifier)
-            .setPoi(selectedPoi.cloneWithNewValues(articles: updated));
-      },
-      itemBuilder: (entry) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(10, 0, 0, 15),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-
-            children: [
-              InkWell(
-                onTap: () => launchUrl(Uri.parse(entry.url)),
-                child: Text(
-                  entry.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.normal,
-                    fontSize: 16,
-                  ),
+              return newEntry;
+            },
+            onEdit: (entry) async {
+              final updatedEntry = await showDialog<ArticleEntry>(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => ArticleEditModal(
+                  initialTitle: entry.title,
+                  initialUrl: entry.url,
                 ),
-              ),
-            ],
+              );
+
+              if (updatedEntry != null) {
+                final updated = [...articles];
+                final index = updated.indexOf(entry);
+                updated[index] = updatedEntry;
+
+                await PoiRepository.updatePoiDataInSupabase(
+                  id: selectedPoi.id,
+                  articles: updated,
+                );
+                ref
+                    .read(selectedPoiProvider.notifier)
+                    .setPoi(selectedPoi.cloneWithNewValues(articles: updated));
+              }
+
+              return updatedEntry;
+            },
+            onDelete: (entry) async {
+              final updated = [...articles]..remove(entry);
+              await PoiRepository.updatePoiDataInSupabase(
+                id: selectedPoi.id,
+                articles: updated,
+              );
+              ref
+                  .read(selectedPoiProvider.notifier)
+                  .setPoi(selectedPoi.cloneWithNewValues(articles: updated));
+            },
+            itemBuilder: (entry) {
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(10, 0, 0, 15),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                  children: [
+                    InkWell(
+                      onTap: () => launchUrl(Uri.parse(entry.url)),
+                      child: Text(
+                        entry.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.normal,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -830,149 +813,219 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
     final username = user.username;
     final imageUrls = poi.images.map((img) => img.url).toList();
 
-    return Column(
-      children: [
-        // List of Images
-        isAdminViewEnabled
-            // Liste mit ImageUrls
-            ? Column(
-                children: [
-                  EditableList<ImageEntry>(
-                    items: selectedPoi!.images,
-                    isAdminViewEnabled: isAdminViewEnabled,
-                    onAdd: () async {
-                      final newEntry = await showDialog<ImageEntry>(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (_) => ImageEditModal(
-                          initialTitle: "",
-                          initialUrl: "",
-                          initialEnteredBy: username,
-                          initialCreditsName: "",
-                          initialCreditsUrl: "",
-                        ),
-                      );
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          isAdminViewEnabled ? SizedBox(height: 15) : SizedBox.shrink(),
+          // Featured Image-URL
+          isAdminViewEnabled
+              ? Stack(
+                  children: [
+                    TextField(
+                      controller: featuredImageUrlController,
+                      readOnly: true,
+                      maxLines: 1,
+                      decoration: const InputDecoration(
+                        labelText: "Featured Image-URL",
+                        alignLabelWithHint: true,
+                        contentPadding: EdgeInsets.fromLTRB(0, 0, 35, 0),
+                      ),
+                    ),
 
-                      if (newEntry != null) {
-                        final updated = [...selectedPoi.images, newEntry];
-                        await PoiRepository.updatePoiDataInSupabase(
-                          id: selectedPoi.id,
-                          images: updated,
-                        );
-                        ref
-                            .read(selectedPoiProvider.notifier)
-                            .setPoi(
-                              selectedPoi.cloneWithNewValues(images: updated),
-                            );
-                      }
-
-                      return newEntry;
-                    },
-                    onEdit: (entry) async {
-                      final updatedEntry = await showDialog<ImageEntry>(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (_) => ImageEditModal(
-                          initialTitle: entry.title,
-                          initialUrl: entry.url,
-                          initialEnteredBy: "",
-                          initialCreditsName: "",
-                          initialCreditsUrl: "",
-                        ),
-                      );
-
-                      if (updatedEntry != null) {
-                        final updated = [...selectedPoi.images];
-                        final index = updated.indexOf(entry);
-                        updated[index] = updatedEntry;
-
-                        await PoiRepository.updatePoiDataInSupabase(
-                          id: selectedPoi.id,
-                          images: updated,
-                        );
-                        ref
-                            .read(selectedPoiProvider.notifier)
-                            .setPoi(
-                              selectedPoi.cloneWithNewValues(images: updated),
-                            );
-                      }
-
-                      return updatedEntry;
-                    },
-                    onDelete: (entry) async {
-                      final updated = [...selectedPoi.images]..remove(entry);
-                      await PoiRepository.updatePoiDataInSupabase(
-                        id: selectedPoi.id,
-                        images: updated,
-                      );
-                      ref
-                          .read(selectedPoiProvider.notifier)
-                          .setPoi(
-                            selectedPoi.cloneWithNewValues(images: updated),
+                    Positioned(
+                      right: 0,
+                      top: 10,
+                      child: IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () async {
+                          final newValue = await _openEditModal(
+                            context,
+                            "Featured Image-URL",
+                            featuredImageUrlController.text,
+                            1,
                           );
-                    },
-                    itemBuilder: (entry) {
-                      return Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 0, 0, 15),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-
-                          children: [
-                            InkWell(
-                              onTap: () => launchUrl(Uri.parse(entry.url)),
-                              child: Text(
-                                entry.title,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.normal,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              )
-            : SizedBox.shrink(),
-        imageUrls.isNotEmpty
-            ? Expanded(
-                child: Padding(
-                  padding: EdgeInsetsGeometry.fromLTRB(0, 8, 0, 0),
-                  child: Stack(
-                    children: [
-                      ListView.separated(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        itemCount: imageUrls.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 12),
-                        itemBuilder: (_, index) {
-                          final url = imageUrls[index];
-                          return ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(url, fit: BoxFit.cover),
-                          );
+                          if (newValue != null) {
+                            featuredImageUrlController.text = newValue;
+                            await PoiRepository.updatePoiDataInSupabase(
+                              id: selectedPoi!.id,
+                              featuredImageUrl: newValue,
+                            );
+                            ref
+                                .read(selectedPoiProvider.notifier)
+                                .setPoi(
+                                  selectedPoi.cloneWithNewValues(
+                                    featuredImageUrl: newValue,
+                                  ),
+                                );
+                            setState(() {});
+                          }
                         },
                       ),
+                    ),
+                  ],
+                )
+              : SizedBox.shrink(),
+          isAdminViewEnabled ? SizedBox(height: 15) : SizedBox.shrink(),
 
-                      Positioned(
-                        top: 5,
-                        right: 5,
-                        child: IconButton(
-                          icon: const Icon(Icons.open_in_new_sharp),
-                          onPressed: () => PhotoGalleryModal.open(
-                            context,
-                            imageUrls: imageUrls,
+          // Featured image
+          (selectedPoi!.featuredImageUrl.isEmpty)
+              ? const Icon(
+                  Icons.image_not_supported,
+                  size: 80,
+                  color: Colors.grey,
+                )
+              : Stack(
+                  children: [
+                    Image.network(
+                      selectedPoi.featuredImageUrl,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.broken_image,
+                          size: 80,
+                          color: Colors.grey,
+                        );
+                      },
+                    ),
+                    Positioned(
+                      top: 5,
+                      right: 5,
+                      child: IconButton(
+                        icon: const Icon(Icons.open_in_new_sharp),
+                        onPressed: () => PhotoGalleryModal.open(
+                          context,
+                          imageUrls: imageUrls,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+          // Liste mit ImageUrls
+          if (isAdminViewEnabled)
+            EditableList<ImageEntry>(
+              items: selectedPoi.images,
+              isAdminViewEnabled: isAdminViewEnabled,
+              onAdd: () async {
+                final newEntry = await showDialog<ImageEntry>(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) => ImageEditModal(
+                    initialTitle: "",
+                    initialUrl: "",
+                    initialEnteredBy: username,
+                    initialCreditsName: "",
+                    initialCreditsUrl: "",
+                  ),
+                );
+
+                if (newEntry != null) {
+                  final updated = [...selectedPoi.images, newEntry];
+                  await PoiRepository.updatePoiDataInSupabase(
+                    id: selectedPoi.id,
+                    images: updated,
+                  );
+                  ref
+                      .read(selectedPoiProvider.notifier)
+                      .setPoi(selectedPoi.cloneWithNewValues(images: updated));
+                }
+
+                return newEntry;
+              },
+              onEdit: (entry) async {
+                final updatedEntry = await showDialog<ImageEntry>(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) => ImageEditModal(
+                    initialTitle: entry.title,
+                    initialUrl: entry.url,
+                    initialEnteredBy: "",
+                    initialCreditsName: "",
+                    initialCreditsUrl: "",
+                  ),
+                );
+
+                if (updatedEntry != null) {
+                  final updated = [...selectedPoi.images];
+                  final index = updated.indexOf(entry);
+                  updated[index] = updatedEntry;
+
+                  await PoiRepository.updatePoiDataInSupabase(
+                    id: selectedPoi.id,
+                    images: updated,
+                  );
+                  ref
+                      .read(selectedPoiProvider.notifier)
+                      .setPoi(selectedPoi.cloneWithNewValues(images: updated));
+                }
+
+                return updatedEntry;
+              },
+              onDelete: (entry) async {
+                final updated = [...selectedPoi.images]..remove(entry);
+                await PoiRepository.updatePoiDataInSupabase(
+                  id: selectedPoi.id,
+                  images: updated,
+                );
+                ref
+                    .read(selectedPoiProvider.notifier)
+                    .setPoi(selectedPoi.cloneWithNewValues(images: updated));
+              },
+              itemBuilder: (entry) {
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+
+                    children: [
+                      InkWell(
+                        onTap: () => launchUrl(Uri.parse(entry.url)),
+                        child: Text(
+                          entry.title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.normal,
+                            fontSize: 16,
                           ),
                         ),
                       ),
                     ],
                   ),
-                ),
-              )
-            : const SizedBox.shrink(),
-      ],
+                );
+              },
+            ),
+          const SizedBox(height: 0),
+          if (imageUrls.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 0),
+              child: Stack(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ...imageUrls.map(
+                        (url) => ClipRRect(
+                          borderRadius: BorderRadius.circular(0),
+                          child: Image.network(url, fit: BoxFit.cover),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  Positioned(
+                    top: 5,
+                    right: 5,
+                    child: IconButton(
+                      icon: const Icon(Icons.open_in_new_sharp),
+                      onPressed: () =>
+                          PhotoGalleryModal.open(context, imageUrls: imageUrls),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -1096,10 +1149,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Geometrietyp",
-          style: TextStyle(fontSize: 16),
-        ),
+        const Text("Geometrietyp", style: TextStyle(fontSize: 16)),
         const SizedBox(height: 8),
 
         RadioGroup<String>(

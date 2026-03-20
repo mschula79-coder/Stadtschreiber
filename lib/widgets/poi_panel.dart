@@ -42,17 +42,18 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
       height: 460,
       child: Column(
         children: [
+          SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              SizedBox(width: 8),
+              SizedBox(width: 18),
               Expanded(
                 child: Row(
                   children: [
                     Text(
                       widget.selectedPoi.name,
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                       overflow: TextOverflow.ellipsis,

@@ -1,3 +1,4 @@
+import 'package:stadtschreiber/models/history_entry.dart';
 import 'package:stadtschreiber/models/image_entry.dart';
 import 'package:stadtschreiber/models/poi_metadata.dart';
 import 'package:stadtschreiber/services/debug_service.dart';
@@ -91,6 +92,7 @@ class PoiRepository {
     String? history,
     String? featuredImageUrl,
     List<ArticleEntry>? articles,
+    List<HistoryEntry>? historyEntries,
     PoiMetadata? metadata,
     String? description,
     List<ImageEntry>? images,
@@ -107,6 +109,9 @@ class PoiRepository {
     }
     if (articles != null) {
       updateData['articles'] = articles.map((e) => e.toJson()).toList();
+    }
+    if (historyEntries != null) {
+      updateData['history'] = historyEntries.map((e) => e.toJson()).toList();
     }
     if (metadata != null) updateData['metadata'] = metadata.toJson();
     if (description != null) updateData['description'] = description;
@@ -224,6 +229,7 @@ class PoiRepository {
       featuredImageUrl: '',
       categories: [],
       articles: [],
+      historyEntries: [],
       metadata: PoiMetadata(),
       geometryType: 'point',
       newPoi: true,

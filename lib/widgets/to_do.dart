@@ -1,18 +1,19 @@
-// TODO General Debugging
-// TODO Photo gallery
-// TODO Icons
+// TODO History as List of decorated textboxes
+// TODO photo upload
 // TODO Kategorien
+// TODO Kategorie Filter
+// TODO Icons
 // TODO Bewertungsschemata
 // TODO Info Popup (© Planetiler, OpenStreetMap, Maplibre...)
 // TODO add poi owner
-// TODO Photo credits
 // TODO Login form, Passwort zurücksetzen, registrieren usw.
-// TODO Kategorie Filter
-// TODO photo upload
+// TODO Photo credits
 // TODO RLS
 // TODO Multipolygon support für geometrie bearbeitung
 // TODO Polygon and Line colors
 // TODO Polygon consistency check
+// TODO Zoom out animation
+// TODO Modal loading distortion 
 
 
 class ToDo {
