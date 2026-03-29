@@ -716,22 +716,71 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
   ) {
     final articles = selectedPoi.articles;
     return SingleChildScrollView(
-      child: Column(
-        children: [
-          SizedBox(height: 16),
-          EditableList<ArticleEntry>(
-            items: articles,
-            isAdminViewEnabled: isAdminViewEnabled,
-            onAdd: () async {
-              final newEntry = await showDialog<ArticleEntry>(
-                context: context,
-                barrierDismissible: false,
-                builder: (_) =>
-                    const ArticleEditModal(initialTitle: "", initialUrl: "", initialSource: ''),
-              );
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            SizedBox(height: 16),
+            EditableList<ArticleEntry>(
+              items: articles,
+              isAdminViewEnabled: isAdminViewEnabled,
+              onAdd: () async {
+                final newEntry = await showDialog<ArticleEntry>(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) => const ArticleEditModal(
+                    initialTitle: "",
+                    initialUrl: "",
+                    initialSource: '',
+                  ),
+                );
 
-              if (newEntry != null) {
-                final updated = [...articles, newEntry];
+                if (newEntry != null) {
+                  final updated = [...articles, newEntry];
+                  await PoiRepository.updatePoiDataInSupabase(
+                    id: selectedPoi.id,
+                    articles: updated,
+                  );
+                  ref
+                      .read(selectedPoiProvider.notifier)
+                      .setPoi(
+                        selectedPoi.cloneWithNewValues(articles: updated),
+                      );
+                }
+
+                return newEntry;
+              },
+              onEdit: (entry) async {
+                final updatedEntry = await showDialog<ArticleEntry>(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) => ArticleEditModal(
+                    initialTitle: entry.title,
+                    initialUrl: entry.url,
+                    initialSource: entry.source,
+                  ),
+                );
+
+                if (updatedEntry != null) {
+                  final updated = [...articles];
+                  final index = updated.indexOf(entry);
+                  updated[index] = updatedEntry;
+
+                  await PoiRepository.updatePoiDataInSupabase(
+                    id: selectedPoi.id,
+                    articles: updated,
+                  );
+                  ref
+                      .read(selectedPoiProvider.notifier)
+                      .setPoi(
+                        selectedPoi.cloneWithNewValues(articles: updated),
+                      );
+                }
+
+                return updatedEntry;
+              },
+              onDelete: (entry) async {
+                final updated = [...articles]..remove(entry);
                 await PoiRepository.updatePoiDataInSupabase(
                   id: selectedPoi.id,
                   articles: updated,
@@ -739,70 +788,31 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                 ref
                     .read(selectedPoiProvider.notifier)
                     .setPoi(selectedPoi.cloneWithNewValues(articles: updated));
-              }
+              },
+              itemBuilder: (entry) {
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 0, 15),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
 
-              return newEntry;
-            },
-            onEdit: (entry) async {
-              final updatedEntry = await showDialog<ArticleEntry>(
-                context: context,
-                barrierDismissible: false,
-                builder: (_) => ArticleEditModal(
-                  initialTitle: entry.title,
-                  initialUrl: entry.url,
-                  initialSource: entry.source,
-                ),
-              );
-
-              if (updatedEntry != null) {
-                final updated = [...articles];
-                final index = updated.indexOf(entry);
-                updated[index] = updatedEntry;
-
-                await PoiRepository.updatePoiDataInSupabase(
-                  id: selectedPoi.id,
-                  articles: updated,
-                );
-                ref
-                    .read(selectedPoiProvider.notifier)
-                    .setPoi(selectedPoi.cloneWithNewValues(articles: updated));
-              }
-
-              return updatedEntry;
-            },
-            onDelete: (entry) async {
-              final updated = [...articles]..remove(entry);
-              await PoiRepository.updatePoiDataInSupabase(
-                id: selectedPoi.id,
-                articles: updated,
-              );
-              ref
-                  .read(selectedPoiProvider.notifier)
-                  .setPoi(selectedPoi.cloneWithNewValues(articles: updated));
-            },
-            itemBuilder: (entry) {
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(10, 0, 0, 15),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-
-                  children: [
-                    InkWell(
-                      onTap: () => launchUrl(Uri.parse(entry.url)),
-                      child: Text(
-                        entry.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.normal,
-                          fontSize: 16,
+                    children: [
+                      InkWell(
+                        onTap: () => launchUrl(Uri.parse(entry.url)),
+                        child: Text(
+                          entry.title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.normal,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1031,14 +1041,13 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
 
   // TODO implement multiple categories / category
   Widget _buildRatingsTab(PointOfInterest poi) {
-    if (poi.categories != null && poi.categories![0].isNotEmpty) {
+    if (poi.categories != null && poi.categories!.isNotEmpty && poi.categories![0].isNotEmpty) {
       final categoryId = ref.watch(
         categoryIdBySlugProvider(poi.categories![0]),
       );
 
       final criteria = ref.watch(criteriaForCategoryProvider(categoryId!));
-
-      // Überschrift mit PoiRatingList
+       // Überschrift mit PoiRatingList
       return criteria.when(
         data: (list) => Padding(
           padding: const EdgeInsets.all(12),
@@ -1117,7 +1126,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
           title: Text("Edit $fieldName"),
           content: TextField(
             controller: tempController,
-            autofocus: true,
+            autofocus: false,
             decoration: InputDecoration(labelText: fieldName),
             maxLines: maxLines,
           ),

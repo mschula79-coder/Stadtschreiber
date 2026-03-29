@@ -5,12 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' hide Consumer;
 import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:stadtschreiber/widgets/categories_menu_content.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'map_screen.dart';
 
-import '../controllers/categories_menu_controller.dart';
 import '../services/debug_service.dart';
-import '../widgets/categories_menu_overlay.dart';
 import '../widgets/main_app_bar.dart';
 
 class MyHomePage extends ConsumerStatefulWidget {
@@ -26,28 +25,21 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
     with TickerProviderStateMixin {
   final GlobalKey _filterKey = GlobalKey();
 
-  final CategoriesMenuController _categoriesMenuController =
-      CategoriesMenuController();
-
   final GlobalKey<MapScreenState> _mapKey = GlobalKey<MapScreenState>();
+
+  bool _menuInitialized = false;
+  bool _menuOpen = false;
 
   @override
   void initState() {
     super.initState();
     WakelockPlus.enable();
-    _categoriesMenuController.initAnimation(this);
-
-    _categoriesMenuController.setOnClosed(() {
-      _mapKey.currentState?.reloadPoisForSelectedCategories();
-    });
 
     ensureLocationPermission();
-  }
 
-  @override
-  void dispose() {
-    _categoriesMenuController.dispose();
-    super.dispose();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() => _menuInitialized = true);
+    });
   }
 
   @override
@@ -63,17 +55,44 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
 
         debugPrint('SupabaseUserState changed: $previous → $next');
 
-/*         ref.read(appStateProvider.notifier).setAdminViewEnabled(next.isAdmin);*/      }
+        /*         ref.read(appStateProvider.notifier).setAdminViewEnabled(next.isAdmin);*/
+      }
     });
 
     return Scaffold(
       appBar: MainAppBar(
         filterButtonKey: _filterKey,
-        onFilterPressed: toggleCategoryMenuOverlay,
+        onFilterPressed: toggleCategoryMenu,
       ),
       body: Stack(
-        clipBehavior: Clip.hardEdge,
-        children: [MapScreen(key: _mapKey)],
+        children: [
+          MapScreen(key: _mapKey),
+
+          // Outside‑Tap‑Catcher
+          if (_menuOpen)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => setState(() => _menuOpen = false),
+                behavior: HitTestBehavior.translucent,
+              ),
+            ),
+
+          // Das Menü selbst
+          AnimatedPositioned(
+            duration: _menuInitialized ? Duration(milliseconds: 200) : Duration.zero,
+            curve: Curves.easeOut,
+            top: _menuOpen ? 10 : -3000, // Menü fährt rein/raus
+            right: 0,
+            width: MediaQuery.of(context).size.width * 0.66,
+            child: Material(
+              elevation: 8,
+              borderRadius: BorderRadius.circular(12),
+              child: CategoriesMenu(
+                onClose: () => setState(() => _menuOpen = false),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -109,17 +128,9 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
     return granted;
   }
 
-  void toggleCategoryMenuOverlay() {
-    _categoriesMenuController.toggle(
-      context: context,
-      buttonKey: _filterKey,
-      vsync: this,
-      builder: (anim) {
-        return CategoriesMenuOverlay(
-          animation: anim,
-          onClose: _categoriesMenuController.hide,
-        );
-      },
-    );
+  void toggleCategoryMenu() {
+    setState(() {
+      _menuOpen = !_menuOpen;
+    });
   }
 }

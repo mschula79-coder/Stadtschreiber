@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/provider/poi_service_provider.dart';
+import 'package:stadtschreiber/provider/search_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
-import 'package:stadtschreiber/provider/visible_pois_provider.dart';
 
 class AddressLookupQueueNotifier extends Notifier<List<PointOfInterest>> {
   bool _isProcessing = false;
@@ -12,6 +12,7 @@ class AddressLookupQueueNotifier extends Notifier<List<PointOfInterest>> {
     return [];
   }
 
+  // TODO poi displayaddress neu setzen
   void enqueue(PointOfInterest poi) {
     state = [...state, poi];
     _process();
@@ -37,7 +38,7 @@ class AddressLookupQueueNotifier extends Notifier<List<PointOfInterest>> {
       if (selected?.id == updated.id) {
         ref.read(selectedPoiProvider.notifier).setPoi(updated);
       }
-      ref.read(visiblePoisProvider.notifier).replaceInVisiblePois(updated);
+ref.read(searchSelectionProvider.notifier).replace(updated);
     }
 
     _isProcessing = false;

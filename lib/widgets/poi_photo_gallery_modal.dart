@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:stadtschreiber/utils/image_utils.dart';
+import 'package:vector_math/vector_math_64.dart' as vector;
 
 class PhotoGalleryModal extends StatefulWidget {
   final List<String> imageUrls;
@@ -174,11 +175,13 @@ class _ZoomableImageState extends State<_ZoomableImage> {
           _controller.value = Matrix4.identity();
         } else {
           final position = _doubleTapDetails!.localPosition;
+
           _controller.value = Matrix4.identity()
-            ..translate(-position.dx * 1.5, -position.dy * 1.5)
-            ..scale(2.0);
+            ..translateByVector3(vector.Vector3(-position.dx * 1.5, -position.dy * 1.5, 0.0))
+            ..scaleByDouble(2.0, 2.0, 1.0, 1.0);
         }
       },
+
       child: InteractiveViewer(
         transformationController: _controller,
         minScale: 1.0,

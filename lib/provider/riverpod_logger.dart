@@ -11,8 +11,8 @@ base class RiverpodLogger extends ProviderObserver {
     DebugService.log('''
 -------------------------
 Provider: ${context.provider.name ?? context.provider.runtimeType}
-Previous: $previousValue
-New:      $newValue
+Previous: ${previousValue.toString()}
+New:      ${newValue.toString()}
 -------------------------
 ''');
   }

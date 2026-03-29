@@ -14,7 +14,7 @@ class CategoryRepository {
         .from('categories')
         .select('id, slug, name, sort_order, icon_source, icon_name')
         .eq('is_active', true)
-        .order('sort_order', ascending: true);
+        .order('name', ascending: true);
 
     final Map<String, CategoryDto> categories = {
       for (var c in catListRaw) c['id'] as String: CategoryDto.fromJson(c),
@@ -57,15 +57,18 @@ class CategoryRepository {
         : null;
 
     final childIds = childrenMap[id] ?? [];
+    final children =
+        childIds
+            .map((childId) => _buildNode(childId, categories, childrenMap))
+            .toList()
+          ..sort((a, b) => a.label.compareTo(b.label));
 
     return CategoryNode(
       id: dto.id,
       label: dto.name,
       value: dto.slug,
       icon: icon,
-      children: childIds
-          .map((childId) => _buildNode(childId, categories, childrenMap))
-          .toList(),
+      children: children,
       ratingCriteria: [],
     );
   }
@@ -80,10 +83,9 @@ class CategoryRepository {
         .select('global_rating_criteria(*)')
         .eq('category_id', categoryId)
         .order('position');
-
     return response
         .map(
-          (row) => RatingCriterionDTO.fromJson(row['global_rating_criteria']),
+          (row) => RatingCriterionDTO.fromJson(row['global_rating_criteria'] ?? ''),
         )
         .toList();
   }

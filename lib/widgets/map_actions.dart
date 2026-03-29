@@ -2,30 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/poi.dart';
-import '../provider/search_provider.dart';
-import '../provider/poi_repository_provider.dart';
+import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
+import 'package:stadtschreiber/widgets/user_actions_bar.dart';
 import '../services/debug_service.dart';
-import '../provider/camera_provider.dart';
 
 class MapActions extends ConsumerStatefulWidget {
   final VoidCallback onChangeStyle;
   final VoidCallback onLocateMe;
   final VoidCallback onRemoveThumbnails;
+  final VoidCallback onAddPoi;
   final bool isAdmin;
   final bool isAdminViewEnabled;
-  final Future<void> Function(PointOfInterest) onTapSearchedPoi;
-  final Future<void> Function(List<PointOfInterest>) onShowAllResults;
 
   const MapActions({
     super.key,
     required this.onChangeStyle,
-    required this.onTapSearchedPoi,
     required this.onLocateMe,
+    required this.onAddPoi,
     required this.onRemoveThumbnails,
     required this.isAdmin,
     required this.isAdminViewEnabled,
-    required this.onShowAllResults,
   });
 
   @override
@@ -33,183 +29,14 @@ class MapActions extends ConsumerStatefulWidget {
 }
 
 class _MapActionsState extends ConsumerState<MapActions> {
-  bool _searchVisible = false;
-  final TextEditingController _searchController = TextEditingController();
-
-  String _searchQuery = "";
+  bool userActionsExpanded = false;
 
   @override
   Widget build(BuildContext context) {
     DebugService.log('Build MapActions');
 
-    final repo = ref.read(poiRepositoryProvider);
-    final camera = ref.read(cameraProvider);
-
-    final searchResults = (_searchVisible && _searchQuery.isNotEmpty)
-        ? ref.watch(
-            searchResultsProvider((
-              query: _searchQuery,
-              searchActive: true,
-              repo: repo,
-              camera: camera,
-            )),
-          )
-        : const AsyncValue<List<PointOfInterest>>.data([]);
-
     return Stack(
       children: [
-        Positioned(
-          top: 20,
-          right: 20,
-          child:
-              //search row
-              Row(
-                children: [
-                  // SEARCH RESULTS DROPDOWN
-                  Column(
-                    children: [
-                      // SEARCH FIELD (only visible when toggled)
-                      if (_searchVisible)
-                        Container(
-                          width: 220,
-                          padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
-                          margin: const EdgeInsets.fromLTRB(0, 0, 4, 8),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: const [
-                              BoxShadow(color: Colors.black26, blurRadius: 6),
-                            ],
-                          ),
-
-                          child: TextField(
-                            controller: _searchController,
-                            autofocus: true,
-                            decoration: const InputDecoration(
-                              hintText: "Search POIs…",
-                              border: InputBorder.none,
-                            ),
-                            onChanged: (value) {
-                              setState(() => _searchQuery = value);
-                            },
-                          ),
-                        ),
-                      // END OF SEARCH FIELD (only visible when toggled)
-                      if (_searchVisible)
-                        searchResults.when(
-                          data: (poiresultslist) {
-                            if (poiresultslist.isEmpty) {
-                              return const SizedBox.shrink();
-                            }
-                            return Container(
-                              width: 220,
-                              margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Colors.black26,
-                                    blurRadius: 6,
-                                  ),
-                                ],
-                              ),
-                              child: ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  maxHeight: 5 * 56, // 5 ListTiles
-                                ),
-                                // SEARCH RESULTS LIST
-                                child: Column(
-                                  children: [
-                                    ListView.builder(
-                                      shrinkWrap: true,
-                                      itemCount: poiresultslist.length,
-                                      itemBuilder: (context, index) {
-                                        final poi = poiresultslist[index];
-                                        return ListTile(
-                                          dense: true,
-                                          title: Text(poi.name),
-                                          subtitle: poi.displayAddress != null
-                                              ? Text(
-                                                  '${poi.city ?? ''}, ${poi.street ?? ''} ${poi.houseNumber ?? ''}',
-                                                )
-                                              : null,
-                                          onTap: () {
-                                            widget.onTapSearchedPoi(poi);
-                                            DebugService.log(
-                                              'Poi selected from search results',
-                                            );
-
-                                            setState(() {
-                                              _searchVisible = false;
-                                              _searchController.clear();
-                                            });
-                                          },
-                                        );
-                                      },
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        widget.onShowAllResults(poiresultslist);
-                                      },
-                                      child: const Text(
-                                        "Show all results on map",
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                          loading: () => Container(
-                            width: 220,
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              boxShadow: const [
-                                BoxShadow(color: Colors.black26, blurRadius: 6),
-                              ],
-                            ),
-                            child: const Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          ),
-                          error: (err, st) => Container(
-                            width: 220,
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              boxShadow: const [
-                                BoxShadow(color: Colors.black26, blurRadius: 6),
-                              ],
-                            ),
-                            child: Text("Error: $err"),
-                          ),
-                        ),
-
-                      // END OF SEARCH RESULTS DROPDOWN
-                    ],
-                  ),
-                  FloatingActionButton(
-                    heroTag: "SearchToggle",
-                    onPressed: () {
-                      setState(() {
-                        _searchVisible = !_searchVisible;
-                        _searchController.clear();
-                      });
-                    },
-                    mini: true,
-                    child: Icon(_searchVisible ? Icons.close : Icons.search),
-                  ),
-                ],
-              ),
-        ),
-
         // MAP ACTIONS BUTTONS
         Positioned(
           bottom: 20,
@@ -220,24 +47,17 @@ class _MapActionsState extends ConsumerState<MapActions> {
             children: [
               // Goto current location
               FloatingActionButton(
-                heroTag: "btn3",
+                heroTag: "locateMe",
                 onPressed: () {
                   widget.onLocateMe();
                 },
                 mini: true,
                 child: const Icon(Icons.my_location),
               ),
+
               const SizedBox(height: 8),
 
-              //change style
-              FloatingActionButton(
-                heroTag: "changeStyle",
-                onPressed: widget.onChangeStyle,
-                mini: true,
-                child: const Icon(Icons.color_lens_outlined),
-              ),
-              const SizedBox(height: 8),
-              //remove thumbnails
+              //Clear thumbnails
               FloatingActionButton(
                 heroTag: "removeThumbnails",
                 onPressed: () {
@@ -248,6 +68,45 @@ class _MapActionsState extends ConsumerState<MapActions> {
                 child: const Iconify(Mdi.pin_off_outline, size: 24),
               ),
               const SizedBox(height: 8),
+
+              // Goto current location
+              if (ref.read(supabaseUserStateProvider).isAdmin)
+                FloatingActionButton(
+                  heroTag: "addPoi",
+                  onPressed: widget.onAddPoi,
+                  mini: true,
+                  child: const Icon(Icons.add_location),
+                ),
+
+              const SizedBox(height: 8),
+
+              Row(
+                children: [
+                  // User Actions Bar
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: userActionsExpanded
+                        ? UserActionsBar(
+                            onClose: () =>
+                                setState(() => userActionsExpanded = false),
+                            onChangeStyle: widget.onChangeStyle,
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+
+                  // Show User Actions Bar
+                  FloatingActionButton(
+                    heroTag: "userActions",
+                    mini: true,
+                    onPressed: () {
+                      setState(
+                        () => userActionsExpanded = !userActionsExpanded,
+                      );
+                    },
+                    child: const Icon(Icons.person),
+                  ),
+                ],
+              ),
             ],
           ),
         ),

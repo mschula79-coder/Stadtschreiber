@@ -10,4 +10,15 @@ class VisiblePoisStateData {
   }
 
   static const initial = VisiblePoisStateData(visible: []);
+
+  @override
+  String toString() {
+    return '''
+VisiblePoisStateData(
+  visible: [
+    ${visible.map((p) => '${p.id} (${p.name})').join(',\n    ')}
+  ]
+)
+''';
+  }
 }

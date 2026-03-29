@@ -1,3 +1,5 @@
+import 'package:maplibre/maplibre.dart';
+
 class CameraState {
   final double lat;
   final double lon;
@@ -8,4 +10,8 @@ class CameraState {
     required this.lon,
     required this.zoom,
   });
+
+  Geographic getLocation () {
+    return Geographic(lat: lat, lon:lon);  
+  }
 }

@@ -1,10 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../state/categories_menu_state.dart';
+import '../state/categories_selection_state.dart';
 import '../services/debug_service.dart';
 
-class CategoriesMenuNotifier extends Notifier<CategoriesMenuState> {
+
+class CategoriesSelectionNotifier extends Notifier<CategoriesSelectionState> {
   @override
-  CategoriesMenuState build() => CategoriesMenuState.initial;
+  CategoriesSelectionState build() => CategoriesSelectionState.initial;
 
   void setSelected(String value, bool selected) {
     final updated = [...state.selectedValues];
@@ -15,7 +16,7 @@ class CategoriesMenuNotifier extends Notifier<CategoriesMenuState> {
       updated.remove(value);
     }
 
-    DebugService.log("CategoriesMenuNotifier.setSelected: $value = $selected");
+    DebugService.log("CategoriesSelectionNotifier.setSelected: $value = $selected");
 
     state = state.copyWith(selectedValues: updated);
   }
@@ -31,19 +32,23 @@ class CategoriesMenuNotifier extends Notifier<CategoriesMenuState> {
       }
     });
 
-    DebugService.log("CategoriesMenuNotifier.setMany: $updates");
+    DebugService.log("CategoriesSelectionNotifier.setMany: $updates");
 
     state = state.copyWith(selectedValues: updated);
   }
 
   void clear() {
-    DebugService.log("CategoriesMenuNotifier.clear");
+    DebugService.log("CategoriesSelectionNotifier.clear");
     state = state.copyWith(selectedValues: []);
   }
 }
 
-final categoriesMenuProvider =
-    NotifierProvider<CategoriesMenuNotifier, CategoriesMenuState>(
-      CategoriesMenuNotifier.new,
-      name: 'categoriesMenuProvider'
+final categoriesSelectionProvider =
+    NotifierProvider<CategoriesSelectionNotifier, CategoriesSelectionState>(
+      CategoriesSelectionNotifier.new,
+      name: 'categoriesSelectionProvider',
     );
+
+final selectedCategoriesProvider = Provider<List<String>>((ref) {
+  return ref.watch(categoriesSelectionProvider).selectedValues;
+});

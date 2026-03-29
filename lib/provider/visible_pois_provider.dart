@@ -2,57 +2,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/provider/categories_menu_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
-import 'package:stadtschreiber/state/visible_pois_state.dart';
+import 'package:stadtschreiber/provider/search_provider.dart';
 
-final visiblePoisProvider =
-    NotifierProvider<VisiblePoisNotifier, VisiblePoisStateData>(
-      VisiblePoisNotifier.new,
-      name: 'visiblePoisProvider',
-    );
+final visiblePoisProvider = FutureProvider<List<PointOfInterest>>((ref) async {
+  final repo = ref.watch(poiRepositoryProvider);
+  final selectedCategories = ref.watch(categoriesSelectionProvider).selectedValues;
+  final searchSelection = ref.watch(searchSelectionProvider);
 
-class VisiblePoisNotifier extends Notifier<VisiblePoisStateData> {
-  @override
-  VisiblePoisStateData build() => VisiblePoisStateData.initial;
-
-  void add(PointOfInterest poi) {
-    final updated = [...state.visible]
-      ..removeWhere((p) => p.id == poi.id)
-      ..add(poi);
-
-    state = state.copyWith(visible: updated);
+  // 1) Suchauswahl hat Vorrang
+  if (searchSelection.isNotEmpty) {
+    return searchSelection;
   }
 
-  void removePoi(PointOfInterest poi) {
-    final updated = [...state.visible]..removeWhere((p) => p.id == poi.id);
+  // 2) Kategorienfilter → POIs vom Server laden
+  return await repo.loadPoisforSelectedCategories(selectedCategories);
+});
 
-    state = state.copyWith(visible: updated);
-  }
 
-  void setAll(List<PointOfInterest> pois) {
-    state = state.copyWith(visible: [...pois]);
-  }
-
-  void removeAll() {
-    state = state.copyWith(visible: []);
-  }
-
-  void replaceInVisiblePois(PointOfInterest updated) {
-    final list = [...state.visible];
-    final index = list.indexWhere((p) => p.id == updated.id);
-
-    if (index != -1) {
-      list[index] = updated;
-      state = VisiblePoisStateData(visible: list);
-    }
-  }
-
-}
-
-final poisForSelectedCategoriesProvider = FutureProvider<List<PointOfInterest>>(
-  (ref) async {
-    final repo = ref.read(poiRepositoryProvider);
-    final selected = ref.watch(categoriesMenuProvider).selectedValues.toList();
-
-    return repo.loadPoisforSelectedCategories(selected);
-  },
-);

@@ -9,13 +9,9 @@ final selectedPoiProvider =
 
 class SelectedPoiNotifier extends Notifier<PointOfInterest?> {
   @override
-  PointOfInterest? build() => null; // initial: kein POI ausgewählt
+  PointOfInterest? build() => null;
 
   void setPoi(PointOfInterest poi) {
-    state = poi;
-  }
-
-  void updatePoi(PointOfInterest poi) {
     state = poi;
   }
 

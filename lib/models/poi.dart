@@ -71,9 +71,12 @@ class PointOfInterest {
               .toList()
             ..sort((a, b) => a.start.compareTo(b.start)),
 
-      articles: (row['articles'] as List<dynamic>)
-          .map((e) => ArticleEntry.fromJson(e))
-          .toList(),
+      articles: row['articles'] == null
+          ? []
+          : (row['articles'] as List<dynamic>)
+                .map((e) => ArticleEntry.fromJson(e))
+                .toList(),
+
       metadata: PoiMetadata(
         links: row['metadata']['links'] != null
             ? Map<String, String>.from(row['metadata']['links'])
@@ -107,9 +110,11 @@ class PointOfInterest {
           (row['geom_area']?['type'] as String?)?.toLowerCase() ?? 'point',
       osmId: row['osm_id'] as int?,
       newPoi: false,
-      images: (row['images'] as List<dynamic>)
-          .map((e) => ImageEntry.fromJson(e))
-          .toList(),
+      images: row['images'] == null
+          ? []
+          : (row['images'] as List<dynamic>)
+                .map((e) => ImageEntry.fromJson(e))
+                .toList(),
     );
   }
 
@@ -328,7 +333,7 @@ class PointOfInterest {
 
   @override
   String toString() {
-    return 'POI(id: $id, name: $name, lat: $location, distance: $distance)';
+    return 'POI(id: $id, name: $name, location: $location, category: $categories)';
   }
 
   String getGeoJsonGeometry() {

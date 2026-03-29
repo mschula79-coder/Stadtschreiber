@@ -10,11 +10,9 @@ class AppStateData {
   });
 
   AppStateData copyWith({
-    bool? isAdmin,
     bool? isAdminViewEnabled,
     bool? isPoiEditMode,
     bool? locationPermission,
-    String? username
   }) {
     return AppStateData(
       isAdminViewEnabled: isAdminViewEnabled ?? this.isAdminViewEnabled,

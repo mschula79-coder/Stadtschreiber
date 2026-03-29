@@ -13,16 +13,25 @@ class RatingCriterionDTO {
   });
 
   factory RatingCriterionDTO.fromJson(Map<String, dynamic> json) {
-    final raw = json['score_descriptions'] as Map<String, dynamic>;
+    // score_descriptions kann fehlen, null sein oder kein Map sein
+    final raw = json['score_descriptions'];
 
-    final converted = raw.map(
-      (key, value) => MapEntry(int.parse(key), value as String),
-    );
+    final Map<int, String> converted = {};
+
+    if (raw is Map) {
+      raw.forEach((key, value) {
+        // Key muss String sein und parsebar zu int
+        final parsedKey = int.tryParse(key.toString());
+        if (parsedKey != null && value is String) {
+          converted[parsedKey] = value;
+        }
+      });
+    }
 
     return RatingCriterionDTO(
-      id: json['id'],
-      name: json['name'],
-      description: json['description'],
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+      description: json['description'] ?? '',
       scoreDescriptions: converted,
     );
   }

@@ -11,28 +11,98 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+
   bool loading = false;
   String? errorMessage;
 
   Future<void> _login() async {
+    await _authAction(() async {
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+    });
+  }
+
+  Future<void> _register() async {
+    await _authAction(() async {
+      await Supabase.instance.client.auth.signUp(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+    });
+  }
+
+  Future<void> _authAction(Future<void> Function() action) async {
     setState(() {
       loading = true;
       errorMessage = null;
     });
 
     try {
-      final res = await Supabase.instance.client.auth.signInWithPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+      await action();
 
-      if (res.session == null) {
-        setState(() => errorMessage = "Login failed");
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session == null) {
+        setState(() => errorMessage = "Authentication failed");
+        return;
+      }
+
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/map');
       }
     } catch (e) {
       setState(() => errorMessage = e.toString());
     } finally {
       setState(() => loading = false);
+    }
+  }
+
+  Future<void> _resetPassword() async {
+    final emailCtrl = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Passwort zurücksetzen"),
+        content: TextField(
+          controller: emailCtrl,
+          decoration: const InputDecoration(
+            labelText: "Email",
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Abbrechen"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // 1) Dialog sofort schließen (synchron)
+              Navigator.pop(context);
+
+              // 2) Danach async ausführen
+              _sendResetEmail(emailCtrl.text.trim());
+            },
+            child: const Text("Senden"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _sendResetEmail(String email) async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      await Supabase.instance.client.auth.resetPasswordForEmail(email);
+
+      messenger.showSnackBar(
+        const SnackBar(content: Text("Reset‑Link wurde gesendet")),
+      );
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text("Fehler: $e")));
     }
   }
 
@@ -80,15 +150,35 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 12),
 
-                ElevatedButton(
-                  onPressed: loading ? null : _login,
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 48),
+                if (loading)
+                  const CircularProgressIndicator()
+                else
+                  Column(
+                    children: [
+                      ElevatedButton(
+                        onPressed: _login,
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 48),
+                        ),
+                        child: const Text("Login"),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton(
+                        onPressed: _register,
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 48),
+                        ),
+                        child: const Text("Registrieren"),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // 🔥 Passwort zurücksetzen
+                      TextButton(
+                        onPressed: _resetPassword,
+                        child: const Text("Passwort vergessen?"),
+                      ),
+                    ],
                   ),
-                  child: loading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Login"),
-                ),
               ],
             ),
           ),

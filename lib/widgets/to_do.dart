@@ -9,6 +9,7 @@
 // TODO Login form, Passwort zurücksetzen, registrieren usw.
 // TODO Photo credits
 // TODO RLS
+// TODO Mehrsprachig
 // TODO Multipolygon support für geometrie bearbeitung
 // TODO Polygon and Line colors
 // TODO Polygon consistency check
