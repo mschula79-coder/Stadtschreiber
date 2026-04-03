@@ -226,7 +226,6 @@ class PoiRepository {
       id: newId,
       name: 'newPOI',
       location: location,
-      featuredImageUrl: '',
       categories: [],
       articles: [],
       historyEntries: [],

@@ -11,7 +11,7 @@ class PointOfInterest {
   Geographic location;
   String id;
   final List<String>? categories;
-  final String featuredImageUrl;
+  final String? featuredImageUrl;
   final List<HistoryEntry> historyEntries;
   final List<ArticleEntry> articles;
   final PoiMetadata metadata;
@@ -35,7 +35,7 @@ class PointOfInterest {
     required this.name,
     required this.location,
     required this.categories,
-    required this.featuredImageUrl,
+    this.featuredImageUrl,
     required this.historyEntries,
     required this.articles,
     required this.metadata,

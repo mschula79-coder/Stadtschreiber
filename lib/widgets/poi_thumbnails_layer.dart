@@ -81,7 +81,7 @@ class PoiThumbnailsLayer extends ConsumerWidget {
       Widget markerWidget;
 
       final isDistrict = poi.categories?.contains('districts') == true;
-      final hasThumbnail = poi.featuredImageUrl.isNotEmpty;
+      final hasThumbnail = poi.featuredImageUrl != null;
 
       if (isDistrict) {
         markerWidget = DistrictThumbnail(

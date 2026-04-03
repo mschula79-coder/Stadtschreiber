@@ -260,9 +260,6 @@ class MapScreenState extends ConsumerState<MapScreen> {
                   ):
                     final cam = event.camera;
 
-                    DebugService.log(
-                      'MapEventMoveCamera: ${cam.center.lat}, ${cam.center.lon}, zoom: ${cam.zoom}',
-                    );
 
                     // ------------------------------------------------------------
                     // 1. Kamera-Status aktualisieren (leichtgewichtige Updates)
@@ -406,10 +403,8 @@ class MapScreenState extends ConsumerState<MapScreen> {
             onLocateMe: _locateMe,
             onAddPoi: () async {
               final newPoi = await poiRepository.newPoi(camera.getLocation());
-
-              DebugService.log(
-                'MapEventLongClick: Created new POI at ${camera.getLocation()}, id: ${newPoi.id}, opening panel and enabling edit mode',
-              );
+              ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
+              ref.invalidate(visiblePoisProvider);
             },
             onRemoveThumbnails: () {
               ref.read(categoriesSelectionProvider.notifier).clear();

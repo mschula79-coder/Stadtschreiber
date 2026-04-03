@@ -22,8 +22,7 @@ class CategoriesMenu extends ConsumerStatefulWidget {
   const CategoriesMenu({super.key, required this.onClose});
 
   @override
-  ConsumerState<CategoriesMenu> createState() =>
-      _CategoriesMenuState();
+  ConsumerState<CategoriesMenu> createState() => _CategoriesMenuState();
 }
 
 class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
@@ -99,6 +98,8 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
                         },
                         onTap: () {
                           ref.read(searchSelectionProvider.notifier).clear();
+                          FocusScope.of(context).unfocus();
+
                           setState(() => _searchVisible = true);
                         },
                         onTapUpOutside: (event) {
@@ -169,7 +170,7 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
             SizedBox(height: 8),
 
             const Text(
-              "Kategorien auswählen",
+              "Kategorien",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
 
@@ -296,9 +297,10 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
             },
           ),
           title: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(width: 0),
-              Text(node.label),
+              Expanded(child: Text(node.label, softWrap: true, maxLines: null)),
               _buildIcon(node),
             ],
           ),

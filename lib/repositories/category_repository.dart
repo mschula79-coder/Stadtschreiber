@@ -39,9 +39,14 @@ class CategoryRepository {
         .toSet();
     final rootIds = categories.keys.where((id) => !allChildren.contains(id));
 
-    final roots = rootIds
-        .map((id) => _buildNode(id, categories, childrenMap))
-        .toList();
+    final roots =
+        rootIds.map((id) => _buildNode(id, categories, childrenMap)).toList()
+          ..sort((a, b) {
+            final dtoA = categories[a.id]!;
+            final dtoB = categories[b.id]!;
+            return dtoA.sortOrder.compareTo(dtoB.sortOrder);
+          });
+
     return roots;
   }
 
@@ -85,7 +90,8 @@ class CategoryRepository {
         .order('position');
     return response
         .map(
-          (row) => RatingCriterionDTO.fromJson(row['global_rating_criteria'] ?? ''),
+          (row) =>
+              RatingCriterionDTO.fromJson(row['global_rating_criteria'] ?? ''),
         )
         .toList();
   }

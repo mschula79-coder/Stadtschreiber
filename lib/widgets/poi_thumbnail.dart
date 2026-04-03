@@ -36,7 +36,7 @@ class _PoiThumbnailState extends State<PoiThumbnail> {
 
   @override
   Widget build(BuildContext context) {
-    final hasPhoto = widget.poi.featuredImageUrl.isNotEmpty;
+    final hasPhoto = widget.poi.featuredImageUrl != null;
     return GestureDetector(
       onTap: widget.onTap,
       onLongPress: widget.onLongPress,
@@ -51,7 +51,7 @@ class _PoiThumbnailState extends State<PoiThumbnail> {
               border: Border.all(color: Colors.white, width: 3),
               image: DecorationImage(
                 image: hasPhoto
-                    ? NetworkImage(widget.poi.featuredImageUrl)
+                    ? NetworkImage(widget.poi.featuredImageUrl!)
                     : const AssetImage('assets/icons/placeholder.png'),
                 fit: BoxFit.cover,
               ),

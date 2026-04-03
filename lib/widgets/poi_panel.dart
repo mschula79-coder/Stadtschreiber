@@ -89,7 +89,6 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
           Expanded(
             child: PoiPanelTabs(
               selectedPoi: widget.selectedPoi,
-              onStartDraggingPoi: widget.onStartDraggingPoi,
             ),
           ),
         ],

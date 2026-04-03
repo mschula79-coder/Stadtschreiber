@@ -15,6 +15,7 @@
 // TODO Polygon consistency check
 // TODO Zoom out animation
 // TODO Modal loading distortion 
+// TODO Featured Image Thumbnail und Edge Function ans laufen bringen
 
 
 class ToDo {

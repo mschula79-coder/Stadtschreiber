@@ -38,12 +38,10 @@ import '../widgets/category_node_tile.dart';
 
 class PoiPanelTabs extends ConsumerStatefulWidget {
   final PointOfInterest selectedPoi;
-  final VoidCallback onStartDraggingPoi;
 
   const PoiPanelTabs({
     required this.selectedPoi,
     super.key,
-    required this.onStartDraggingPoi,
   });
 
   @override
@@ -96,7 +94,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
         if (next != null) {
           setState(() {
             nameController.text = next.name;
-            featuredImageUrlController.text = next.featuredImageUrl;
+            featuredImageUrlController.text = next.featuredImageUrl ?? '';
             descriptionController.text = next.description ?? '';
           });
         }
@@ -106,7 +104,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
       final current = ref.read(selectedPoiProvider);
       if (current != null) {
         nameController.text = current.name;
-        featuredImageUrlController.text = current.featuredImageUrl;
+        featuredImageUrlController.text = current.featuredImageUrl ?? '';
         descriptionController.text = current.description ?? '';
         DebugService.log(
           'Initial values set in PoiPanelTabs Name: ${current.name}',
@@ -232,6 +230,8 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                                     name: newValue,
                                   ),
                                 );
+                            //ref.invalidate(visiblePoisProvider);
+
                             setState(() {});
                           }
                         },
@@ -423,6 +423,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                       );
 
                       ref.read(selectedPoiProvider.notifier).setPoi(updatedPoi);
+                      //ref.invalidate(visiblePoisProvider);
                     },
                   ),
                 ),
@@ -500,6 +501,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                         metadata: newPoi.metadata,
                       );
                       ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
+                      //ref.invalidate(visiblePoisProvider);
                     },
                   ),
                 ),
@@ -552,9 +554,9 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
 
                   GestureDetector(
                     onTap: () {
-                      widget.onStartDraggingPoi;
+                      ref.read(dragPoiProvider.notifier).startDraggingPoi(selectedPoi);
                     },
-                    child: Icon(Icons.location_searching),
+                    child: Icon(Icons.edit),
                   ),
                 ],
               ),
@@ -631,6 +633,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                               historyEntries: updated,
                             ),
                           );
+                      //ref.invalidate(visiblePoisProvider);
                     }
 
                     return newEntry;
@@ -662,6 +665,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                               historyEntries: updated,
                             ),
                           );
+                      //ref.invalidate(visiblePoisProvider);
                     }
 
                     return updatedEntry;
@@ -746,6 +750,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                       .setPoi(
                         selectedPoi.cloneWithNewValues(articles: updated),
                       );
+                  //ref.invalidate(visiblePoisProvider);
                 }
 
                 return newEntry;
@@ -775,6 +780,8 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                       .setPoi(
                         selectedPoi.cloneWithNewValues(articles: updated),
                       );
+                  //ref.invalidate(visiblePoisProvider);
+                  //ref.invalidate(visiblePoisProvider);
                 }
 
                 return updatedEntry;
@@ -818,7 +825,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
   }
 
   Widget _buildGalleryTab(PointOfInterest poi, bool isAdminViewEnabled) {
-    final selectedPoi = ref.read(selectedPoiProvider);
+    final selectedPoi = ref.watch(selectedPoiProvider);
     final user = ref.watch(supabaseUserStateProvider);
     final username = user.username;
     final imageUrls = poi.images.map((img) => img.url).toList();
@@ -867,6 +874,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                                     featuredImageUrl: newValue,
                                   ),
                                 );
+                            //ref.invalidate(visiblePoisProvider);
                             setState(() {});
                           }
                         },
@@ -878,7 +886,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
           isAdminViewEnabled ? SizedBox(height: 15) : SizedBox.shrink(),
 
           // Featured image
-          (selectedPoi!.featuredImageUrl.isEmpty)
+          (selectedPoi!.featuredImageUrl !=null)
               ? const Icon(
                   Icons.image_not_supported,
                   size: 80,
@@ -887,7 +895,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
               : Stack(
                   children: [
                     Image.network(
-                      selectedPoi.featuredImageUrl,
+                      selectedPoi.featuredImageUrl!,
                       fit: BoxFit.cover,
                       alignment: Alignment.topCenter,
                       errorBuilder: (context, error, stackTrace) {
@@ -939,6 +947,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                   ref
                       .read(selectedPoiProvider.notifier)
                       .setPoi(selectedPoi.cloneWithNewValues(images: updated));
+                  //ref.invalidate(visiblePoisProvider);
                 }
 
                 return newEntry;
@@ -969,6 +978,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                       .read(selectedPoiProvider.notifier)
                       .setPoi(selectedPoi.cloneWithNewValues(images: updated));
                 }
+                //ref.invalidate(visiblePoisProvider);
 
                 return updatedEntry;
               },
@@ -1041,45 +1051,48 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
 
   // TODO implement multiple categories / category
   Widget _buildRatingsTab(PointOfInterest poi) {
-    if (poi.categories != null && poi.categories!.isNotEmpty && poi.categories![0].isNotEmpty) {
+    if (poi.categories != null &&
+        poi.categories!.isNotEmpty &&
+        poi.categories![0].isNotEmpty) {
       final categoryId = ref.watch(
         categoryIdBySlugProvider(poi.categories![0]),
       );
-
-      final criteria = ref.watch(criteriaForCategoryProvider(categoryId!));
-       // Überschrift mit PoiRatingList
-      return criteria.when(
-        data: (list) => Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'Bewertung',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  SizedBox(width: 4),
-                  GestureDetector(
-                    onTap: () => _openRatingEditor(poi, list),
-                    child: Icon(
-                      Icons.rate_review,
-                      color: Color.fromARGB(255, 42, 23, 86),
+      if (categoryId != null) {
+        final criteria = ref.watch(criteriaForCategoryProvider(categoryId));
+        // Überschrift mit PoiRatingList
+        return criteria.when(
+          data: (list) => Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Bewertung',
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: PoiRatingList(criteria: list, poi: poi),
-              ),
-            ],
+                    SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: () => _openRatingEditor(poi, list),
+                      child: Icon(
+                        Icons.rate_review,
+                        color: Color.fromARGB(255, 42, 23, 86),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: PoiRatingList(criteria: list, poi: poi),
+                ),
+              ],
+            ),
           ),
-        ),
-        loading: () => const CircularProgressIndicator(),
-        error: (e, _) => Text("Fehler: $e"),
-      );
+          loading: () => const CircularProgressIndicator(),
+          error: (e, _) => Text("Fehler: $e"),
+        );
+      }
     }
 
     return const Padding(
@@ -1172,6 +1185,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
             }
             ref.read(appStateProvider.notifier).setPoiEditMode(false);
             ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
+            //ref.invalidate(visiblePoisProvider);
           },
           child: Column(
             children: <Widget>[

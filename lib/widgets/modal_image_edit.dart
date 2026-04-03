@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/image_entry.dart';
+import 'package:stadtschreiber/provider/image_repository_provider.dart';
 
-class ImageEditModal extends StatefulWidget {
+class ImageEditModal extends ConsumerStatefulWidget {
   final String initialTitle;
   final String initialUrl;
   final String initialEnteredBy;
@@ -18,10 +20,10 @@ class ImageEditModal extends StatefulWidget {
   });
 
   @override
-  State<ImageEditModal> createState() => _ImageEditModalState();
+  ConsumerState<ImageEditModal> createState() => _ImageEditModalState();
 }
 
-class _ImageEditModalState extends State<ImageEditModal> {
+class _ImageEditModalState extends ConsumerState<ImageEditModal> {
   late final TextEditingController _titleController;
   late final TextEditingController _urlController;
   late final TextEditingController _enteredByController;
@@ -61,7 +63,11 @@ class _ImageEditModalState extends State<ImageEditModal> {
 
     if (title.isEmpty || url.isEmpty || enteredBy.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Titel, URL und Eingetragen von dürfen nicht leer sein")),
+        const SnackBar(
+          content: Text(
+            "Titel, URL und Eingetragen von dürfen nicht leer sein",
+          ),
+        ),
       );
       return;
     }
@@ -80,6 +86,9 @@ class _ImageEditModalState extends State<ImageEditModal> {
 
   @override
   Widget build(BuildContext context) {
+    final imageRepo = ref.read(imageRepositoryProvider);
+    String? previewUrl;
+
     return AlertDialog(
       title: const Text("Bildinformationen bearbeiten"),
       content: SingleChildScrollView(
@@ -98,22 +107,68 @@ class _ImageEditModalState extends State<ImageEditModal> {
                 ),
               ),
               const SizedBox(height: 12),
-              TextField(
-                controller: _urlController,
-                decoration: const InputDecoration(
-                  labelText: "URL",
-                  border: OutlineInputBorder(),
-                ),
+
+              // URL + Upload
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _urlController,
+                      decoration: const InputDecoration(
+                        labelText: "URL",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.upload),
+                    label: const Text("Bild auswählen"),
+                    onPressed: () async {
+                      final url = await imageRepo.pickProcessAndUploadImage();
+                      if (url == null) return;
+
+                      setState(() {
+                        _urlController.text = url;
+                        previewUrl = url;
+                      });
+                    },
+                  ),
+                ],
               ),
+
               const SizedBox(height: 12),
+
+              // Preview image
+              if (previewUrl != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      previewUrl!,
+                      height: 180,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+
+              const SizedBox(height: 12),
+
+              // Bildautor
               TextField(
                 controller: _enteredByController,
+                readOnly: true,
                 decoration: const InputDecoration(
                   labelText: "Bild eingetragen von",
                   border: OutlineInputBorder(),
                 ),
               ),
+              
               const SizedBox(height: 12),
+              
+              // Credits name
               TextField(
                 controller: _creditsNameController,
                 decoration: const InputDecoration(
@@ -121,7 +176,10 @@ class _ImageEditModalState extends State<ImageEditModal> {
                   border: OutlineInputBorder(),
                 ),
               ),
+
               const SizedBox(height: 12),
+
+              // Credits url
               TextField(
                 controller: _creditsUrlController,
                 decoration: const InputDecoration(
@@ -133,6 +191,8 @@ class _ImageEditModalState extends State<ImageEditModal> {
           ),
         ),
       ),
+      
+      // Buttons speichern und abbrechen
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
