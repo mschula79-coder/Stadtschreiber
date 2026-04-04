@@ -39,10 +39,7 @@ import '../widgets/category_node_tile.dart';
 class PoiPanelTabs extends ConsumerStatefulWidget {
   final PointOfInterest selectedPoi;
 
-  const PoiPanelTabs({
-    required this.selectedPoi,
-    super.key,
-  });
+  const PoiPanelTabs({required this.selectedPoi, super.key});
 
   @override
   ConsumerState<PoiPanelTabs> createState() => _PoiPanelTabsState();
@@ -58,6 +55,8 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
   bool _listenerRegistered = false;
   late final ProviderSubscription<PointOfInterest?> _sub;
   late final PoiDragNotifier dragPoiNotifier;
+
+  final bool isEditModeEnabled = false;
 
   @override
   void initState() {
@@ -201,13 +200,13 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                 decoration: const InputDecoration(
                   labelText: "Name",
                   alignLabelWithHint: true,
-                  contentPadding: EdgeInsets.fromLTRB(0, 0, 35, 0),
+                  contentPadding: EdgeInsets.fromLTRB(0, 0, 35, 5),
                 ),
               ),
               isAdminViewEnabled
                   ? Positioned(
                       right: 0,
-                      top: 10,
+                      top: 5,
                       child: IconButton(
                         icon: const Icon(Icons.edit),
                         onPressed: () async {
@@ -554,7 +553,9 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
 
                   GestureDetector(
                     onTap: () {
-                      ref.read(dragPoiProvider.notifier).startDraggingPoi(selectedPoi);
+                      ref
+                          .read(dragPoiProvider.notifier)
+                          .startDraggingPoi(selectedPoi);
                     },
                     child: Icon(Icons.edit),
                   ),
@@ -886,7 +887,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
           isAdminViewEnabled ? SizedBox(height: 15) : SizedBox.shrink(),
 
           // Featured image
-          (selectedPoi!.featuredImageUrl !=null)
+          (selectedPoi!.featuredImageUrl != null)
               ? const Icon(
                   Icons.image_not_supported,
                   size: 80,

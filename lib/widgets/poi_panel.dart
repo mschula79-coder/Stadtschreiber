@@ -9,12 +9,10 @@ import '../provider/selected_poi_provider.dart';
 class PoiPanel extends ConsumerStatefulWidget {
   final PointOfInterest selectedPoi;
   final VoidCallback onToggleAdminView;
-  final VoidCallback onStartDraggingPoi;
 
   const PoiPanel({
     required this.selectedPoi,
     required this.onToggleAdminView,
-    required this.onStartDraggingPoi,
     super.key,
   });
 

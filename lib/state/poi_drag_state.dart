@@ -17,7 +17,7 @@ class PoiDragState {
     int? dragPoiPointIndex,
   }) {
     return PoiDragState(
-      dragPoi: dragPoi ?? this.dragPoi,
+      dragPoi: dragPoi,
       dragPoiPoint: dragPoiPoint ?? this.dragPoiPoint,
       dragPoiPointIndex: dragPoiPointIndex ?? this.dragPoiPointIndex,
     );

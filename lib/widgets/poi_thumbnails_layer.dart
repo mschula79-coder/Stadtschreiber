@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:stadtschreiber/provider/camera_provider.dart';
 import 'package:stadtschreiber/provider/map_controller_provider.dart';
+import 'package:stadtschreiber/provider/poi_drag_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_provider.dart';
-import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/services/debug_service.dart';
 
 import '../models/poi.dart';
@@ -20,15 +20,8 @@ class PoiThumbnailsLayer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final visiblePois = ref
-        .watch(visiblePoisProvider)
-        .maybeWhen(
-          data: (list) => list,
-          orElse: () => const <PointOfInterest>[],
-        );
-
-    final selectedPoi = ref.watch(selectedPoiProvider);
-    final zoom = ref.watch(cameraProvider).zoom;
+    /*     final cameraPosition = ref.watch(cameraProvider).getLocation();
+ */
     final mapController = ref.watch(mapControllerProvider);
 
     if (mapController == null) {
@@ -38,118 +31,146 @@ class PoiThumbnailsLayer extends ConsumerWidget {
     final screenSize = MediaQuery.of(context).size;
 
     // Thumbnails erst ab Zoom >= 14
-    final showThumbnails = zoom >= 14.0;
 
     // Overlap-Avoidance
     final List<Offset> usedPositions = [];
     final List<Widget> widgets = [];
 
-    for (final poi in visiblePois) {
-      // Live-Berechnung der Position
-      final screen = mapController.toScreenLocation(poi.location);
-      final pos = Offset(screen.dx, screen.dy);
+    final dragState = ref.watch(dragPoiProvider);
+    final dragMode = dragState.dragPoi != null;
 
-      // Nur Marker im sichtbaren Bereich
-      final isOnScreen =
-          pos.dx >= 0 &&
-          pos.dx <= screenSize.width &&
-          pos.dy >= 0 &&
-          pos.dy <= screenSize.height;
+    if (dragMode) {
+      final dragPoi = ref.watch(dragPoiProvider).dragPoi;
 
-      if (!isOnScreen) continue;
-
-      DebugService.log(
-        'PoiThumbnailsLayer: ${poi.name}: posx: ${pos.dx}, posy: ${pos.dy}',
-      );
-
-      // Overlap-Avoidance
-      const minDistance = 50.0;
-      final tooClose = usedPositions.any(
-        (other) => (other - pos).distance < minDistance,
-      );
-      if (tooClose) continue;
-
-      usedPositions.add(pos);
-
-      // Highlighting
-      final isSelected = selectedPoi?.id == poi.id;
-
-      // Zoom-basierte Skalierung
-      final scale = (zoom / 13.0).clamp(0.7, 1.6);
-
-      // Widget auswählen
-      Widget markerWidget;
-
-      final isDistrict = poi.categories?.contains('districts') == true;
-      final hasThumbnail = poi.featuredImageUrl != null;
-
-      if (isDistrict) {
-        markerWidget = DistrictThumbnail(
-          poi: poi,
-          allowLabel: true,
-          onTap: () => onTapPoi(poi),
-        );
-      } else if (showThumbnails && hasThumbnail) {
-        markerWidget = PoiThumbnail(
-          poi: poi,
-          allowLabel: true,
-          onTap: () => onTapPoi(poi),
-        );
-      } else {
-        markerWidget = PinMarker(
-          poi: poi,
-          allowLabel: true,
-          onTap: () => onTapPoi(poi),
-        );
-      }
-
-      // Animation + Highlighting
-      final animated = AnimatedScale(
-        scale: isSelected ? scale * 1.2 : scale,
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeOut,
-        child: AnimatedOpacity(
-          opacity: 1.0,
-          duration: const Duration(milliseconds: 150),
-          child: markerWidget,
-        ),
-      );
-
-      // Roter Punkt (Debug)
-      widgets.add(
-        Positioned(
-          left: pos.dx - 4,
-          top: pos.dy - 4,
-          child: Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: Colors.red,
-              shape: BoxShape.circle,
-            ),
+      final pos = mapController.toScreenLocation(dragPoi!.location);
+      return Positioned(
+        top: pos.dy - 2,
+        left: pos.dx - 2,
+        child: Container(
+          width: 4,
+          height: 4,
+          decoration: const BoxDecoration(
+            color: Colors.red,
+            shape: BoxShape.circle,
           ),
         ),
       );
+    } else {
+      final visiblePois = ref
+          .watch(visiblePoisProvider)
+          .maybeWhen(
+            data: (list) => list,
+            orElse: () => const <PointOfInterest>[],
+          );
 
-      // Thumbnail / Pin positionieren
-      if (isDistrict) {
-        widgets.add(
-          Positioned(left: pos.dx - 5, top: pos.dy - 21, child: animated),
+      final zoom = ref.watch(cameraProvider).zoom;
+      final showThumbnails = zoom >= 14.0;
+
+      for (final poi in visiblePois) {
+        // Live-Berechnung der Position
+        final screen = mapController.toScreenLocation(poi.location);
+        final pos = Offset(screen.dx, screen.dy);
+
+        // Nur Marker im sichtbaren Bereich
+        final isOnScreen =
+            pos.dx >= 0 &&
+            pos.dx <= screenSize.width &&
+            pos.dy >= 0 &&
+            pos.dy <= screenSize.height;
+
+        if (!isOnScreen) continue;
+
+        DebugService.log(
+          'PoiThumbnailsLayer: ${poi.name}: posx: ${pos.dx}, posy: ${pos.dy}',
         );
-      } else if (showThumbnails && hasThumbnail) {
-        widgets.add(
-          Positioned(left: pos.dx - 45, top: pos.dy - 21, child: animated),
+
+        // Overlap-Avoidance
+        const minDistance = 50.0;
+        final tooClose = usedPositions.any(
+          (other) => (other - pos).distance < minDistance,
         );
-      } else {
-        widgets.add(
-          Positioned(left: pos.dx - 5, top: pos.dy - 21, child: animated),
+        if (tooClose) continue;
+
+        usedPositions.add(pos);
+
+        // Zoom-basierte Skalierung
+        final scale = (zoom / 13.0).clamp(0.7, 1.6);
+
+        // Widget auswählen
+        Widget markerWidget;
+
+        final isDistrict = poi.categories?.contains('districts') == true;
+        final hasThumbnail =
+            !(poi.featuredImageUrl == null || poi.featuredImageUrl!.isEmpty);
+
+        if (isDistrict) {
+          markerWidget = DistrictThumbnail(
+            poi: poi,
+            allowLabel: true,
+            onTap: () => onTapPoi(poi),
+          );
+        } else if (showThumbnails && hasThumbnail) {
+          markerWidget = PoiThumbnail(
+            poi: poi,
+            allowLabel: true,
+            onTap: () => onTapPoi(poi),
+          );
+        } else {
+          markerWidget = PinMarker(
+            poi: poi,
+            allowLabel: true,
+            onTap: () => onTapPoi(poi),
+          );
+        }
+
+        // Animation + Highlighting
+        final animated = AnimatedScale(
+          scale: scale,
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+          child: AnimatedOpacity(
+            opacity: 1.0,
+            duration: const Duration(milliseconds: 150),
+            child: markerWidget,
+          ),
         );
+
+        // Roter Punkt (Debug)
+        widgets.add(
+          Positioned(
+            left: pos.dx - 4,
+            top: pos.dy - 4,
+            child: Container(
+              width: 0,
+              height: 0,
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        );
+
+        // Thumbnail / Pin positionieren
+        if (isDistrict) {
+          widgets.add(
+            Positioned(left: pos.dx - 5, top: pos.dy - 21, child: animated),
+          );
+        } else if (showThumbnails && hasThumbnail) {
+          widgets.add(
+            Positioned(left: pos.dx - 45, top: pos.dy - 21, child: animated),
+          );
+        } else {
+          widgets.add(
+            Positioned(left: pos.dx - 5, top: pos.dy - 21, child: animated),
+          );
+        }
       }
-    }
 
-    return IgnorePointer(
-      ignoring: false,
-      child: Stack(clipBehavior: Clip.none, children: widgets),
-    );
+      return IgnorePointer(
+        ignoring: false,
+        child: Stack(clipBehavior: Clip.none, children: widgets),
+      );
+    }
   }
 }

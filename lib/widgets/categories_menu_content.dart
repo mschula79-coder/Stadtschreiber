@@ -73,7 +73,7 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
                   children: [
                     // SEARCH FIELD
                     Container(
-                      width: 215,
+                      width: 250,
                       padding: const EdgeInsets.fromLTRB(6, 0, 4, 0),
                       margin: const EdgeInsets.fromLTRB(4, 0, 4, 4),
                       decoration: BoxDecoration(

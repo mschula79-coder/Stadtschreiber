@@ -6,10 +6,12 @@ class PoiDragNotifier extends Notifier<PoiDragState> {
   @override
   PoiDragState build() => const PoiDragState();
 
+  /// Sets state to poi
   void startDraggingPoi(PointOfInterest poi) {
     state = state.copyWith(dragPoi: poi);
   }
 
+  /// Sets state to null
   void stopDraggingPoi() {
     state = state.copyWith(dragPoi: null);
   }
