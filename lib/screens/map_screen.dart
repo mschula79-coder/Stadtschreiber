@@ -92,8 +92,9 @@ class MapScreenState extends ConsumerState<MapScreen> {
 
     final user = ref.watch(supabaseUserStateProvider);
 
-    final isPoiEditMode = appState.isPoiEditMode;
+    final isPoiGeomEditMode = appState.isPoiGeomEditMode;
     final isAdminViewEnabled = appState.isAdminViewEnabled;
+    final isPoiEditMode = appState.isPoiEditMode;
 
     final selectedPoi = ref.watch(selectedPoiProvider);
     final hasSelectedPoi = selectedPoi != null;
@@ -102,7 +103,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
         .isDraggingPoiPoint();
 
     final bool showPoiPanel =
-        hasSelectedPoi && !isPoiEditMode && !isDraggingPoi;
+        hasSelectedPoi && !isPoiGeomEditMode && !isDraggingPoi;
     CameraState camera;
     if (isDraggingPoi) {
       camera = ref.read(cameraProvider);
@@ -111,7 +112,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
     }
 
     DebugService.log(
-      'Build MapScreen Screen size: ${MediaQuery.of(context).size}\n isPoiEditMode: $isPoiEditMode\nisAdminViewEnabled: $isAdminViewEnabled\nhasSelectedPoi: $hasSelectedPoi\nshowPoiPanel: $showPoiPanel\nisDraggingPoi: $isDraggingPoi\nisDraggingPoiPoint: $isDraggingPoiPoint',
+      'Build MapScreen Screen size: ${MediaQuery.of(context).size}\n isPoiGeomEditMode: $isPoiGeomEditMode\nisAdminViewEnabled: $isAdminViewEnabled\nhasSelectedPoi: $hasSelectedPoi\nshowPoiPanel: $showPoiPanel\nisDraggingPoi: $isDraggingPoi\nisDraggingPoiPoint: $isDraggingPoiPoint',
     );
 
     /*     if (!_selectedPoiListenerRegistered) {
@@ -124,20 +125,20 @@ class MapScreenState extends ConsumerState<MapScreen> {
       _registerVisiblePoisListener();
     } */
 
-    // isPoiEditmode => add points layer
+    // isPoiGeomEditMode => add points layer
     if (selectedPoi != null) {
       DebugService.log('SelectedPoi: $selectedPoi.name');
 
       ref.listen<AppStateData>(appStateProvider, (previous, next) {
         debugPrint('AppStateData changed: $previous → $next');
 
-        if (next.isPoiEditMode &&
-            (previous == null || !previous.isPoiEditMode)) {
+        if (next.isPoiGeomEditMode &&
+            (previous == null || !previous.isPoiGeomEditMode)) {
           addPoiPointsLayer(selectedPoi);
         }
-        if (!next.isPoiEditMode &&
+        if (!next.isPoiGeomEditMode &&
             previous != null &&
-            !previous.isPoiEditMode) {
+            !previous.isPoiGeomEditMode) {
           removePoiPointsLayer();
         }
       });
@@ -213,7 +214,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
                     screenPoint: Offset(),
                   ):
                     // Long press on map without poi edit mode -> create new poi
-                    if (isPoiEditMode) {
+                    if (isPoiGeomEditMode) {
                       // start dragging / add new point
                       List<maplibre.Geographic> points =
                           selectedPoi!.getPoints() ?? [];
@@ -354,13 +355,13 @@ class MapScreenState extends ConsumerState<MapScreen> {
                     }
 
                     if (isDraggingPoi) {
-                      final poi = ref.read(dragPoiProvider.notifier).dragPoi();
+                      /* final poi = ref.read(dragPoiProvider.notifier).dragPoi();
                       await poiRepository.updatePoiGeomInSupabase(poi!);
                       ref.read(selectedPoiProvider.notifier).setPoi(poi);
                       ref.invalidate(visiblePoisProvider);
 
                       ref.read(dragPoiProvider.notifier).stopDraggingPoi();
-                      maplibre.MapGestures.all();
+                      maplibre.MapGestures.all(); */
                     }
                     break;
 
@@ -378,7 +379,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
               ],
             ),
           ),
-          isPoiEditMode
+          isPoiGeomEditMode
               // Button Edit Mode beenden anzeigen
               ? Positioned(
                   bottom: 20,
@@ -389,7 +390,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
                       onPressed: () {
                         ref
                             .read(appStateProvider.notifier)
-                            .setPoiEditMode(false);
+                            .setPoiGeomEditMode(false);
                         final poi = ref
                             .read(selectedPoiProvider)!
                             .cloneWithNewValues();
@@ -416,6 +417,9 @@ class MapScreenState extends ConsumerState<MapScreen> {
             onAddPoi: () async {
               final newPoi = await poiRepository.newPoi(camera.getLocation());
               ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
+              ref.read(appStateProvider.notifier).setAdminViewEnabled(true);
+              ref.read(appStateProvider.notifier).setPoiEditMode(true);
+              
               ref.invalidate(visiblePoisProvider);
             },
             onRemoveThumbnails: () {
@@ -444,16 +448,16 @@ class MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
 
-          // PoiPanel anzeigen, wenn hasSelectedPoi !& isPoiEditMode
+          // PoiPanel anzeigen, wenn hasSelectedPoi !& isPoiGeomEditMode
           showPoiPanel
               ? Align(
                   alignment: Alignment.bottomCenter,
                   child: PoiPanel(
                     selectedPoi: selectedPoi,
-                    onToggleAdminView: () {
+                    onTogglePoiEditView: () {
                       ref
                           .read(appStateProvider.notifier)
-                          .setAdminViewEnabled(!isAdminViewEnabled);
+                          .setPoiEditMode(!isPoiEditMode);
                     },
                   ),
                 )
@@ -475,6 +479,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
                     ref.read(dragPoiProvider.notifier).stopDraggingPoi();
 
                     ref.read(selectedPoiProvider.notifier).setPoi(dragPoi);
+                    poiRepository.updatePoiGeomInSupabase(dragPoi);
 
                     maplibre.MapGestures.all();
                     ref.invalidate(visiblePoisProvider);
@@ -587,6 +592,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
         removePoiGeometrieLayer();
         // TODO move this to UI
         ref.read(appStateProvider.notifier).setPoiEditMode(false);
+        ref.read(appStateProvider.notifier).setPoiGeomEditMode(false);
         return;
       }
 

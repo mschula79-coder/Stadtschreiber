@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class UserActionsBar extends StatelessWidget {
+class UserActionsBar extends ConsumerWidget {
   final VoidCallback onClose;
   final VoidCallback onChangeStyle;
 
@@ -12,11 +14,12 @@ class UserActionsBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final user = Supabase.instance.client.auth.currentUser;
     final roles = user?.appMetadata['roles'] ?? [];
 
     final isAdmin = roles.contains("admin");
+    final isAdminViewEnabled = ref.watch(appStateProvider).isAdminViewEnabled;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -44,7 +47,7 @@ class UserActionsBar extends StatelessWidget {
               }
             },
           ),
-          
+
           // Einstellungen Modal öffnen
           FloatingActionButton(
             heroTag: "Einstellungen",
@@ -64,14 +67,15 @@ class UserActionsBar extends StatelessWidget {
             FloatingActionButton(
               heroTag: "Admin UI",
               mini: true,
-              child: const Icon(Icons.admin_panel_settings),
+              child: isAdminViewEnabled
+                  ? const Icon(Icons.admin_panel_settings)
+                  : const Icon(Icons.admin_panel_settings_outlined),
               onPressed: () {
-                onClose();
-                Navigator.pushNamed(context, "/admin");
+                ref
+                    .read(appStateProvider.notifier)
+                    .setAdminViewEnabled(!isAdminViewEnabled);
               },
             ),
-
-          
 
           //change style
           FloatingActionButton(

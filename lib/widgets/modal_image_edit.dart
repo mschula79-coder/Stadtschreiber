@@ -2,22 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/image_entry.dart';
 import 'package:stadtschreiber/provider/image_repository_provider.dart';
+import 'package:stadtschreiber/provider/poi_repository_provider.dart';
+import 'package:stadtschreiber/provider/selected_poi_provider.dart';
+import 'package:stadtschreiber/provider/visible_pois_provider.dart';
+import 'package:stadtschreiber/services/debug_service.dart';
 
 class ImageEditModal extends ConsumerStatefulWidget {
-  final String initialTitle;
-  final String initialUrl;
-  final String initialEnteredBy;
-  final String initialCreditsName;
-  final String initialCreditsUrl;
+  final ImageEntry image;
 
-  const ImageEditModal({
-    super.key,
-    required this.initialTitle,
-    required this.initialUrl,
-    required this.initialEnteredBy,
-    required this.initialCreditsName,
-    required this.initialCreditsUrl,
-  });
+  const ImageEditModal({super.key, required this.image});
 
   @override
   ConsumerState<ImageEditModal> createState() => _ImageEditModalState();
@@ -29,19 +22,23 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
   late final TextEditingController _enteredByController;
   late final TextEditingController _creditsNameController;
   late final TextEditingController _creditsUrlController;
+  String? previewUrl;
+  bool isFeatured = false;
+  late ImageEntry image;
 
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.initialTitle);
-    _urlController = TextEditingController(text: widget.initialUrl);
-    _enteredByController = TextEditingController(text: widget.initialEnteredBy);
+    _titleController = TextEditingController(text: widget.image.title);
+    _urlController = TextEditingController(text: widget.image.url);
+    _enteredByController = TextEditingController(text: widget.image.enteredBy);
     _creditsNameController = TextEditingController(
-      text: widget.initialCreditsName,
+      text: widget.image.creditsName,
     );
     _creditsUrlController = TextEditingController(
-      text: widget.initialCreditsUrl,
+      text: widget.image.creditsUrl,
     );
+    image = widget.image;
   }
 
   @override
@@ -71,30 +68,31 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
       );
       return;
     }
-
-    Navigator.pop(
-      context,
-      ImageEntry(
-        title: title,
-        url: url,
-        enteredBy: enteredBy,
-        creditsName: creditsName,
-        creditsUrl: creditsUrl,
-      ),
+    image = ImageEntry(
+      title: title,
+      url: url,
+      enteredBy: enteredBy,
+      creditsName: creditsName,
+      creditsUrl: creditsUrl,
     );
+
+    Navigator.pop(context, image);
   }
 
   @override
   Widget build(BuildContext context) {
     final imageRepo = ref.read(imageRepositoryProvider);
-    String? previewUrl;
+    final selectedPoi = ref.watch(selectedPoiProvider);
 
+    isFeatured = (selectedPoi?.featuredImageUrl == image.url);
+
+    DebugService.log(isFeatured.toString());
     return AlertDialog(
       title: const Text("Bildinformationen bearbeiten"),
       content: SingleChildScrollView(
         child: ConstrainedBox(
           constraints: const BoxConstraints(
-            maxHeight: 400, // or MediaQuery.of(context).size.height * 0.6
+            maxHeight: 600, // or MediaQuery.of(context).size.height * 0.6
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -126,12 +124,14 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
                     icon: const Icon(Icons.upload),
                     label: const Text("Bild auswählen"),
                     onPressed: () async {
-                      final url = await imageRepo.pickProcessAndUploadImage();
-                      if (url == null) return;
+                      final imageEntry = await imageRepo
+                          .pickProcessAndUploadImage();
+                      if (imageEntry == null) return;
 
                       setState(() {
-                        _urlController.text = url;
-                        previewUrl = url;
+                        image = imageEntry; // <— wichtig!
+                        _urlController.text = imageEntry.url;
+                        previewUrl = imageEntry.url;
                       });
                     },
                   ),
@@ -165,9 +165,9 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
                   border: OutlineInputBorder(),
                 ),
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Credits name
               TextField(
                 controller: _creditsNameController,
@@ -187,11 +187,35 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
                   border: OutlineInputBorder(),
                 ),
               ),
+
+              const SizedBox(height: 12),
+
+              SwitchListTile(
+                title: const Text('Featured Image'),
+                value: isFeatured,
+                onChanged: (newValue) {
+                  final newPoi = selectedPoi!.cloneWithNewValues(
+                    featuredImageUrl: newValue ? image.url : null,
+                    clearFeaturedImage: !newValue,
+                  );
+
+                  ref
+                      .read(poiRepositoryProvider)
+                      .updatePoiDataInSupabase(
+                        id: newPoi.id,
+                        featuredImageUrl: newValue ? image.url : null,
+                      );
+
+                  ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
+
+                  ref.invalidate(visiblePoisProvider);
+                },
+              ),
             ],
           ),
         ),
       ),
-      
+
       // Buttons speichern und abbrechen
       actions: [
         TextButton(

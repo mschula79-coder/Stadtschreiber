@@ -39,6 +39,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() => _menuInitialized = true);
+      ref.read(appStateProvider.notifier).setAdminViewEnabled(true);
     });
   }
 
@@ -79,7 +80,9 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
 
           // Das Menü selbst
           AnimatedPositioned(
-            duration: _menuInitialized ? Duration(milliseconds: 200) : Duration.zero,
+            duration: _menuInitialized
+                ? Duration(milliseconds: 200)
+                : Duration.zero,
             curve: Curves.easeOut,
             top: _menuOpen ? 10 : -3000, // Menü fährt rein/raus
             right: 0,

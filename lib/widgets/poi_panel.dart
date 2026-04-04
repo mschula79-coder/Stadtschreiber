@@ -2,17 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
-import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'poi_panel_tabs.dart';
 import '../provider/selected_poi_provider.dart';
 
 class PoiPanel extends ConsumerStatefulWidget {
   final PointOfInterest selectedPoi;
-  final VoidCallback onToggleAdminView;
+  final VoidCallback onTogglePoiEditView;
 
   const PoiPanel({
     required this.selectedPoi,
-    required this.onToggleAdminView,
+    required this.onTogglePoiEditView,
     super.key,
   });
 
@@ -28,8 +27,7 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final isAdminViewEnabled = ref.read(appStateProvider).isAdminViewEnabled;
-    final isAdmin = ref.read(supabaseUserStateProvider).isAdmin;
+    final isAdminViewEnabled = ref.watch(appStateProvider).isAdminViewEnabled;
 
     return Container(
       decoration: const BoxDecoration(
@@ -57,10 +55,10 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(width: 5),
-                    isAdmin
+                    isAdminViewEnabled
                         ? GestureDetector(
-                            onTap: widget.onToggleAdminView,
-                            child: isAdminViewEnabled
+                            onTap: widget.onTogglePoiEditView,
+                            child: !ref.read(appStateProvider).isPoiEditMode
                                 // TODO Icon.polyline Icon.location => poiEdit
                                 ? const Icon(
                                     Icons.edit,
@@ -68,7 +66,7 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
                                   )
                                 : const Icon(
                                     Icons.edit_off,
-                                    color: Colors.grey,
+                                    color: Color.fromARGB(255, 42, 23, 86),
                                   ),
                           )
                         : SizedBox.shrink(),
@@ -80,13 +78,13 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
                 onPressed: () {
                   ref.read(selectedPoiProvider.notifier).clear();
                   ref.read(appStateProvider.notifier).setPoiEditMode(false);
+                  ref.read(appStateProvider.notifier).setPoiGeomEditMode(false);
                 },
               ),
             ],
           ),
           Expanded(
             child: PoiPanelTabs(
-              selectedPoi: widget.selectedPoi,
             ),
           ),
         ],

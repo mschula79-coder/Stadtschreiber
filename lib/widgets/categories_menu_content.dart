@@ -366,6 +366,8 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
         return const Iconify(Mdi.table_tennis, size: 24);
       case "tabler:ball-tennis":
         return const Iconify(Tabler.ball_tennis, size: 24);
+      case "mdi:spray":
+        return const Iconify(Mdi.spray, size: 24);
       default:
         return const Iconify(Mdi.help_outline, size: 24);
     }

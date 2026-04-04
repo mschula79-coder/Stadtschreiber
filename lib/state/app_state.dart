@@ -1,21 +1,25 @@
 class AppStateData {
   final bool isAdminViewEnabled;
-  final bool isPoiEditMode;
+  final bool isPoiGeomEditMode;
   final bool locationPermission;
+  final bool isPoiEditMode;
 
   const AppStateData({
     required this.isAdminViewEnabled,
+    required this.isPoiGeomEditMode,
     required this.isPoiEditMode,
     required this.locationPermission,
   });
 
   AppStateData copyWith({
     bool? isAdminViewEnabled,
-    bool? isPoiEditMode,
+    bool? isPoiGeomEditMode,
     bool? locationPermission,
+    bool? isPoiEditMode
   }) {
     return AppStateData(
       isAdminViewEnabled: isAdminViewEnabled ?? this.isAdminViewEnabled,
+      isPoiGeomEditMode: isPoiGeomEditMode ?? this.isPoiGeomEditMode,
       isPoiEditMode: isPoiEditMode ?? this.isPoiEditMode,
       locationPermission: locationPermission ?? this.locationPermission,
     );
@@ -23,7 +27,8 @@ class AppStateData {
 
   static const initial = AppStateData(
     isAdminViewEnabled: false,
-    isPoiEditMode: false,
+    isPoiGeomEditMode: false,
     locationPermission: false,
+    isPoiEditMode: false,
   );
 }

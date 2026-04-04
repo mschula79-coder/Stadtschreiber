@@ -23,6 +23,11 @@ class AppStateNotifier extends Notifier<AppStateData> {
     state = state.copyWith(isPoiEditMode: value);
   }
 
+  void setPoiGeomEditMode(bool value) {
+    DebugService.log('AppState.setPoiGeomEditMode: $value');
+    state = state.copyWith(isPoiGeomEditMode: value);
+  }
+
   void setLocationPermission(bool value) {
     DebugService.log('AppState.setLocationPermission: $value');
     state = state.copyWith(locationPermission: value);

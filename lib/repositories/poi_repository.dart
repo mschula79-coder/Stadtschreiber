@@ -86,11 +86,12 @@ class PoiRepository {
     return poi.cloneWithNewValues(categories: newCategories);
   }
 
-  static Future<void> updatePoiDataInSupabase({
+  Future<void> updatePoiDataInSupabase({
     required String id,
     String? name,
     String? history,
     String? featuredImageUrl,
+    bool clearFeaturedImage = false,
     List<ArticleEntry>? articles,
     List<HistoryEntry>? historyEntries,
     PoiMetadata? metadata,
@@ -104,9 +105,13 @@ class PoiRepository {
 
     if (name != null) updateData['name'] = name;
     if (history != null) updateData['history'] = history;
-    if (featuredImageUrl != null) {
-      updateData['featured_image_url'] = featuredImageUrl;
+
+    if (clearFeaturedImage) {
+      updateData['featured_image_url'] = null; // explizit löschen
+    } else if (featuredImageUrl != null) {
+      updateData['featured_image_url'] = featuredImageUrl; // neuen Wert setzen
     }
+
     if (articles != null) {
       updateData['articles'] = articles.map((e) => e.toJson()).toList();
     }

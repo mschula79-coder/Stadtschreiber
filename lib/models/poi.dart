@@ -124,6 +124,7 @@ class PointOfInterest {
     Geographic? location,
     List<String>? categories,
     String? featuredImageUrl,
+    bool? clearFeaturedImage,
     List<HistoryEntry>? historyEntries,
     List<ArticleEntry>? articles,
     PoiMetadata? metadata,
@@ -168,6 +169,9 @@ class PointOfInterest {
       country = parsedCountry ?? country;
       displayAddress = parsedDisplayAddress ?? displayAddress;
     }
+    final newFeatured = clearFeaturedImage == true
+        ? null
+        : (featuredImageUrl ?? this.featuredImageUrl);
 
     final sortedHistory = (historyEntries ?? this.historyEntries).toList()
       ..sort((a, b) => a.start.compareTo(b.start));
@@ -179,7 +183,7 @@ class PointOfInterest {
       categories:
           categories ??
           (this.categories != null ? List.from(this.categories!) : null),
-      featuredImageUrl: featuredImageUrl ?? this.featuredImageUrl,
+      featuredImageUrl: newFeatured,
       historyEntries: sortedHistory,
       articles: articles ?? List<ArticleEntry>.from(this.articles),
       metadata: metadata ?? this.metadata,

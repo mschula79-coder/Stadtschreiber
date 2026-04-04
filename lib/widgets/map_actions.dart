@@ -38,6 +38,20 @@ class _MapActionsState extends ConsumerState<MapActions> {
     return Stack(
       children: [
         // MAP ACTIONS BUTTONS
+        if (userActionsExpanded)
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: ()  {
+                setState(() {
+                  userActionsExpanded = false;
+                });
+              },
+
+              child: Container(color: Colors.transparent),
+            ),
+          ),
+
         Positioned(
           bottom: 20,
           right: 20,

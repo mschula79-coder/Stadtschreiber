@@ -1,6 +1,4 @@
 // TODO History as List of decorated textboxes
-// TODO photo upload
-// TODO Kategorien
 // TODO Kategorie Filter
 // TODO Icons
 // TODO Bewertungsschemata

@@ -26,8 +26,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/article_entry.dart';
 import '../models/poi.dart';
 
-import '../repositories/poi_repository.dart';
-
 import '../utils/url_utils.dart';
 
 import '../widgets/_editable_list.dart';
@@ -37,9 +35,7 @@ import 'modal_article_edit.dart';
 import '../widgets/category_node_tile.dart';
 
 class PoiPanelTabs extends ConsumerStatefulWidget {
-  final PointOfInterest selectedPoi;
-
-  const PoiPanelTabs({required this.selectedPoi, super.key});
+  const PoiPanelTabs({super.key});
 
   @override
   ConsumerState<PoiPanelTabs> createState() => _PoiPanelTabsState();
@@ -55,8 +51,6 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
   bool _listenerRegistered = false;
   late final ProviderSubscription<PointOfInterest?> _sub;
   late final PoiDragNotifier dragPoiNotifier;
-
-  final bool isEditModeEnabled = false;
 
   @override
   void initState() {
@@ -77,10 +71,10 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
   @override
   Widget build(BuildContext context) {
     DebugService.log('Build PoiPanelTabs');
+    final selectedPoi = ref.watch(selectedPoiProvider);
+    if (selectedPoi == null) return const SizedBox.shrink();
 
-    final bool isAdminViewEnabled = ref
-        .watch(appStateProvider)
-        .isAdminViewEnabled;
+    final bool isEditModeEnabled = ref.watch(appStateProvider).isPoiEditMode;
 
     if (!_listenerRegistered) {
       _listenerRegistered = true;
@@ -144,11 +138,11 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
     ];
 
     final pages = [
-      _buildInfoTab(widget.selectedPoi, isAdminViewEnabled),
-      _buildGalleryTab(widget.selectedPoi, isAdminViewEnabled),
-      _buildRatingsTab(widget.selectedPoi),
-      _buildHistoryTab(widget.selectedPoi, isAdminViewEnabled),
-      _buildArticlesTab(widget.selectedPoi, isAdminViewEnabled),
+      _buildInfoTab(selectedPoi, isEditModeEnabled),
+      _buildGalleryTab(selectedPoi, isEditModeEnabled),
+      _buildRatingsTab(selectedPoi),
+      _buildHistoryTab(selectedPoi, isEditModeEnabled),
+      _buildArticlesTab(selectedPoi, isEditModeEnabled),
     ];
 
     return LayoutBuilder(
@@ -172,7 +166,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
     );
   }
 
-  Widget _buildInfoTab(PointOfInterest selectedPoi, bool isAdminViewEnabled) {
+  Widget _buildInfoTab(PointOfInterest selectedPoi, bool isEditModeEnabled) {
     final location = selectedPoi.location;
     final pts = selectedPoi.getPoints();
     final pointsList = pts == null
@@ -203,7 +197,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                   contentPadding: EdgeInsets.fromLTRB(0, 0, 35, 5),
                 ),
               ),
-              isAdminViewEnabled
+              isEditModeEnabled
                   ? Positioned(
                       right: 0,
                       top: 5,
@@ -218,10 +212,12 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                           );
                           if (newValue != null) {
                             nameController.text = newValue;
-                            await PoiRepository.updatePoiDataInSupabase(
-                              id: selectedPoi.id,
-                              name: newValue,
-                            );
+                            ref
+                                .read(poiRepositoryProvider)
+                                .updatePoiDataInSupabase(
+                                  id: selectedPoi.id,
+                                  name: newValue,
+                                );
                             ref
                                 .read(selectedPoiProvider.notifier)
                                 .setPoi(
@@ -250,7 +246,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                   floatingLabelBehavior: FloatingLabelBehavior.always,
                   labelText: "Beschreibung",
                   alignLabelWithHint: true,
-                  contentPadding: isAdminViewEnabled
+                  contentPadding: isEditModeEnabled
                       ? const EdgeInsets.fromLTRB(0, 0, 35, 5)
                       : const EdgeInsets.fromLTRB(0, 10, 0, 5),
                 ),
@@ -262,7 +258,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                 ),
               ),
               // Edit button
-              if (isAdminViewEnabled)
+              if (isEditModeEnabled)
                 Positioned(
                   right: 0,
                   top: 5,
@@ -277,10 +273,12 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                       );
                       if (newValue != null) {
                         descriptionController.text = newValue;
-                        await PoiRepository.updatePoiDataInSupabase(
-                          id: selectedPoi.id,
-                          description: newValue,
-                        );
+                        ref
+                            .read(poiRepositoryProvider)
+                            .updatePoiDataInSupabase(
+                              id: selectedPoi.id,
+                              description: newValue,
+                            );
                         ref
                             .read(selectedPoiProvider.notifier)
                             .setPoi(
@@ -316,7 +314,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                 decoration: InputDecoration(
                   labelText: "Links",
                   alignLabelWithHint: true,
-                  contentPadding: isAdminViewEnabled
+                  contentPadding: isEditModeEnabled
                       ? const EdgeInsets.fromLTRB(0, 10, 35, 5)
                       : const EdgeInsets.fromLTRB(0, 10, 0, 5),
                 ),
@@ -398,7 +396,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                 ),
               ),
               //Edit links
-              if (isAdminViewEnabled)
+              if (isEditModeEnabled)
                 Positioned(
                   right: 0,
                   top: 5,
@@ -416,10 +414,12 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                       if (newLinks != null) {
                         updatedPoi.metadata.setLinks(newLinks);
                       }
-                      await PoiRepository.updatePoiDataInSupabase(
-                        id: selectedPoi.id,
-                        metadata: updatedPoi.metadata,
-                      );
+                      ref
+                          .read(poiRepositoryProvider)
+                          .updatePoiDataInSupabase(
+                            id: selectedPoi.id,
+                            metadata: updatedPoi.metadata,
+                          );
 
                       ref.read(selectedPoiProvider.notifier).setPoi(updatedPoi);
                       //ref.invalidate(visiblePoisProvider);
@@ -436,7 +436,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                 decoration: InputDecoration(
                   labelText: "Features",
                   alignLabelWithHint: true,
-                  contentPadding: isAdminViewEnabled
+                  contentPadding: isEditModeEnabled
                       ? const EdgeInsets.fromLTRB(0, 10, 35, 5)
                       : const EdgeInsets.fromLTRB(0, 10, 0, 5),
                 ),
@@ -479,7 +479,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                 ),
               ),
               // Edit features
-              if (isAdminViewEnabled)
+              if (isEditModeEnabled)
                 Positioned(
                   right: 0,
                   top: 5,
@@ -495,10 +495,12 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                       );
                       final newPoi = selectedPoi.cloneWithNewValues();
                       newPoi.metadata.setFeatures(newFeatures!);
-                      await PoiRepository.updatePoiDataInSupabase(
-                        id: selectedPoi.id,
-                        metadata: newPoi.metadata,
-                      );
+                      ref
+                          .read(poiRepositoryProvider)
+                          .updatePoiDataInSupabase(
+                            id: selectedPoi.id,
+                            metadata: newPoi.metadata,
+                          );
                       ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
                       //ref.invalidate(visiblePoisProvider);
                     },
@@ -508,7 +510,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
           ),
 
           // Kategorien bearbeiten
-          if (isAdminViewEnabled) ...[
+          if (isEditModeEnabled) ...[
             const SizedBox(height: 20),
             Text(
               'Kategorien bearbeiten',
@@ -534,7 +536,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
             ),
             const SizedBox(height: 20),
           ],
-          if (isAdminViewEnabled) ...[
+          if (isEditModeEnabled) ...[
             // Standort und Geometrie
             Text(
               'Standort und Geometrie',
@@ -567,9 +569,10 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
             SwitchListTile(
               title: const Text('Geometriepunkte bearbeiten'),
               contentPadding: const EdgeInsets.only(left: 0, right: 0),
-              value: appState.isPoiEditMode,
-              onChanged: (newValue) =>
-                  ref.read(appStateProvider.notifier).setPoiEditMode(newValue),
+              value: appState.isPoiGeomEditMode,
+              onChanged: (newValue) => ref
+                  .read(appStateProvider.notifier)
+                  .setPoiGeomEditMode(newValue),
             ),
             const SizedBox(height: 5),
             buildGeometryTypeSelector(context, selectedPoi),
@@ -580,7 +583,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
             ),
             EditableList<String>(
               items: pointsList,
-              isAdminViewEnabled: true,
+              isEditModeEnabled: true,
               itemBuilder: (entry) {
                 return Padding(
                   padding: const EdgeInsets.fromLTRB(10, 0, 0, 15),
@@ -594,10 +597,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
     );
   }
 
-  Widget _buildHistoryTab(
-    PointOfInterest selectedPoi,
-    bool isAdminViewEnabled,
-  ) {
+  Widget _buildHistoryTab(PointOfInterest selectedPoi, bool isEditModeEnabled) {
     final historyEntries = selectedPoi.historyEntries;
     return Padding(
       padding: const EdgeInsets.all(12),
@@ -609,7 +609,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                 SizedBox(height: 16),
                 EditableList<HistoryEntry>(
                   items: historyEntries,
-                  isAdminViewEnabled: isAdminViewEnabled,
+                  isEditModeEnabled: isEditModeEnabled,
                   onAdd: () async {
                     final newEntry = await showDialog<HistoryEntry>(
                       context: context,
@@ -623,10 +623,12 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
 
                     if (newEntry != null) {
                       final updated = [...historyEntries, newEntry];
-                      await PoiRepository.updatePoiDataInSupabase(
-                        id: selectedPoi.id,
-                        historyEntries: updated,
-                      );
+                      ref
+                          .read(poiRepositoryProvider)
+                          .updatePoiDataInSupabase(
+                            id: selectedPoi.id,
+                            historyEntries: updated,
+                          );
                       ref
                           .read(selectedPoiProvider.notifier)
                           .setPoi(
@@ -655,10 +657,12 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                       final index = updated.indexOf(entry);
                       updated[index] = updatedEntry;
 
-                      await PoiRepository.updatePoiDataInSupabase(
-                        id: selectedPoi.id,
-                        historyEntries: updated,
-                      );
+                      ref
+                          .read(poiRepositoryProvider)
+                          .updatePoiDataInSupabase(
+                            id: selectedPoi.id,
+                            historyEntries: updated,
+                          );
                       ref
                           .read(selectedPoiProvider.notifier)
                           .setPoi(
@@ -673,10 +677,12 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                   },
                   onDelete: (entry) async {
                     final updated = [...historyEntries]..remove(entry);
-                    await PoiRepository.updatePoiDataInSupabase(
-                      id: selectedPoi.id,
-                      historyEntries: updated,
-                    );
+                    ref
+                        .read(poiRepositoryProvider)
+                        .updatePoiDataInSupabase(
+                          id: selectedPoi.id,
+                          historyEntries: updated,
+                        );
                     ref
                         .read(selectedPoiProvider.notifier)
                         .setPoi(
@@ -717,7 +723,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
 
   Widget _buildArticlesTab(
     PointOfInterest selectedPoi,
-    bool isAdminViewEnabled,
+    bool isEditModeEnabled,
   ) {
     final articles = selectedPoi.articles;
     return SingleChildScrollView(
@@ -728,7 +734,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
             SizedBox(height: 16),
             EditableList<ArticleEntry>(
               items: articles,
-              isAdminViewEnabled: isAdminViewEnabled,
+              isEditModeEnabled: isEditModeEnabled,
               onAdd: () async {
                 final newEntry = await showDialog<ArticleEntry>(
                   context: context,
@@ -742,10 +748,12 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
 
                 if (newEntry != null) {
                   final updated = [...articles, newEntry];
-                  await PoiRepository.updatePoiDataInSupabase(
-                    id: selectedPoi.id,
-                    articles: updated,
-                  );
+                  ref
+                      .read(poiRepositoryProvider)
+                      .updatePoiDataInSupabase(
+                        id: selectedPoi.id,
+                        articles: updated,
+                      );
                   ref
                       .read(selectedPoiProvider.notifier)
                       .setPoi(
@@ -772,10 +780,12 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                   final index = updated.indexOf(entry);
                   updated[index] = updatedEntry;
 
-                  await PoiRepository.updatePoiDataInSupabase(
-                    id: selectedPoi.id,
-                    articles: updated,
-                  );
+                  ref
+                      .read(poiRepositoryProvider)
+                      .updatePoiDataInSupabase(
+                        id: selectedPoi.id,
+                        articles: updated,
+                      );
                   ref
                       .read(selectedPoiProvider.notifier)
                       .setPoi(
@@ -789,10 +799,12 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
               },
               onDelete: (entry) async {
                 final updated = [...articles]..remove(entry);
-                await PoiRepository.updatePoiDataInSupabase(
-                  id: selectedPoi.id,
-                  articles: updated,
-                );
+                ref
+                    .read(poiRepositoryProvider)
+                    .updatePoiDataInSupabase(
+                      id: selectedPoi.id,
+                      articles: updated,
+                    );
                 ref
                     .read(selectedPoiProvider.notifier)
                     .setPoi(selectedPoi.cloneWithNewValues(articles: updated));
@@ -825,7 +837,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
     );
   }
 
-  Widget _buildGalleryTab(PointOfInterest poi, bool isAdminViewEnabled) {
+  Widget _buildGalleryTab(PointOfInterest poi, bool isEditModeEnabled) {
     final selectedPoi = ref.watch(selectedPoiProvider);
     final user = ref.watch(supabaseUserStateProvider);
     final username = user.username;
@@ -834,9 +846,9 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
     return SingleChildScrollView(
       child: Column(
         children: [
-          isAdminViewEnabled ? SizedBox(height: 15) : SizedBox.shrink(),
+          isEditModeEnabled ? SizedBox(height: 15) : SizedBox.shrink(),
           // Featured Image-URL
-          isAdminViewEnabled
+          isEditModeEnabled
               ? Stack(
                   children: [
                     TextField(
@@ -864,10 +876,12 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                           );
                           if (newValue != null) {
                             featuredImageUrlController.text = newValue;
-                            await PoiRepository.updatePoiDataInSupabase(
-                              id: selectedPoi!.id,
-                              featuredImageUrl: newValue,
-                            );
+                            ref
+                                .read(poiRepositoryProvider)
+                                .updatePoiDataInSupabase(
+                                  id: selectedPoi!.id,
+                                  featuredImageUrl: newValue,
+                                );
                             ref
                                 .read(selectedPoiProvider.notifier)
                                 .setPoi(
@@ -884,10 +898,10 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                   ],
                 )
               : SizedBox.shrink(),
-          isAdminViewEnabled ? SizedBox(height: 15) : SizedBox.shrink(),
+          isEditModeEnabled ? SizedBox(height: 15) : SizedBox.shrink(),
 
           // Featured image
-          (selectedPoi!.featuredImageUrl != null)
+          (selectedPoi!.featuredImageUrl == null)
               ? const Icon(
                   Icons.image_not_supported,
                   size: 80,
@@ -922,33 +936,42 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                 ),
 
           // Liste mit ImageUrls
-          if (isAdminViewEnabled)
+          if (isEditModeEnabled)
             EditableList<ImageEntry>(
               items: selectedPoi.images,
-              isAdminViewEnabled: isAdminViewEnabled,
+              isEditModeEnabled: isEditModeEnabled,
               onAdd: () async {
                 final newEntry = await showDialog<ImageEntry>(
                   context: context,
                   barrierDismissible: false,
                   builder: (_) => ImageEditModal(
-                    initialTitle: "",
-                    initialUrl: "",
-                    initialEnteredBy: username,
-                    initialCreditsName: "",
-                    initialCreditsUrl: "",
+                    image: ImageEntry(
+                      title: '',
+                      url: '',
+                      enteredBy: username,
+                      creditsName: '',
+                      creditsUrl: '',
+                    ),
                   ),
                 );
 
                 if (newEntry != null) {
-                  final updated = [...selectedPoi.images, newEntry];
-                  await PoiRepository.updatePoiDataInSupabase(
-                    id: selectedPoi.id,
-                    images: updated,
-                  );
+                  final currentPoi = ref.read(selectedPoiProvider)!;
+
+                  final updatedImages = [...currentPoi.images, newEntry];
+
+                  ref
+                      .read(poiRepositoryProvider)
+                      .updatePoiDataInSupabase(
+                        id: currentPoi.id,
+                        images: updatedImages,
+                      );
+
                   ref
                       .read(selectedPoiProvider.notifier)
-                      .setPoi(selectedPoi.cloneWithNewValues(images: updated));
-                  //ref.invalidate(visiblePoisProvider);
+                      .setPoi(
+                        currentPoi.cloneWithNewValues(images: updatedImages),
+                      );
                 }
 
                 return newEntry;
@@ -958,37 +981,48 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                   context: context,
                   barrierDismissible: false,
                   builder: (_) => ImageEditModal(
-                    initialTitle: entry.title,
-                    initialUrl: entry.url,
-                    initialEnteredBy: "",
-                    initialCreditsName: "",
-                    initialCreditsUrl: "",
+                    image: ImageEntry(
+                      title: entry.title,
+                      url: entry.url,
+                      enteredBy: entry.enteredBy,
+                      creditsName: entry.creditsName ?? '',
+                      creditsUrl: entry.creditsUrl ?? '',
+                    ),
                   ),
                 );
 
                 if (updatedEntry != null) {
-                  final updated = [...selectedPoi.images];
-                  final index = updated.indexOf(entry);
-                  updated[index] = updatedEntry;
+                  final currentPoi = ref.read(selectedPoiProvider)!;
 
-                  await PoiRepository.updatePoiDataInSupabase(
-                    id: selectedPoi.id,
-                    images: updated,
-                  );
+                  final updatedImages = currentPoi.images.map((img) {
+                    return img.url == entry.url ? updatedEntry : img;
+                  }).toList();
+
+                  ref
+                      .read(poiRepositoryProvider)
+                      .updatePoiDataInSupabase(
+                        id: currentPoi.id,
+                        images: updatedImages,
+                      );
+
                   ref
                       .read(selectedPoiProvider.notifier)
-                      .setPoi(selectedPoi.cloneWithNewValues(images: updated));
+                      .setPoi(
+                        currentPoi.cloneWithNewValues(images: updatedImages),
+                      );
                 }
-                //ref.invalidate(visiblePoisProvider);
 
                 return updatedEntry;
               },
+
               onDelete: (entry) async {
                 final updated = [...selectedPoi.images]..remove(entry);
-                await PoiRepository.updatePoiDataInSupabase(
-                  id: selectedPoi.id,
-                  images: updated,
-                );
+                ref
+                    .read(poiRepositoryProvider)
+                    .updatePoiDataInSupabase(
+                      id: selectedPoi.id,
+                      images: updated,
+                    );
                 ref
                     .read(selectedPoiProvider.notifier)
                     .setPoi(selectedPoi.cloneWithNewValues(images: updated));
@@ -1184,7 +1218,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
               final poiRepository = ref.read(poiRepositoryProvider);
               poiRepository.updatePoiGeomInSupabase(newPoi);
             }
-            ref.read(appStateProvider.notifier).setPoiEditMode(false);
+            ref.read(appStateProvider.notifier).setPoiGeomEditMode(false);
             ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
             //ref.invalidate(visiblePoisProvider);
           },
