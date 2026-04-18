@@ -194,7 +194,7 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
                 title: const Text('Featured Image'),
                 value: isFeatured,
                 onChanged: (newValue) {
-                  final newPoi = selectedPoi!.cloneWithNewValues(
+                  final newPoi = selectedPoi!.copyWith(
                     featuredImageUrl: newValue ? image.url : null,
                     clearFeaturedImage: !newValue,
                   );

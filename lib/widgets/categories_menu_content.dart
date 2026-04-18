@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:iconify_flutter/icons/tabler.dart';
@@ -360,6 +361,8 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
 
   Widget _iconifyIconFromString(String name) {
     switch (name) {
+      case "fa7-solid:walking": 
+      return const FaIcon(FontAwesomeIcons.personWalking, size: 24);
       case "mdi:tennis":
         return const Iconify(Mdi.tennis, size: 24);
       case "mdi:table-tennis":

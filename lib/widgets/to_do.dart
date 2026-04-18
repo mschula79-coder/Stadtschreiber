@@ -14,6 +14,7 @@
 // TODO Zoom out animation
 // TODO Modal loading distortion 
 // TODO Featured Image Thumbnail und Edge Function ans laufen bringen
+// TODO Adresse editieren
 
 
 class ToDo {

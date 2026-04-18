@@ -221,7 +221,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                             ref
                                 .read(selectedPoiProvider.notifier)
                                 .setPoi(
-                                  selectedPoi.cloneWithNewValues(
+                                  selectedPoi.copyWith(
                                     name: newValue,
                                   ),
                                 );
@@ -282,7 +282,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                         ref
                             .read(selectedPoiProvider.notifier)
                             .setPoi(
-                              selectedPoi.cloneWithNewValues(
+                              selectedPoi.copyWith(
                                 description: newValue,
                               ),
                             );
@@ -410,7 +410,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                           initialValues: selectedPoi.metadata.getLinks(),
                         ),
                       );
-                      final updatedPoi = selectedPoi.cloneWithNewValues();
+                      final updatedPoi = selectedPoi.copyWith();
                       if (newLinks != null) {
                         updatedPoi.metadata.setLinks(newLinks);
                       }
@@ -493,7 +493,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                           initialFeatures: selectedPoi.metadata.getFeatures(),
                         ),
                       );
-                      final newPoi = selectedPoi.cloneWithNewValues();
+                      final newPoi = selectedPoi.copyWith();
                       newPoi.metadata.setFeatures(newFeatures!);
                       ref
                           .read(poiRepositoryProvider)
@@ -557,7 +557,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                     onTap: () {
                       ref
                           .read(dragPoiProvider.notifier)
-                          .startDraggingPoi(selectedPoi);
+                          .startDraggingPoiMode(selectedPoi);
                     },
                     child: Icon(Icons.edit),
                   ),
@@ -570,9 +570,14 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
               title: const Text('Geometriepunkte bearbeiten'),
               contentPadding: const EdgeInsets.only(left: 0, right: 0),
               value: appState.isPoiGeomEditMode,
-              onChanged: (newValue) => ref
-                  .read(appStateProvider.notifier)
-                  .setPoiGeomEditMode(newValue),
+              onChanged: (newValue) {
+                ref
+                    .read(appStateProvider.notifier)
+                    .setPoiGeomEditMode(newValue);
+                if (newValue) {
+                  ref.read(dragPoiProvider.notifier).setDragPoi(selectedPoi);
+                }
+              },
             ),
             const SizedBox(height: 5),
             buildGeometryTypeSelector(context, selectedPoi),
@@ -632,7 +637,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                       ref
                           .read(selectedPoiProvider.notifier)
                           .setPoi(
-                            selectedPoi.cloneWithNewValues(
+                            selectedPoi.copyWith(
                               historyEntries: updated,
                             ),
                           );
@@ -666,7 +671,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                       ref
                           .read(selectedPoiProvider.notifier)
                           .setPoi(
-                            selectedPoi.cloneWithNewValues(
+                            selectedPoi.copyWith(
                               historyEntries: updated,
                             ),
                           );
@@ -686,7 +691,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                     ref
                         .read(selectedPoiProvider.notifier)
                         .setPoi(
-                          selectedPoi.cloneWithNewValues(
+                          selectedPoi.copyWith(
                             historyEntries: updated,
                           ),
                         );
@@ -757,7 +762,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                   ref
                       .read(selectedPoiProvider.notifier)
                       .setPoi(
-                        selectedPoi.cloneWithNewValues(articles: updated),
+                        selectedPoi.copyWith(articles: updated),
                       );
                   //ref.invalidate(visiblePoisProvider);
                 }
@@ -789,7 +794,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                   ref
                       .read(selectedPoiProvider.notifier)
                       .setPoi(
-                        selectedPoi.cloneWithNewValues(articles: updated),
+                        selectedPoi.copyWith(articles: updated),
                       );
                   //ref.invalidate(visiblePoisProvider);
                   //ref.invalidate(visiblePoisProvider);
@@ -807,7 +812,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                     );
                 ref
                     .read(selectedPoiProvider.notifier)
-                    .setPoi(selectedPoi.cloneWithNewValues(articles: updated));
+                    .setPoi(selectedPoi.copyWith(articles: updated));
               },
               itemBuilder: (entry) {
                 return Padding(
@@ -885,7 +890,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                             ref
                                 .read(selectedPoiProvider.notifier)
                                 .setPoi(
-                                  selectedPoi.cloneWithNewValues(
+                                  selectedPoi.copyWith(
                                     featuredImageUrl: newValue,
                                   ),
                                 );
@@ -970,7 +975,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                   ref
                       .read(selectedPoiProvider.notifier)
                       .setPoi(
-                        currentPoi.cloneWithNewValues(images: updatedImages),
+                        currentPoi.copyWith(images: updatedImages),
                       );
                 }
 
@@ -1008,7 +1013,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                   ref
                       .read(selectedPoiProvider.notifier)
                       .setPoi(
-                        currentPoi.cloneWithNewValues(images: updatedImages),
+                        currentPoi.copyWith(images: updatedImages),
                       );
                 }
 
@@ -1025,7 +1030,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                     );
                 ref
                     .read(selectedPoiProvider.notifier)
-                    .setPoi(selectedPoi.cloneWithNewValues(images: updated));
+                    .setPoi(selectedPoi.copyWith(images: updated));
               },
               itemBuilder: (entry) {
                 return Padding(
@@ -1212,7 +1217,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
         RadioGroup<String>(
           groupValue: selectedPoi.geometryType,
           onChanged: (value) {
-            final newPoi = selectedPoi.cloneWithNewValues(geometryType: value!);
+            final newPoi = selectedPoi.copyWith(geometryType: value!);
 
             if (newPoi.isGeometryValid()) {
               final poiRepository = ref.read(poiRepositoryProvider);

@@ -46,13 +46,15 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
               Expanded(
                 child: Row(
                   children: [
-                    Text(
-                      widget.selectedPoi.name,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Text(
+                        widget.selectedPoi.name,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(width: 5),
                     isAdminViewEnabled
@@ -83,10 +85,7 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
               ),
             ],
           ),
-          Expanded(
-            child: PoiPanelTabs(
-            ),
-          ),
+          Expanded(child: PoiPanelTabs()),
         ],
       ),
     );

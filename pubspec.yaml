@@ -26,6 +26,7 @@ dependencies:
   flutter_image_compress: ^2.4.0
   image: ^4.8.0
   cached_network_image: ^3.4.1
+  font_awesome_flutter: ^11.0.0
 
 dev_dependencies:
   flutter_test:
@@ -59,6 +60,6 @@ fonts:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icons/app_icon.png"
+  image_path: "assets/icons/app_icon_android.png"
   remove_alpha_ios: true
 

@@ -45,7 +45,7 @@ class PoiService {
     // TODO CHECK OB DOPPELT
     await repo.updatePoiAddressInSupabase(poi.id, address);
 
-    return poi.cloneWithNewValues(address: address);
+    return poi.copyWith(address: address);
   }
 
   Future<PointOfInterest> toggleCategory({
@@ -73,7 +73,7 @@ class PoiService {
       'PoiController.toggleCategory - selectedPoi: $selPoi.name',
     );
 
-    return selPoi.cloneWithNewValues(categories: updatedCategories);
+    return selPoi.copyWith(categories: updatedCategories);
   }
 
   Future<int?> findPoiPointIndexAtGeoPosition(

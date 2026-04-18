@@ -118,7 +118,7 @@ class PointOfInterest {
     );
   }
 
-  PointOfInterest cloneWithNewValues({
+  PointOfInterest copyWith({
     String? id,
     String? name,
     Geographic? location,

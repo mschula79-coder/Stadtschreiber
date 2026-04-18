@@ -98,9 +98,9 @@ class MapScreenState extends ConsumerState<MapScreen> {
 
     final selectedPoi = ref.watch(selectedPoiProvider);
     final hasSelectedPoi = selectedPoi != null;
-    final bool isDraggingPoiPoint = ref
+    final bool isDraggingPointMode = ref
         .read(dragPoiProvider.notifier)
-        .isDraggingPoiPoint();
+        .isDraggingPointMode();
 
     final bool showPoiPanel =
         hasSelectedPoi && !isPoiGeomEditMode && !isDraggingPoi;
@@ -112,7 +112,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
     }
 
     DebugService.log(
-      'Build MapScreen Screen size: ${MediaQuery.of(context).size}\n isPoiGeomEditMode: $isPoiGeomEditMode\nisAdminViewEnabled: $isAdminViewEnabled\nhasSelectedPoi: $hasSelectedPoi\nshowPoiPanel: $showPoiPanel\nisDraggingPoi: $isDraggingPoi\nisDraggingPoiPoint: $isDraggingPoiPoint',
+      'Build MapScreen Screen size: ${MediaQuery.of(context).size}\n isPoiGeomEditMode: $isPoiGeomEditMode\nisAdminViewEnabled: $isAdminViewEnabled\nhasSelectedPoi: $hasSelectedPoi\nshowPoiPanel: $showPoiPanel\nisDraggingPoi: $isDraggingPoi\nisDraggingPointMode: $isDraggingPointMode',
     );
 
     /*     if (!_selectedPoiListenerRegistered) {
@@ -234,12 +234,13 @@ class MapScreenState extends ConsumerState<MapScreen> {
                         );
                         ref
                             .read(dragPoiProvider.notifier)
-                            .startDraggingPoiPoint(selectedPoi, pointIndex);
-                        mapController!.moveCamera(center: event.point);
+                            .startDraggingPointMode(selectedPoi, pointIndex);
+                        /*                         mapController!.moveCamera(center: event.point);
+ */
                       }
                       // no point hit -> add new point and update geometry immediately, no dragging
                       else {
-                        final newPoi = selectedPoi.cloneWithNewValues();
+                        final newPoi = selectedPoi.copyWith();
 
                         DebugService.log(
                           'MapEventLongClick: Long press on POI point, adding new point',
@@ -265,18 +266,9 @@ class MapScreenState extends ConsumerState<MapScreen> {
                   case maplibre.MapEventMoveCamera(
                     camera: maplibre.MapCamera(),
                   ):
-                    final cam = event.camera;
+                    final cam = mapController?.camera;
 
-                    // ------------------------------------------------------------
-                    // 1. Kamera-Status aktualisieren (leichtgewichtige Updates)
-                    // ------------------------------------------------------------
-                    ref
-                        .read(cameraProvider.notifier)
-                        .update(cam.center.lat, cam.center.lon, cam.zoom);
-
-                    // ------------------------------------------------------------
-                    // 2. User-Marker aktualisieren (falls vorhanden)
-                    // ------------------------------------------------------------
+                    // aktualisiere User Position (blue dot)
                     if (lastKnownUserLat != null && lastKnownUserLon != null) {
                       final screen = mapController?.toScreenLocation(
                         maplibre.Geographic(
@@ -284,7 +276,6 @@ class MapScreenState extends ConsumerState<MapScreen> {
                           lon: lastKnownUserLon!,
                         ),
                       );
-
                       if (screen != null) {
                         setState(() {
                           userMarkerOffset = Offset(screen.dx, screen.dy);
@@ -292,64 +283,64 @@ class MapScreenState extends ConsumerState<MapScreen> {
                       }
                     }
 
-                    // ------------------------------------------------------------
-                    // 3. Dragging eines Polygon-Punktes
-                    // ------------------------------------------------------------
-                    if (isDraggingPoiPoint) {
+                    // Dragging eines Polygon-Punktes
+                    if (isDraggingPointMode) {
                       maplibre.MapGestures.none();
 
-                      final dragPoi = ref
+                      final dragPointPoi = ref
                           .read(dragPoiProvider.notifier)
-                          .dragPoi();
-                      final index = ref
-                          .read(dragPoiProvider)
-                          .dragPoiPointIndex!;
-                      final points = dragPoi!.getPoints()!;
+                          .dragPointPoi();
+                      final index = ref.read(dragPoiProvider).dragPointIndex!;
+                      final points = dragPointPoi!.getPoints()!;
 
-                      points[index] = cam.center;
-                      dragPoi.setPoints(points);
+                      points[index] = cam!.center;
+                      dragPointPoi.setPoints(points);
 
                       ref
                           .read(selectedPoiProvider.notifier)
-                          .setPoi(dragPoi.cloneWithNewValues());
+                          .setPoi(dragPointPoi.copyWith());
                     }
 
-                    // ------------------------------------------------------------
-                    // 4. Dragging eines ganzen POIs
-                    // ------------------------------------------------------------
+                    // Dragging eines POIs
                     if (isDraggingPoi) {
                       maplibre.MapGestures.none();
 
                       final poi = ref.read(dragPoiProvider.notifier).dragPoi()!;
-                      final updated = poi.cloneWithNewValues(
-                        location: cam.center,
-                      );
+                      final updated = poi.copyWith(location: cam!.center);
 
                       ref
                           .read(dragPoiProvider.notifier)
-                          .startDraggingPoi(updated);
+                          .startDraggingPoiMode(updated);
                     }
 
                     break;
 
                   case maplibre.MapEventCameraIdle():
                     if (mapController == null) return;
-
-                    // ------------------------------------------------------------
+                    final cam = mapController?.camera;
+                    if (cam != null) {
+                      ref
+                          .read(cameraProvider.notifier)
+                          .update(cam.center.lat, cam.center.lon, cam.zoom);
+                    } // ------------------------------------------------------------
                     // 1. Dragging-Updates (wie bisher)
                     // ------------------------------------------------------------
-                    if (isDraggingPoiPoint) {
-                      final poi = ref.read(dragPoiProvider.notifier).dragPoi()!;
+                    if (isDraggingPointMode) {
+                      final poi = ref
+                          .read(dragPoiProvider.notifier)
+                          .dragPointPoi()!;
 
                       poi.closePolygonIfNeeded();
                       if (poi.isGeometryValid()) {
                         await poiRepository.updatePoiGeomInSupabase(poi);
                       }
 
-                      ref.read(dragPoiProvider.notifier).stopDraggingPoiPoint();
+                      ref
+                          .read(dragPoiProvider.notifier)
+                          .stopDraggingPointMode();
                       ref
                           .read(selectedPoiProvider.notifier)
-                          .setPoi(poi.cloneWithNewValues());
+                          .setPoi(poi.copyWith());
 
                       maplibre.MapGestures.all();
                     }
@@ -386,17 +377,18 @@ class MapScreenState extends ConsumerState<MapScreen> {
                   left: 0,
                   right: 0,
                   child: Center(
+                    // TODO !!!!!!!!!!!!!!!!!!!!!!!
                     child: ElevatedButton(
                       onPressed: () {
                         ref
                             .read(appStateProvider.notifier)
                             .setPoiGeomEditMode(false);
-                        final poi = ref
-                            .read(selectedPoiProvider)!
-                            .cloneWithNewValues();
+                        final poi = ref.read(selectedPoiProvider)!.copyWith();
                         ref.read(selectedPoiProvider.notifier).setPoi(poi);
-
                         ref.read(selectedPoiProvider.notifier).clear();
+                        ref
+                            .read(dragPoiProvider.notifier)
+                            .stopDraggingPointMode();
                       },
                       child: Text('Edit Mode beenden'),
                     ),
@@ -419,7 +411,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
               ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
               ref.read(appStateProvider.notifier).setAdminViewEnabled(true);
               ref.read(appStateProvider.notifier).setPoiEditMode(true);
-              
+
               ref.invalidate(visiblePoisProvider);
             },
             onRemoveThumbnails: () {
@@ -476,7 +468,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
                     final dragPoi = ref.read(dragPoiProvider).dragPoi;
                     if (dragPoi == null) return;
 
-                    ref.read(dragPoiProvider.notifier).stopDraggingPoi();
+                    ref.read(dragPoiProvider.notifier).stopDraggingPoiMode();
 
                     ref.read(selectedPoiProvider.notifier).setPoi(dragPoi);
                     poiRepository.updatePoiGeomInSupabase(dragPoi);
@@ -487,7 +479,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
                 ),
               ),
             ),
-          if (isDraggingPoiPoint)
+          if (isDraggingPointMode)
             // Show trash button when dragging a point
             Stack(
               children: [
@@ -507,13 +499,13 @@ class MapScreenState extends ConsumerState<MapScreen> {
                         if (confirmed) {
                           final index = ref
                               .read(dragPoiProvider)
-                              .dragPoiPointIndex;
+                              .dragPointIndex;
                           final pts = List<maplibre.Geographic>.from(
                             selectedPoi!.getPoints()!,
                           );
                           pts.removeAt(index!);
 
-                          final newPoi = selectedPoi.cloneWithNewValues();
+                          final newPoi = selectedPoi.copyWith();
                           newPoi.setPoints(pts);
 
                           newPoi.closePolygonIfNeeded();
@@ -530,7 +522,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
 
                           ref
                               .read(dragPoiProvider.notifier)
-                              .stopDraggingPoiPoint();
+                              .stopDraggingPointMode();
 
                           maplibre.MapGestures.all();
                         }
@@ -540,13 +532,18 @@ class MapScreenState extends ConsumerState<MapScreen> {
                   ),
                 ),
                 Positioned(
-                  bottom: 20,
+                  top: 80,
                   left: 0,
                   right: 0,
                   child: Center(
+                    widthFactor: 0.6,
                     child: Text(
                       'Bewege die Karte, um den Punkt neu zu positionieren. Beim loslassen wird die Änderung gespeichert.',
-                      style: TextStyle(color: Colors.black, fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 12,
+                        backgroundColor: Colors.white,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -614,7 +611,10 @@ class MapScreenState extends ConsumerState<MapScreen> {
       );
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        centerSelectedPoiConsideringPanel();
+        if (!ref.read(dragPoiProvider.notifier).isDraggingPoiMode() &&
+            !ref.read(dragPoiProvider.notifier).isDraggingPointMode()) {
+          centerSelectedPoiConsideringPanel();
+        }
       });
     });
   }
@@ -805,7 +805,7 @@ NEWPOI
     DebugService.log('MapScreen updatePoiPointsData');
 
     final newGeoJson = poi.getPointsGeoJson();
-    if (newGeoJson != null) {
+    if (newGeoJson != null && mapStyle != null) {
       mapStyle!.updateGeoJsonSource(id: 'poi-points-source', data: newGeoJson);
     }
   }
@@ -838,7 +838,7 @@ NEWPOI
 
   Future<void> centerSelectedPoiConsideringPanel() async {
     if (mapController == null) return;
-    final dragPoi = ref.read(dragPoiProvider.notifier).isDraggingPoi();
+    final dragPoi = ref.read(dragPoiProvider.notifier).isDraggingPoiMode();
     if (dragPoi) return;
 
     final poi = ref.read(selectedPoiProvider);

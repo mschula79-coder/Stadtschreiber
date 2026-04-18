@@ -2,24 +2,24 @@ import 'package:stadtschreiber/models/poi.dart';
 
 class PoiDragState {
   final PointOfInterest? dragPoi;
-  final PointOfInterest? dragPoiPoint;
-  final int? dragPoiPointIndex;
+  final PointOfInterest? dragPointPoi;
+  final int? dragPointIndex;
 
   const PoiDragState({
     this.dragPoi,
-    this.dragPoiPoint,
-    this.dragPoiPointIndex,
+    this.dragPointPoi,
+    this.dragPointIndex,
   });
 
   PoiDragState copyWith({
-    PointOfInterest? dragPoi,
-    PointOfInterest? dragPoiPoint,
-    int? dragPoiPointIndex,
+    required PointOfInterest? dragPoi,
+    required PointOfInterest? dragPointPoi,
+    required int? dragPointIndex,
   }) {
     return PoiDragState(
       dragPoi: dragPoi,
-      dragPoiPoint: dragPoiPoint ?? this.dragPoiPoint,
-      dragPoiPointIndex: dragPoiPointIndex ?? this.dragPoiPointIndex,
+      dragPointPoi: dragPointPoi,
+      dragPointIndex: dragPointIndex,
     );
   }
 }

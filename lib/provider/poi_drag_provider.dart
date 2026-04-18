@@ -7,28 +7,28 @@ class PoiDragNotifier extends Notifier<PoiDragState> {
   PoiDragState build() => const PoiDragState();
 
   /// Sets state to poi
-  void startDraggingPoi(PointOfInterest poi) {
-    state = state.copyWith(dragPoi: poi);
+  void startDraggingPoiMode(PointOfInterest poi) {
+    state = state.copyWith(dragPoi: poi, dragPointIndex: null, dragPointPoi: null);
   }
 
   /// Sets state to null
-  void stopDraggingPoi() {
-    state = state.copyWith(dragPoi: null);
+  void stopDraggingPoiMode() {
+    state = state.copyWith(dragPoi: null,dragPointIndex: null, dragPointPoi: null);
   }
 
-  void startDraggingPoiPoint(PointOfInterest poi, int index) {
-    state = state.copyWith(dragPoiPoint: poi, dragPoiPointIndex: index);
+  void startDraggingPointMode(PointOfInterest poi, int index) {
+    state = state.copyWith(dragPointPoi: poi, dragPointIndex: index, dragPoi: null);
   }
 
-  void stopDraggingPoiPoint() {
-    state = state.copyWith(dragPoiPoint: null, dragPoiPointIndex: null);
+  void stopDraggingPointMode() {
+    state = state.copyWith(dragPointIndex: null, dragPointPoi: null, dragPoi: null);
   }
 
-  bool isDraggingPoiPoint() {
-    return state.dragPoiPoint != null;
+  bool isDraggingPointMode() {
+    return state.dragPointPoi != null;
   }
 
-  bool isDraggingPoi() {
+  bool isDraggingPoiMode() {
     return state.dragPoi != null;
   }
 
@@ -36,8 +36,13 @@ class PoiDragNotifier extends Notifier<PoiDragState> {
     return state.dragPoi;
   }
 
-  PointOfInterest? dragPoiPoint() {
-    return state.dragPoiPoint;
+  PointOfInterest? dragPointPoi() {
+    return state.dragPointPoi;
+  }
+
+
+  void setDragPoi(PointOfInterest poi) {
+    state.copyWith(dragPoi: poi, dragPointPoi: null, dragPointIndex: null);
   }
 }
 

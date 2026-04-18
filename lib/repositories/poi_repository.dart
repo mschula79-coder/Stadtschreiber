@@ -83,7 +83,7 @@ class PoiRepository {
         .eq('id', poi.id);
 
     // neues POI-Objekt zurückgeben
-    return poi.cloneWithNewValues(categories: newCategories);
+    return poi.copyWith(categories: newCategories);
   }
 
   Future<void> updatePoiDataInSupabase({
@@ -222,7 +222,7 @@ class PoiRepository {
 
     final result = await supabase
         .from('pois')
-        .insert({'name': 'newPOI', 'lat': location.lat, 'lon': location.lon})
+        .insert({'name': 'newPOI', 'lat': location.lat, 'lon': location.lon, 'featured_image_url': ''})
         .select()
         .single();
     final newId = result['id'];
@@ -238,6 +238,7 @@ class PoiRepository {
       geometryType: 'point',
       newPoi: true,
       images: [],
+      featuredImageUrl: ""
     );
   }
 
