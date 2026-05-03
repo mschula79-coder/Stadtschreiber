@@ -6,7 +6,7 @@ import '../models/poi.dart';
 class PinMarker extends StatefulWidget {
   final PointOfInterest poi;
   final VoidCallback? onTap;
-  final VoidCallback? onLongPress;  
+  final VoidCallback? onLongPress;
   final ValueChanged<Size>? onSize;
   final bool allowLabel;
 
@@ -50,29 +50,45 @@ class _PinMarkerState extends State<PinMarker> {
           ),
           const SizedBox(width: 4),
           widget.allowLabel
-          ? 
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(4),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 3,
-                  offset: Offset(0, 1),
-                ),
-              ],
-            ),
-            child: Text(
-              widget.poi.name,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          )
-          : Container()
+              ? Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  constraints: const BoxConstraints(maxWidth: 150),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent, // Box ist durchsichtig
+                    borderRadius: BorderRadius.circular(4),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 3,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    child: Text(
+                      widget.poi.name,
+                      maxLines: 1,
+                      softWrap: true,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                )
+              : Container(),
         ],
       ),
     );

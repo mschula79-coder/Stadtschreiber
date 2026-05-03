@@ -48,6 +48,7 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
         : const AsyncValue<List<PointOfInterest>>.data([]);
 
     return Container(
+      // Menucontainer
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -58,153 +59,114 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
             MediaQuery.of(context).size.height * 0.75 -
             MediaQuery.of(context).viewInsets.bottom,
       ),
+
+      // Menuinhalt
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+
           children: [
+            SizedBox(height: 8),
+
+            // Suche
             const Text(
               "Suche",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
-            //search row
-            Row(
-              children: [
-                Column(
-                  children: [
-                    // SEARCH FIELD
-                    Container(
-                      width: 250,
-                      padding: const EdgeInsets.fromLTRB(6, 0, 4, 0),
-                      margin: const EdgeInsets.fromLTRB(4, 0, 4, 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: const [
-                          BoxShadow(color: Colors.black26, blurRadius: 6),
-                        ],
-                      ),
+            SizedBox(height: 4),
 
-                      child: TextField(
-                        controller: _searchController,
-                        autofocus: false,
-                        decoration: const InputDecoration(
-                          hintText: "Suche nach Orten",
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.fromLTRB(0, 8, 0, 8),
-                          isDense: true,
-                        ),
-                        onChanged: (value) {
-                          setState(() => _searchQuery = value);
-                        },
-                        onTap: () {
-                          ref.read(searchSelectionProvider.notifier).clear();
-                          FocusScope.of(context).unfocus();
+            // SEARCH FIELD
+            Container(
+              width: 250,
+              padding: const EdgeInsets.fromLTRB(6, 0, 4, 0),
+              margin: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black26, blurRadius: 6),
+                ],
+              ),
 
-                          setState(() => _searchVisible = true);
-                        },
-                        onTapUpOutside: (event) {
-                          setState(() => _searchVisible = false);
-                        },
-                      ),
-                    ),
-                    // END OF SEARCH FIELD (only visible when toggled)
-                    if (_searchVisible)
-                      searchResults.when(
-                        data: (poiresultslist) {
-                          if (poiresultslist.isEmpty) {
-                            return const SizedBox.shrink();
-                          }
-
-                          return SearchResultsList(
-                            results: poiresultslist,
-                            onSelect: (poi) async {
-                              final poiService = ref.read(poiServiceProvider);
-                              final checkedPoi = await poiService
-                                  .checkForDuplicates(poi);
-                              ref
-                                  .read(addressLookupQueueProvider.notifier)
-                                  .enqueue(checkedPoi);
-
-                              ref
-                                  .read(searchSelectionProvider.notifier)
-                                  .add(checkedPoi);
-                              ref
-                                  .read(selectedPoiProvider.notifier)
-                                  .setPoi(checkedPoi);
-
-                              setState(() {
-                                _searchVisible = false;
-                                _searchController.clear();
-                              });
-                              widget.onClose();
-                            },
-                            onShowAll: () {},
-                          );
-                        },
-                        loading: () => const SizedBox(
-                          width: 220,
-                          child: Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
-                        error: (err, st) => Text("Error: $err"),
-                      ),
-
-                    // END OF SEARCH RESULTS DROPDOWN
-                  ],
+              child: TextField(
+                controller: _searchController,
+                autofocus: false,
+                decoration: const InputDecoration(
+                  hintText: "Suche nach Orten",
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.fromLTRB(0, 8, 0, 8),
+                  isDense: true,
                 ),
-                /* FloatingActionButton(
-                  heroTag: "SearchToggle",
-                  onPressed: () {
-                    setState(() {
-                      _searchVisible = !_searchVisible;
-                      _searchController.clear();
-                    });
-                  },
-                  mini: true,
-                  child: Icon(_searchVisible ? Icons.close : Icons.search),
-                ), */
-              ],
+                onChanged: (value) {
+                  setState(() => _searchQuery = value);
+                },
+                onTap: () {
+                  ref.read(searchSelectionProvider.notifier).clear();
+                  FocusScope.of(context).unfocus();
+
+                  setState(() => _searchVisible = true);
+                },
+                onTapUpOutside: (event) {
+                  setState(() => _searchVisible = false);
+                },
+              ),
             ),
+            // END OF SEARCH FIELD
 
-            SizedBox(height: 8),
+            // Search Results(only visible when toggled)
+            if (_searchVisible)
+              searchResults.when(
+                data: (poiresultslist) {
+                  if (poiresultslist.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
 
+                  return SearchResultsList(
+                    results: poiresultslist,
+                    onSelect: (poi) async {
+                      final poiService = ref.read(poiServiceProvider);
+                      final checkedPoi = await poiService.checkForDuplicates(
+                        poi,
+                      );
+                      ref
+                          .read(addressLookupQueueProvider.notifier)
+                          .enqueue(checkedPoi);
+
+                      ref
+                          .read(searchSelectionProvider.notifier)
+                          .add(checkedPoi);
+                      ref.read(selectedPoiProvider.notifier).setPoi(checkedPoi);
+
+                      setState(() {
+                        _searchVisible = false;
+                        _searchController.clear();
+                      });
+                      widget.onClose();
+                    },
+                    onShowAll: () {},
+                  );
+                },
+                loading: () => const SizedBox(
+                  width: 220,
+                  child: Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+                error: (err, st) => Text("Error: $err"),
+              ),
+
+            // END OF SEARCH RESULTS
+            SizedBox(height: 12),
+
+            // Überschrift Kategorien
             const Text(
               "Kategorien",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
 
-            /* CheckboxListTile(
-              contentPadding: const EdgeInsets.only(left: 4, top: 5, right: 15),
-              value: filterState.selectedValues.isEmpty
-                  ? false
-                  : filterState.selectedValues.length == allLeafValues.length
-                  ? true
-                  : null,
-              tristate: true,
-              secondary: Icon(
-                Icons.map_outlined, 
-                size: 24
-              ),
-              title: const Text("Alles auswählen"),
-              controlAffinity: ListTileControlAffinity.leading,
-              onChanged: (checked) {
-                if (checked == true) {
-                  for (final v in allLeafValues) {
-                    if (!filterState.isSelected(v)) {
-                      filterState.setSelected(v, true);
-                    }
-                  }
-                } else {
-                  for (final v in allLeafValues) {
-                    if (filterState.isSelected(v)) {
-                      filterState.setSelected(v, false);
-                    }
-                  }
-                }
-              },
-            ), */
+            SizedBox(height: 8),
+
+            // Kategorien-Baum
             ...categories.map((node) => _buildCategoryNode(context, ref, node)),
           ],
         ),
@@ -221,13 +183,91 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
   ) {
     final categoryCheckboxesState = ref.watch(categoriesSelectionProvider);
 
-    if (node.isLeaf) {
+    // 1st Level Nodes = not isLeaf
+    if (!node.isLeaf) {
+      final allDescendantLeaves = _collectLeafValues(node);
+      final directLeafChildren = node.children
+          .where((c) => c.isLeaf && c.value != null)
+          .map((c) => c.value!)
+          .toList();
+
+      final checkedChildren = allDescendantLeaves
+          .where((v) => categoryCheckboxesState.isSelected(v))
+          .length;
+
+      bool? parentChecked;
+      if (checkedChildren == 0) {
+        parentChecked = false;
+      } else if (checkedChildren == allDescendantLeaves.length) {
+        parentChecked = true;
+      } else {
+        parentChecked = null;
+      }
+
+      return Theme(
+        data: Theme.of(context).copyWith(
+          listTileTheme: const ListTileThemeData(
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        child: ListTileTheme(
+          contentPadding: EdgeInsets.zero,
+          horizontalTitleGap: 0,
+          minLeadingWidth: 0,
+          // 1st Level Nodes
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.only(left: 0, right: 15),
+            childrenPadding: EdgeInsets.zero,
+            visualDensity: VisualDensity.compact,
+            leading: Checkbox(
+              value: parentChecked,
+              tristate: true,
+              onChanged: (checked) {
+                if (checked == true) {
+                  for (final value in directLeafChildren) {
+                    if (!categoryCheckboxesState.isSelected(value)) {
+                      ref
+                          .read(categoriesSelectionProvider.notifier)
+                          .setSelected(value, true);
+                    }
+                  }
+                } else {
+                  for (final value in directLeafChildren) {
+                    if (categoryCheckboxesState.isSelected(value)) {
+                      ref
+                          .read(categoriesSelectionProvider.notifier)
+                          .setSelected(value, false);
+                    }
+                  }
+                }
+              },
+            ),
+            title: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(width: 0),
+                Expanded(
+                  child: Text(node.label, softWrap: true, maxLines: null),
+                ),
+                _buildIcon(node),
+              ],
+            ),
+            children: node.children
+                .map((child) => _buildCategoryNode(context, ref, child))
+                .toList(),
+          ),
+        ),
+      );
+    }
+    // 2nd level
+    else {
       final isChecked =
           node.value != null && categoryCheckboxesState.isSelected(node.value!);
-      // 2nd level
+
       return CheckboxListTile(
         contentPadding: const EdgeInsets.only(top: 0, left: 4, right: 15),
         value: isChecked,
+        visualDensity: VisualDensity.compact,
         onChanged: (checked) {
           if (node.value == null) return;
           ref
@@ -242,75 +282,6 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
         ),
       );
     }
-
-    final allDescendantLeaves = _collectLeafValues(node);
-    final directLeafChildren = node.children
-        .where((c) => c.isLeaf && c.value != null)
-        .map((c) => c.value!)
-        .toList();
-
-    final checkedChildren = allDescendantLeaves
-        .where((v) => categoryCheckboxesState.isSelected(v))
-        .length;
-
-    bool? parentChecked;
-    if (checkedChildren == 0) {
-      parentChecked = false;
-    } else if (checkedChildren == allDescendantLeaves.length) {
-      parentChecked = true;
-    } else {
-      parentChecked = null;
-    }
-
-    return Theme(
-      data: Theme.of(context).copyWith(
-        listTileTheme: const ListTileThemeData(contentPadding: EdgeInsets.zero),
-      ),
-      child: ListTileTheme(
-        contentPadding: EdgeInsets.zero,
-        horizontalTitleGap: 0,
-        minLeadingWidth: 0,
-        // 1st Level Nodes
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.only(left: 0, right: 15),
-          childrenPadding: EdgeInsets.zero,
-          leading: Checkbox(
-            value: parentChecked,
-            tristate: true,
-            onChanged: (checked) {
-              if (checked == true) {
-                for (final value in directLeafChildren) {
-                  if (!categoryCheckboxesState.isSelected(value)) {
-                    ref
-                        .read(categoriesSelectionProvider.notifier)
-                        .setSelected(value, true);
-                  }
-                }
-              } else {
-                for (final value in directLeafChildren) {
-                  if (categoryCheckboxesState.isSelected(value)) {
-                    ref
-                        .read(categoriesSelectionProvider.notifier)
-                        .setSelected(value, false);
-                  }
-                }
-              }
-            },
-          ),
-          title: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(width: 0),
-              Expanded(child: Text(node.label, softWrap: true, maxLines: null)),
-              _buildIcon(node),
-            ],
-          ),
-          children: node.children
-              .map((child) => _buildCategoryNode(context, ref, child))
-              .toList(),
-        ),
-      ),
-    );
   }
 
   // ---------- icon helpers ----------
@@ -361,8 +332,8 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
 
   Widget _iconifyIconFromString(String name) {
     switch (name) {
-      case "fa7-solid:walking": 
-      return const FaIcon(FontAwesomeIcons.personWalking, size: 24);
+      case "fa7-solid:walking":
+        return const FaIcon(FontAwesomeIcons.personWalking, size: 24);
       case "mdi:tennis":
         return const Iconify(Mdi.tennis, size: 24);
       case "mdi:table-tennis":

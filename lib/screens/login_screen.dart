@@ -108,12 +108,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final horizontalPadding = width < 600 ? 24.0 : width * 0.3;
+
     return Scaffold(
       body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 350),
+        child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(horizontalPadding),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -163,9 +165,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: const Text("Login"),
                       ),
                       const SizedBox(height: 12),
-                      OutlinedButton(
+                      ElevatedButton(
                         onPressed: _register,
-                        style: OutlinedButton.styleFrom(
+                        style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 48),
                         ),
                         child: const Text("Registrieren"),
