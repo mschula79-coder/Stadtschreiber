@@ -235,8 +235,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
                         ref
                             .read(dragPoiProvider.notifier)
                             .startDraggingPointMode(selectedPoi, pointIndex);
-                        /*                         mapController!.moveCamera(center: event.point);
- */
+                        /*                         mapController!.moveCamera(center: event.point);*/
                       }
                       // no point hit -> add new point and update geometry immediately, no dragging
                       else {

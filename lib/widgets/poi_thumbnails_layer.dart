@@ -15,7 +15,8 @@ import '../widgets/poi_pin_marker.dart';
 class PoiThumbnailsLayer extends ConsumerWidget {
   final void Function(PointOfInterest poi) onTapPoi;
 
-  const PoiThumbnailsLayer({super.key, required this.onTapPoi});
+   // ignore: prefer_const_constructors_in_immutables
+   PoiThumbnailsLayer({super.key, required this.onTapPoi});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
