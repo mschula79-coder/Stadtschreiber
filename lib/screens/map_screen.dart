@@ -834,9 +834,11 @@ NEWPOI
     addPoiGeometrieLayer(poi);
   }
 
-  final panelHeight = 460;
+
 
   Future<void> centerSelectedPoiConsideringPanel() async {
+    
+    final panelHeight = ref.read(appStateProvider).panelHeight;
     if (mapController == null) return;
     final dragPoi = ref.read(dragPoiProvider.notifier).isDraggingPoiMode();
     if (dragPoi) return;

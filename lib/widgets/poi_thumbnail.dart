@@ -68,16 +68,20 @@ class _PoiThumbnailState extends State<PoiThumbnail> {
           widget.allowLabel
           ?
           Container(
-            constraints: const BoxConstraints(maxWidth: 120),
+            constraints: const BoxConstraints(maxWidth: 100),
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Color.fromRGBO(255,255,255,0.7),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
               widget.poi.name,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              maxLines: 2,
+              softWrap: true,
               overflow: TextOverflow.ellipsis,
+              textWidthBasis: TextWidthBasis.longestLine,
+
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
             ),
           )
           : Container()

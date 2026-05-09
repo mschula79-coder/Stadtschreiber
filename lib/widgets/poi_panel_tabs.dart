@@ -5,7 +5,6 @@ import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:iconify_flutter/icons/game_icons.dart';
 import 'package:iconify_flutter/icons/maki.dart';
 import 'package:stadtschreiber/models/history_entry.dart';
-import 'package:stadtschreiber/models/image_entry.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
@@ -14,11 +13,10 @@ import 'package:stadtschreiber/provider/poi_ratings_provider.dart';
 import 'package:stadtschreiber/provider/poi_ratings_stats_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
-import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/services/debug_service.dart';
+import 'package:stadtschreiber/utils/dialog_utils.dart';
 import 'package:stadtschreiber/widgets/modal_history_edit.dart';
-import 'package:stadtschreiber/widgets/modal_image_edit.dart';
-import 'package:stadtschreiber/widgets/poi_photo_gallery_modal.dart';
+import 'package:stadtschreiber/widgets/poi_panel_tabs_gallery.dart';
 import 'package:stadtschreiber/widgets/poi_rating_editor_dialog.dart';
 import 'package:stadtschreiber/widgets/poi_rating_list.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -42,13 +40,8 @@ class PoiPanelTabs extends ConsumerStatefulWidget {
 }
 
 class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
-  late final TextEditingController nameController = TextEditingController();
-  late final TextEditingController featuredImageUrlController =
-      TextEditingController();
-  late final TextEditingController descriptionController =
-      TextEditingController();
-
-  bool _listenerRegistered = false;
+  /*   bool _listenerRegistered = false;
+ */
   late final ProviderSubscription<PointOfInterest?> _sub;
   late final PoiDragNotifier dragPoiNotifier;
 
@@ -61,9 +54,6 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
   @override
   void dispose() {
     _sub.close();
-    nameController.dispose();
-    featuredImageUrlController.dispose();
-    descriptionController.dispose();
     super.dispose();
     DebugService.log('Dispose PoiPanelTabs');
   }
@@ -75,7 +65,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
     if (selectedPoi == null) return const SizedBox.shrink();
 
     final bool isEditModeEnabled = ref.watch(appStateProvider).isPoiEditMode;
-
+    /* 
     if (!_listenerRegistered) {
       _listenerRegistered = true;
 
@@ -84,13 +74,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
         prev,
         next,
       ) {
-        if (next != null) {
-          setState(() {
-            nameController.text = next.name;
-            featuredImageUrlController.text = next.featuredImageUrl ?? '';
-            descriptionController.text = next.description ?? '';
-          });
-        }
+        
       });
 
       // 2. Initialen Wert manuell setzen
@@ -103,7 +87,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
           'Initial values set in PoiPanelTabs Name: ${current.name}',
         );
       }
-    }
+    } */
 
     final tabs = [
       const Tab(
@@ -139,7 +123,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
 
     final pages = [
       _buildInfoTab(selectedPoi, isEditModeEnabled),
-      _buildGalleryTab(selectedPoi, isEditModeEnabled),
+      PoiPanelGalleryTab(),
       _buildRatingsTab(selectedPoi),
       _buildHistoryTab(selectedPoi, isEditModeEnabled),
       _buildArticlesTab(selectedPoi, isEditModeEnabled),
@@ -187,8 +171,8 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
           // Name + Edit Button
           Stack(
             children: [
-              TextField(
-                controller: nameController,
+              TextFormField(
+                initialValue: selectedPoi.name,
                 readOnly: true,
                 maxLines: 1,
                 decoration: const InputDecoration(
@@ -196,6 +180,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                   alignLabelWithHint: true,
                   contentPadding: EdgeInsets.fromLTRB(0, 0, 35, 5),
                 ),
+                
               ),
               isEditModeEnabled
                   ? Positioned(
@@ -204,14 +189,13 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                       child: IconButton(
                         icon: const Icon(Icons.edit),
                         onPressed: () async {
-                          final newValue = await _openEditModal(
+                          final newValue = await openEditModal(
                             context,
-                            "Name",
-                            nameController.text,
-                            1,
+                            fieldName: "Name",
+                            initialValue: selectedPoi.name,
+                            maxLines: 1,
                           );
                           if (newValue != null) {
-                            nameController.text = newValue;
                             ref
                                 .read(poiRepositoryProvider)
                                 .updatePoiDataInSupabase(
@@ -220,14 +204,8 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                                 );
                             ref
                                 .read(selectedPoiProvider.notifier)
-                                .setPoi(
-                                  selectedPoi.copyWith(
-                                    name: newValue,
-                                  ),
-                                );
+                                .setPoi(selectedPoi.copyWith(name: newValue));
                             //ref.invalidate(visiblePoisProvider);
-
-                            setState(() {});
                           }
                         },
                       ),
@@ -253,7 +231,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                 child: SizedBox(
                   height: 80,
                   child: SingleChildScrollView(
-                    child: Text(descriptionController.text, softWrap: true),
+                    child: Text(selectedPoi.description ?? '', softWrap: true),
                   ),
                 ),
               ),
@@ -265,14 +243,13 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                   child: IconButton(
                     icon: const Icon(Icons.edit),
                     onPressed: () async {
-                      final newValue = await _openEditModal(
+                      final newValue = await openEditModal(
                         context,
-                        "Beschreibung",
-                        descriptionController.text,
-                        10,
+                        fieldName: "Beschreibung",
+                        initialValue: selectedPoi.description ?? '',
+                        maxLines: 10,
                       );
                       if (newValue != null) {
-                        descriptionController.text = newValue;
                         ref
                             .read(poiRepositoryProvider)
                             .updatePoiDataInSupabase(
@@ -282,9 +259,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                         ref
                             .read(selectedPoiProvider.notifier)
                             .setPoi(
-                              selectedPoi.copyWith(
-                                description: newValue,
-                              ),
+                              selectedPoi.copyWith(description: newValue),
                             );
                       }
                     },
@@ -637,9 +612,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                       ref
                           .read(selectedPoiProvider.notifier)
                           .setPoi(
-                            selectedPoi.copyWith(
-                              historyEntries: updated,
-                            ),
+                            selectedPoi.copyWith(historyEntries: updated),
                           );
                       //ref.invalidate(visiblePoisProvider);
                     }
@@ -671,9 +644,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                       ref
                           .read(selectedPoiProvider.notifier)
                           .setPoi(
-                            selectedPoi.copyWith(
-                              historyEntries: updated,
-                            ),
+                            selectedPoi.copyWith(historyEntries: updated),
                           );
                       //ref.invalidate(visiblePoisProvider);
                     }
@@ -690,11 +661,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                         );
                     ref
                         .read(selectedPoiProvider.notifier)
-                        .setPoi(
-                          selectedPoi.copyWith(
-                            historyEntries: updated,
-                          ),
-                        );
+                        .setPoi(selectedPoi.copyWith(historyEntries: updated));
                   },
                   itemBuilder: (entry) {
                     return Padding(
@@ -761,9 +728,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                       );
                   ref
                       .read(selectedPoiProvider.notifier)
-                      .setPoi(
-                        selectedPoi.copyWith(articles: updated),
-                      );
+                      .setPoi(selectedPoi.copyWith(articles: updated));
                   //ref.invalidate(visiblePoisProvider);
                 }
 
@@ -793,9 +758,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
                       );
                   ref
                       .read(selectedPoiProvider.notifier)
-                      .setPoi(
-                        selectedPoi.copyWith(articles: updated),
-                      );
+                      .setPoi(selectedPoi.copyWith(articles: updated));
                   //ref.invalidate(visiblePoisProvider);
                   //ref.invalidate(visiblePoisProvider);
                 }
@@ -842,252 +805,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
     );
   }
 
-  Widget _buildGalleryTab(PointOfInterest poi, bool isEditModeEnabled) {
-    final selectedPoi = ref.watch(selectedPoiProvider);
-    final user = ref.watch(supabaseUserStateProvider);
-    final username = user.username;
-    final imageUrls = poi.images.map((img) => img.url).toList();
-
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          isEditModeEnabled ? SizedBox(height: 15) : SizedBox.shrink(),
-          // Featured Image-URL
-          isEditModeEnabled
-              ? Stack(
-                  children: [
-                    TextField(
-                      controller: featuredImageUrlController,
-                      readOnly: true,
-                      maxLines: 1,
-                      decoration: const InputDecoration(
-                        labelText: "Featured Image-URL",
-                        alignLabelWithHint: true,
-                        contentPadding: EdgeInsets.fromLTRB(0, 0, 35, 0),
-                      ),
-                    ),
-
-                    Positioned(
-                      right: 0,
-                      top: 10,
-                      child: IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () async {
-                          final newValue = await _openEditModal(
-                            context,
-                            "Featured Image-URL",
-                            featuredImageUrlController.text,
-                            1,
-                          );
-                          if (newValue != null) {
-                            featuredImageUrlController.text = newValue;
-                            ref
-                                .read(poiRepositoryProvider)
-                                .updatePoiDataInSupabase(
-                                  id: selectedPoi!.id,
-                                  featuredImageUrl: newValue,
-                                );
-                            ref
-                                .read(selectedPoiProvider.notifier)
-                                .setPoi(
-                                  selectedPoi.copyWith(
-                                    featuredImageUrl: newValue,
-                                  ),
-                                );
-                            //ref.invalidate(visiblePoisProvider);
-                            setState(() {});
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                )
-              : SizedBox.shrink(),
-          isEditModeEnabled ? SizedBox(height: 15) : SizedBox.shrink(),
-
-          // Featured image
-          (selectedPoi!.featuredImageUrl == null)
-              ? const Icon(
-                  Icons.image_not_supported,
-                  size: 80,
-                  color: Colors.grey,
-                )
-              : Stack(
-                  children: [
-                    Image.network(
-                      selectedPoi.featuredImageUrl!,
-                      fit: BoxFit.cover,
-                      alignment: Alignment.topCenter,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.broken_image,
-                          size: 80,
-                          color: Colors.grey,
-                        );
-                      },
-                    ),
-                    Positioned(
-                      top: 5,
-                      right: 5,
-                      child: IconButton(
-                        icon: const Icon(Icons.open_in_new_sharp),
-                        onPressed: () => PhotoGalleryModal.open(
-                          context,
-                          imageUrls: imageUrls,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-          // Liste mit ImageUrls
-          if (isEditModeEnabled)
-            EditableList<ImageEntry>(
-              items: selectedPoi.images,
-              isEditModeEnabled: isEditModeEnabled,
-              onAdd: () async {
-                final newEntry = await showDialog<ImageEntry>(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (_) => ImageEditModal(
-                    image: ImageEntry(
-                      title: '',
-                      url: '',
-                      enteredBy: username,
-                      creditsName: '',
-                      creditsUrl: '',
-                    ),
-                  ),
-                );
-
-                if (newEntry != null) {
-                  final currentPoi = ref.read(selectedPoiProvider)!;
-
-                  final updatedImages = [...currentPoi.images, newEntry];
-
-                  ref
-                      .read(poiRepositoryProvider)
-                      .updatePoiDataInSupabase(
-                        id: currentPoi.id,
-                        images: updatedImages,
-                      );
-
-                  ref
-                      .read(selectedPoiProvider.notifier)
-                      .setPoi(
-                        currentPoi.copyWith(images: updatedImages),
-                      );
-                }
-
-                return newEntry;
-              },
-              onEdit: (entry) async {
-                final updatedEntry = await showDialog<ImageEntry>(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (_) => ImageEditModal(
-                    image: ImageEntry(
-                      title: entry.title,
-                      url: entry.url,
-                      enteredBy: entry.enteredBy,
-                      creditsName: entry.creditsName ?? '',
-                      creditsUrl: entry.creditsUrl ?? '',
-                    ),
-                  ),
-                );
-
-                if (updatedEntry != null) {
-                  final currentPoi = ref.read(selectedPoiProvider)!;
-
-                  final updatedImages = currentPoi.images.map((img) {
-                    return img.url == entry.url ? updatedEntry : img;
-                  }).toList();
-
-                  ref
-                      .read(poiRepositoryProvider)
-                      .updatePoiDataInSupabase(
-                        id: currentPoi.id,
-                        images: updatedImages,
-                      );
-
-                  ref
-                      .read(selectedPoiProvider.notifier)
-                      .setPoi(
-                        currentPoi.copyWith(images: updatedImages),
-                      );
-                }
-
-                return updatedEntry;
-              },
-
-              onDelete: (entry) async {
-                final updated = [...selectedPoi.images]..remove(entry);
-                ref
-                    .read(poiRepositoryProvider)
-                    .updatePoiDataInSupabase(
-                      id: selectedPoi.id,
-                      images: updated,
-                    );
-                ref
-                    .read(selectedPoiProvider.notifier)
-                    .setPoi(selectedPoi.copyWith(images: updated));
-              },
-              itemBuilder: (entry) {
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-
-                    children: [
-                      InkWell(
-                        onTap: () => launchUrl(Uri.parse(entry.url)),
-                        child: Text(
-                          entry.title,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.normal,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          const SizedBox(height: 0),
-          if (imageUrls.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 0),
-              child: Stack(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      ...imageUrls.map(
-                        (url) => ClipRRect(
-                          borderRadius: BorderRadius.circular(0),
-                          child: Image.network(url, fit: BoxFit.cover),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  Positioned(
-                    top: 5,
-                    right: 5,
-                    child: IconButton(
-                      icon: const Icon(Icons.open_in_new_sharp),
-                      onPressed: () =>
-                          PhotoGalleryModal.open(context, imageUrls: imageUrls),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
+  
 
   // TODO implement multiple categories / category
   Widget _buildRatingsTab(PointOfInterest poi) {
@@ -1161,42 +879,6 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
           ref.invalidate(poiRatingStatsProvider(poi.id));
         },
       ),
-    );
-  }
-
-  Future<String?> _openEditModal(
-    BuildContext context,
-    String fieldName,
-    String initialValue,
-    int maxLines,
-  ) {
-    final tempController = TextEditingController(text: initialValue);
-
-    return showDialog<String>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Edit $fieldName"),
-          content: TextField(
-            controller: tempController,
-            autofocus: false,
-            decoration: InputDecoration(labelText: fieldName),
-            maxLines: maxLines,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context, tempController.text);
-              },
-              child: const Text("Save"),
-            ),
-          ],
-        );
-      },
     );
   }
 

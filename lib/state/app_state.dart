@@ -2,7 +2,8 @@ class AppStateData {
   final bool isAdminViewEnabled;
   final bool isPoiGeomEditMode;
   final bool locationPermission;
-  final bool isPoiEditMode;
+  final bool isPoiEditMode;  
+  final double panelHeight = 460;
 
   const AppStateData({
     required this.isAdminViewEnabled,

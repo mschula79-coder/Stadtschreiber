@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:iconify_flutter/iconify_flutter.dart';
-import 'package:iconify_flutter/icons/mdi.dart';
-import 'package:iconify_flutter/icons/tabler.dart';
+
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/provider/address_lookup_queue_provider.dart';
 import 'package:stadtschreiber/provider/camera_provider.dart';
@@ -13,6 +10,7 @@ import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/poi_service_provider.dart';
 import 'package:stadtschreiber/provider/search_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
+import 'package:stadtschreiber/widgets/_icon_getter.dart';
 import 'package:stadtschreiber/widgets/search_results_list.dart';
 
 import '../models/category.dart';
@@ -249,7 +247,7 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
                 Expanded(
                   child: Text(node.label, softWrap: true, maxLines: null),
                 ),
-                _buildIcon(node),
+                getIcon(node.value ?? ''),
               ],
             ),
             children: node.children
@@ -274,76 +272,13 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
               .read(categoriesSelectionProvider.notifier)
               .setSelected(node.value!, checked ?? false);
         },
-        secondary: _buildIcon(node),
+        secondary: getIcon(node.value!),
         controlAffinity: ListTileControlAffinity.leading,
         title: Padding(
           padding: const EdgeInsets.only(left: 5),
           child: Text(node.label),
         ),
       );
-    }
-  }
-
-  // ---------- icon helpers ----------
-
-  Widget _buildIcon(CategoryNode node) {
-    final icon = node.icon;
-    if (icon == null) return const SizedBox.shrink();
-
-    switch (icon.type) {
-      case "url":
-        return Image.network(icon.value, height: 24, width: 24);
-      case "flutter":
-        final iconData = _flutterIconFromString(icon.value);
-        return Icon(iconData, size: 24);
-      case "iconify":
-        return _iconifyIconFromString(icon.value);
-      default:
-        return const SizedBox.shrink();
-    }
-  }
-
-  IconData _flutterIconFromString(String name) {
-    switch (name) {
-      case "parks":
-        return Icons.park;
-      case "playgrounds":
-        return Icons.local_play;
-      case "sports":
-        return Icons.sports;
-      case "sports_tennis":
-        return Icons.sports_tennis;
-      case "park":
-        return Icons.park;
-      case "playground":
-        return Icons.play_lesson;
-      case "food_court":
-        return Icons.restaurant;
-      case "market":
-        return Icons.local_grocery_store;
-      case "basketball_court":
-        return Icons.sports_basketball;
-      case "tennis_court":
-        return Icons.sports_tennis;
-      default:
-        return Icons.help_outline;
-    }
-  }
-
-  Widget _iconifyIconFromString(String name) {
-    switch (name) {
-      case "fa7-solid:walking":
-        return const FaIcon(FontAwesomeIcons.personWalking, size: 24);
-      case "mdi:tennis":
-        return const Iconify(Mdi.tennis, size: 24);
-      case "mdi:table-tennis":
-        return const Iconify(Mdi.table_tennis, size: 24);
-      case "tabler:ball-tennis":
-        return const Iconify(Tabler.ball_tennis, size: 24);
-      case "mdi:spray":
-        return const Iconify(Mdi.spray, size: 24);
-      default:
-        return const Iconify(Mdi.help_outline, size: 24);
     }
   }
 

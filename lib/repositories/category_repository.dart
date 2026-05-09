@@ -57,10 +57,6 @@ class CategoryRepository {
   ) {
     final dto = categories[id]!;
 
-    final icon = (dto.iconSource != null && dto.iconName != null)
-        ? CategoryIcon(type: dto.iconSource!, value: dto.iconName!)
-        : null;
-
     final childIds = childrenMap[id] ?? [];
     final children =
         childIds
@@ -72,7 +68,6 @@ class CategoryRepository {
       id: dto.id,
       label: dto.name,
       value: dto.slug,
-      icon: icon,
       children: children,
       ratingCriteria: [],
     );
