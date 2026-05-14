@@ -46,7 +46,6 @@ class MapScreenState extends ConsumerState<MapScreen> {
 
   late ProviderSubscription<PointOfInterest?> _selectedPoiSub;
 
-  // TODO userMarkerOffset reaktiv machen
   Offset? userMarkerOffset;
   maplibre.StyleController? mapStyle;
   double? lastKnownUserLat;
@@ -159,216 +158,224 @@ class MapScreenState extends ConsumerState<MapScreen> {
       return Stack(
         children: [
           // MapLibreMap
-          Listener(
-            behavior: HitTestBehavior.opaque,
-            child: maplibre.MapLibreMap(
-              options: maplibre.MapOptions(
-                initCenter: maplibre.Geographic(lon: 7.59253, lat: 47.55634),
-                initZoom: 13.67,
-                gestures: maplibre.MapGestures(
-                  rotate: false,
-                  pan: true,
-                  zoom: true,
-                  pitch: false,
+          GestureDetector(
+            onDoubleTap: () {
+              ref.read(selectedPoiProvider.notifier).clear();
+            },
+            child: Listener(
+              behavior: HitTestBehavior.opaque,
+              child: maplibre.MapLibreMap(
+                options: maplibre.MapOptions(
+                  initCenter: maplibre.Geographic(lon: 7.59253, lat: 47.55634),
+                  initZoom: 13.67,
+                  gestures: maplibre.MapGestures(
+                    rotate: false,
+                    pan: true,
+                    zoom: true,
+                    pitch: false,
+                  ),
+                  initStyle:
+                      'https://stadtschreiber.duckdns.org/styles/basel-vintage/style.json',
                 ),
-                initStyle:
-                    'https://stadtschreiber.duckdns.org/styles/basel-vintage/style.json',
-              ),
-              onMapCreated: (controller) async {
-                mapController = controller;
+                onMapCreated: (controller) async {
+                  mapController = controller;
 
-                if (_lastVisiblePois.isNotEmpty) {
-                  /* final newPositions = calculatePoiMarkerPositions(
+                  if (_lastVisiblePois.isNotEmpty) {
+                    /* final newPositions = calculatePoiMarkerPositions(
                     visiblePois: _lastVisiblePois,
                     controller: controller,
                   );
                   ref
                       .read(poiMarkerPositionsProvider.notifier)
                       .setPositions(newPositions); */
-                }
-              },
+                  }
+                },
 
-              onEvent: (event) async {
-                DebugService.log('Event: $event.runtimeType');
-                // check for double events and add break if necessary
-                switch (event) {
-                  // TODO double click funktioniert nicht??
-                  case maplibre.MapEventDoubleClick():
-                    ref.read(selectedPoiProvider.notifier).clear();
-                    break;
-                  case maplibre.MapEventStyleLoaded():
-                    ref.read(mapControllerProvider.notifier).state =
-                        mapController;
-                    mapStyle = event.style;
+                onEvent: (event) async {
+/*                   DebugService.log('MapEvent: $event.runtimeType'); */
+                  // check for double events and add break if necessary
+                  switch (event) {
+                    // double click ist bei MapLibreMap deaktiviert!!
+                    case maplibre.MapEventDoubleClick():
+                      break;
+                    case maplibre.MapEventStyleLoaded():
+                      ref.read(mapControllerProvider.notifier).state =
+                          mapController;
+                      mapStyle = event.style;
 
-                    // Wenn ein POI ausgewählt ist → Geometrie-Layer neu aufbauen
-                    final selectedPoi = ref.read(selectedPoiProvider);
-                    if (selectedPoi != null) {
-                      addPoiGeometrieLayer(selectedPoi);
-                      updatePoiPointsData(selectedPoi);
-                    }
-                    break;
+                      // Wenn ein POI ausgewählt ist → Geometrie-Layer neu aufbauen
+                      final selectedPoi = ref.read(selectedPoiProvider);
+                      if (selectedPoi != null) {
+                        addPoiGeometrieLayer(selectedPoi);
+                        updatePoiPointsData(selectedPoi);
+                      }
+                      break;
 
-                  case maplibre.MapEventLongClick(
-                    point: maplibre.Geographic(),
-                    screenPoint: Offset(),
-                  ):
-                    // Long press on map without poi edit mode -> create new poi
-                    if (isPoiGeomEditMode) {
-                      // start dragging / add new point
-                      List<maplibre.Geographic> points =
-                          selectedPoi!.getPoints() ?? [];
+                    case maplibre.MapEventLongClick(
+                      point: maplibre.Geographic(),
+                      screenPoint: Offset(),
+                    ):
+                      // Long press on map without poi edit mode -> create new poi
+                      if (isPoiGeomEditMode) {
+                        // start dragging / add new point
+                        List<maplibre.Geographic> points =
+                            selectedPoi!.getPoints() ?? [];
 
-                      final pointIndex = await ref
-                          .read(poiServiceProvider)
-                          .findPoiPointIndexAtGeoPosition(
-                            points,
-                            event.point,
-                            mapController!,
+                        final pointIndex = await ref
+                            .read(poiServiceProvider)
+                            .findPoiPointIndexAtGeoPosition(
+                              points,
+                              event.point,
+                              mapController!,
+                            );
+
+                        // Punkt wurde getroffen → Drag starten, Geometrie wird erst beim Loslassen aktualisiert
+                        if (pointIndex != null) {
+                          DebugService.log(
+                            'MapEventLongClick: Long press on POI point, index $pointIndex, starting drag',
                           );
+                          ref
+                              .read(dragPoiProvider.notifier)
+                              .startDraggingPointMode(selectedPoi, pointIndex);
+                          /*                         mapController!.moveCamera(center: event.point);*/
+                        }
+                        // no point hit -> add new point and update geometry immediately, no dragging
+                        else {
+                          final newPoi = selectedPoi.copyWith();
 
-                      // Punkt wurde getroffen → Drag starten, Geometrie wird erst beim Loslassen aktualisiert
-                      if (pointIndex != null) {
-                        DebugService.log(
-                          'MapEventLongClick: Long press on POI point, index $pointIndex, starting drag',
+                          DebugService.log(
+                            'MapEventLongClick: Long press on POI point, adding new point',
+                          );
+                          if (newPoi.geometryType == "Polygon") {
+                            newPoi.insertPointIntoPolygon(points, event.point);
+                          } else {
+                            points.add(event.point);
+                          }
+
+                          newPoi.setPoints(points);
+                          newPoi.closePolygonIfNeeded();
+
+                          if (newPoi.isGeometryValid()) {
+                            await poiRepository.updatePoiGeomInSupabase(newPoi);
+                          }
+
+                          ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
+                        }
+                      }
+                      break;
+                    // Ende MapEventLongClick()
+                    case maplibre.MapEventMoveCamera(
+                      camera: maplibre.MapCamera(),
+                    ):
+                      final cam = mapController?.camera;
+
+                      // aktualisiere User Position (blue dot)
+                      if (lastKnownUserLat != null &&
+                          lastKnownUserLon != null) {
+                        final screen = mapController?.toScreenLocation(
+                          maplibre.Geographic(
+                            lat: lastKnownUserLat!,
+                            lon: lastKnownUserLon!,
+                          ),
                         );
+                        if (screen != null) {
+                          setState(() {
+                            userMarkerOffset = Offset(screen.dx, screen.dy);
+                          });
+                        }
+                      }
+
+                      // Dragging eines Polygon-Punktes
+                      if (isDraggingPointMode) {
+                        maplibre.MapGestures.none();
+
+                        final dragPointPoi = ref
+                            .read(dragPoiProvider.notifier)
+                            .dragPointPoi();
+                        final index = ref.read(dragPoiProvider).dragPointIndex!;
+                        final points = dragPointPoi!.getPoints()!;
+
+                        points[index] = cam!.center;
+                        dragPointPoi.setPoints(points);
+
+                        ref
+                            .read(selectedPoiProvider.notifier)
+                            .setPoi(dragPointPoi.copyWith());
+                      }
+
+                      // Dragging eines POIs
+                      if (isDraggingPoi) {
+                        maplibre.MapGestures.none();
+
+                        final poi = ref
+                            .read(dragPoiProvider.notifier)
+                            .dragPoi()!;
+                        final updated = poi.copyWith(location: cam!.center);
+
                         ref
                             .read(dragPoiProvider.notifier)
-                            .startDraggingPointMode(selectedPoi, pointIndex);
-                        /*                         mapController!.moveCamera(center: event.point);*/
+                            .startDraggingPoiMode(updated);
                       }
-                      // no point hit -> add new point and update geometry immediately, no dragging
-                      else {
-                        final newPoi = selectedPoi.copyWith();
 
-                        DebugService.log(
-                          'MapEventLongClick: Long press on POI point, adding new point',
-                        );
-                        if (newPoi.geometryType == "Polygon") {
-                          newPoi.insertPointIntoPolygon(points, event.point);
-                        } else {
-                          points.add(event.point);
+                      break;
+
+                    case maplibre.MapEventCameraIdle():
+                      if (mapController == null) return;
+                      final cam = mapController?.camera;
+                      if (cam != null) {
+                        ref
+                            .read(cameraProvider.notifier)
+                            .update(cam.center.lat, cam.center.lon, cam.zoom);
+                      } // ------------------------------------------------------------
+                      // 1. Dragging-Updates (wie bisher)
+                      // ------------------------------------------------------------
+                      if (isDraggingPointMode) {
+                        final poi = ref
+                            .read(dragPoiProvider.notifier)
+                            .dragPointPoi()!;
+
+                        poi.closePolygonIfNeeded();
+                        if (poi.isGeometryValid()) {
+                          await poiRepository.updatePoiGeomInSupabase(poi);
                         }
 
-                        newPoi.setPoints(points);
-                        newPoi.closePolygonIfNeeded();
+                        ref
+                            .read(dragPoiProvider.notifier)
+                            .stopDraggingPointMode();
+                        ref
+                            .read(selectedPoiProvider.notifier)
+                            .setPoi(poi.copyWith());
 
-                        if (newPoi.isGeometryValid()) {
-                          await poiRepository.updatePoiGeomInSupabase(newPoi);
-                        }
-
-                        ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
-                      }
-                    }
-                    break;
-                  // Ende MapEventLongClick()
-                  case maplibre.MapEventMoveCamera(
-                    camera: maplibre.MapCamera(),
-                  ):
-                    final cam = mapController?.camera;
-
-                    // aktualisiere User Position (blue dot)
-                    if (lastKnownUserLat != null && lastKnownUserLon != null) {
-                      final screen = mapController?.toScreenLocation(
-                        maplibre.Geographic(
-                          lat: lastKnownUserLat!,
-                          lon: lastKnownUserLon!,
-                        ),
-                      );
-                      if (screen != null) {
-                        setState(() {
-                          userMarkerOffset = Offset(screen.dx, screen.dy);
-                        });
-                      }
-                    }
-
-                    // Dragging eines Polygon-Punktes
-                    if (isDraggingPointMode) {
-                      maplibre.MapGestures.none();
-
-                      final dragPointPoi = ref
-                          .read(dragPoiProvider.notifier)
-                          .dragPointPoi();
-                      final index = ref.read(dragPoiProvider).dragPointIndex!;
-                      final points = dragPointPoi!.getPoints()!;
-
-                      points[index] = cam!.center;
-                      dragPointPoi.setPoints(points);
-
-                      ref
-                          .read(selectedPoiProvider.notifier)
-                          .setPoi(dragPointPoi.copyWith());
-                    }
-
-                    // Dragging eines POIs
-                    if (isDraggingPoi) {
-                      maplibre.MapGestures.none();
-
-                      final poi = ref.read(dragPoiProvider.notifier).dragPoi()!;
-                      final updated = poi.copyWith(location: cam!.center);
-
-                      ref
-                          .read(dragPoiProvider.notifier)
-                          .startDraggingPoiMode(updated);
-                    }
-
-                    break;
-
-                  case maplibre.MapEventCameraIdle():
-                    if (mapController == null) return;
-                    final cam = mapController?.camera;
-                    if (cam != null) {
-                      ref
-                          .read(cameraProvider.notifier)
-                          .update(cam.center.lat, cam.center.lon, cam.zoom);
-                    } // ------------------------------------------------------------
-                    // 1. Dragging-Updates (wie bisher)
-                    // ------------------------------------------------------------
-                    if (isDraggingPointMode) {
-                      final poi = ref
-                          .read(dragPoiProvider.notifier)
-                          .dragPointPoi()!;
-
-                      poi.closePolygonIfNeeded();
-                      if (poi.isGeometryValid()) {
-                        await poiRepository.updatePoiGeomInSupabase(poi);
+                        maplibre.MapGestures.all();
                       }
 
-                      ref
-                          .read(dragPoiProvider.notifier)
-                          .stopDraggingPointMode();
-                      ref
-                          .read(selectedPoiProvider.notifier)
-                          .setPoi(poi.copyWith());
-
-                      maplibre.MapGestures.all();
-                    }
-
-                    if (isDraggingPoi) {
-                      /* final poi = ref.read(dragPoiProvider.notifier).dragPoi();
+                      if (isDraggingPoi) {
+                        /* final poi = ref.read(dragPoiProvider.notifier).dragPoi();
                       await poiRepository.updatePoiGeomInSupabase(poi!);
                       ref.read(selectedPoiProvider.notifier).setPoi(poi);
                       ref.invalidate(visiblePoisProvider);
 
                       ref.read(dragPoiProvider.notifier).stopDraggingPoi();
                       maplibre.MapGestures.all(); */
-                    }
-                    break;
+                      }
+                      break;
 
-                  case maplibre.MapEventIdle():
-                    break;
+                    case maplibre.MapEventIdle():
+                      break;
 
-                  default:
-                }
-              },
-              children: [
-                maplibre.SourceAttribution(
-                  showMapLibre: true,
-                  alignment: Alignment.bottomLeft,
-                ),
-              ],
+                    default:
+                  }
+                },
+                children: [
+                  maplibre.SourceAttribution(
+                    showMapLibre: true,
+                    alignment: Alignment.bottomLeft,
+                  ),
+                ],
+              ),
             ),
           ),
+
           isPoiGeomEditMode
               // Button Edit Mode beenden anzeigen
               ? Positioned(
@@ -376,7 +383,6 @@ class MapScreenState extends ConsumerState<MapScreen> {
                   left: 0,
                   right: 0,
                   child: Center(
-                    // TODO !!!!!!!!!!!!!!!!!!!!!!!
                     child: ElevatedButton(
                       onPressed: () {
                         ref
@@ -397,7 +403,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
               : PoiThumbnailsLayer(
                   // onTapPoi
                   onTapPoi: (poi) {
-                    DebugService.log('Poi selected from screen');
+/*                     DebugService.log('Poi selected from screen'); */
                     _selectPoi(poi);
                   },
                 ),
@@ -586,7 +592,6 @@ class MapScreenState extends ConsumerState<MapScreen> {
       // Poi de-selected
       if (next == null) {
         removePoiGeometrieLayer();
-        // TODO move this to UI
         ref.read(appStateProvider.notifier).setPoiEditMode(false);
         ref.read(appStateProvider.notifier).setPoiGeomEditMode(false);
         return;
@@ -823,7 +828,7 @@ NEWPOI
 
   /// sets selectedPoi and opens the panel in PoiPanelState and adds the geometry layer for the selected poi (if poi has geometry)
   void _selectPoi(PointOfInterest poi) {
-    DebugService.log('MapScreen run _selectPoi(poi)');
+/*     DebugService.log('MapScreen run _selectPoi(poi)'); */
 
     ref.read(selectedPoiProvider.notifier).setPoi(poi);
 
@@ -833,10 +838,7 @@ NEWPOI
     addPoiGeometrieLayer(poi);
   }
 
-
-
   Future<void> centerSelectedPoiConsideringPanel() async {
-    
     final panelHeight = ref.read(appStateProvider).panelHeight;
     if (mapController == null) return;
     final dragPoi = ref.read(dragPoiProvider.notifier).isDraggingPoiMode();

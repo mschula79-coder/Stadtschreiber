@@ -61,7 +61,6 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
                         ? GestureDetector(
                             onTap: widget.onTogglePoiEditView,
                             child: !ref.read(appStateProvider).isPoiEditMode
-                                // TODO Icon.polyline Icon.location => poiEdit
                                 ? const Icon(
                                     Icons.edit,
                                     color: Color.fromARGB(255, 42, 23, 86),

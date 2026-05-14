@@ -6,15 +6,15 @@
 // TODO add poi owner
 // TODO Login form, Passwort zurücksetzen, registrieren usw.
 // TODO Photo credits
-// TODO RLS
 // TODO Mehrsprachig
 // TODO Multipolygon support für geometrie bearbeitung
 // TODO Polygon and Line colors
 // TODO Polygon consistency check
 // TODO Zoom out animation
 // TODO Modal loading distortion 
-// TODO Featured Image Thumbnail und Edge Function ans laufen bringen
 // TODO Adresse editieren
+// TODO implement multiple categories / category for ratings
+
 
 
 class ToDo {

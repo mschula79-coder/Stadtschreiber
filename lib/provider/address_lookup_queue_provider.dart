@@ -12,7 +12,6 @@ class AddressLookupQueueNotifier extends Notifier<List<PointOfInterest>> {
     return [];
   }
 
-  // TODO poi displayaddress neu setzen
   void enqueue(PointOfInterest poi) {
     state = [...state, poi];
     _process();

@@ -83,7 +83,8 @@ class PoiPanelGalleryTab extends ConsumerWidget {
             isEditModeEnabled ? SizedBox(height: 15) : SizedBox.shrink(),
 
             // Featured image
-            if (selectedPoi.featuredImageUrl == null) ...[
+            if (selectedPoi.featuredImageUrl == null ||
+                selectedPoi.featuredImageUrl!.isEmpty) ...[
               const Icon(
                 Icons.image_not_supported,
                 size: 80,

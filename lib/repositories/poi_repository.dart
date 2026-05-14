@@ -30,7 +30,6 @@ class PoiRepository {
         .toList();
   }
 
-  // TODO combine with New Poi
   Future<PointOfInterest> saveOSMPoiToSupabase(PointOfInterest poi) async {
     poi.newPoi = true;
     poi.id = '-1';
@@ -129,7 +128,6 @@ class PoiRepository {
     await supabase.from('pois').update(updateData).eq('id', id);
   }
 
-  // TODO Combine with updateData
   Future<void> updatePoiGeomInSupabase(PointOfInterest poi) async {
     final supabase = Supabase.instance.client;
     await supabase
@@ -197,7 +195,6 @@ class PoiRepository {
     }
   }
 
-  // TODO change to updateData
   Future<void> updatePoiAddressInSupabase(
     String id,
     Map<String, String?> address,
@@ -243,7 +240,6 @@ class PoiRepository {
   }
 
   /// Check if a POI with the given OSM ID already exists in the database and load it if it does.
-  // TODO Combine with loadPoiById
   Future<PointOfInterest?> loadPoiByOSMId(int osmId) async {
     final result = await supabase
         .from('pois')

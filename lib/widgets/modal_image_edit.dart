@@ -6,6 +6,7 @@ import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_provider.dart';
 import 'package:stadtschreiber/services/debug_service.dart';
+import 'package:stadtschreiber/services/url_service.dart';
 
 class ImageEditModal extends ConsumerStatefulWidget {
   final ImageEntry image;
@@ -120,6 +121,7 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
                   ),
                   const SizedBox(width: 8),
 
+                  // Bild auswählen
                   ElevatedButton.icon(
                     icon: const Icon(Icons.upload),
                     label: const Text("Bild auswählen"),
@@ -131,6 +133,7 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
                       setState(() {
                         image = imageEntry; // <— wichtig!
                         _urlController.text = imageEntry.url;
+                        _titleController.text = getFilenameNoExtensionFromUrl(imageEntry.url);
                         previewUrl = imageEntry.url;
                       });
                     },

@@ -135,6 +135,7 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
 
         return DefaultTabController(
           length: tabs.length,
+          initialIndex: 1,
           child: Column(
             children: [
               TabBar(
@@ -807,7 +808,6 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
 
   
 
-  // TODO implement multiple categories / category
   Widget _buildRatingsTab(PointOfInterest poi) {
     if (poi.categories != null &&
         poi.categories!.isNotEmpty &&

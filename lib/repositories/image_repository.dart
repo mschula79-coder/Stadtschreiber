@@ -3,6 +3,7 @@ import 'package:flutter/painting.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:stadtschreiber/models/image_entry.dart';
+import 'package:stadtschreiber/services/url_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ImageRepository {
@@ -49,13 +50,13 @@ class ImageRepository {
 
     // Neuer Dateiname
     final fileName = "${baseName}_$timestamp.webp";
-
+    final fileNameCleaned = sanitizeFilename(fileName);
     await supabase.storage
         .from("Photos")
-        .uploadBinary("processed/$fileName", Uint8List.fromList(processed));
+        .uploadBinary("processed/$fileNameCleaned", Uint8List.fromList(processed));
     final url = supabase.storage
         .from("Photos")
-        .getPublicUrl("processed/$fileName");
+        .getPublicUrl("processed/$fileNameCleaned");
     return ImageEntry(title: baseName, url: url, enteredBy: 'dummy');
   }
 }
