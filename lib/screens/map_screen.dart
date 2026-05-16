@@ -575,7 +575,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
 
           final lookupQueue = ref.read(addressLookupQueueProvider.notifier);
           for (final poi in pois) {
-            if (poi.displayAddress == null || poi.displayAddress!.isEmpty) {
+            if (poi.address?.displayAddress() == null) {
               lookupQueue.enqueue(poi);
             }
           }

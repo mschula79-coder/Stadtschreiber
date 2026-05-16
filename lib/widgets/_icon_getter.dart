@@ -6,14 +6,16 @@ import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/grommet_icons.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
 /* import 'package:iconify_flutter/icons/fluent_mdl2.dart';
- */import 'package:iconify_flutter/icons/game_icons.dart';
+ */
+import 'package:iconify_flutter/icons/game_icons.dart';
 import 'package:iconify_flutter/icons/icomoon_free.dart';
 import 'package:iconify_flutter/icons/clarity.dart';
 import 'package:iconify_flutter/icons/tabler.dart';
 /* import 'package:iconify_flutter/icons/bx.dart'; */
 import 'package:iconify_flutter/icons/simple_icons.dart';
-
-
+// ignore: unused_import
+import 'package:iconify_flutter/icons/maki.dart';
+import 'package:iconify_flutter/icons/material_symbols.dart';
 
 /* import 'package:iconify_flutter/icons/cib.dart';
 
@@ -33,8 +35,8 @@ Widget getIcon(String category) {
       return Iconify(GameIcons.dragon_balls, size: 24);
     case "boulevards":
       return FaIcon(FontAwesomeIcons.personWalking, size: 24);
-    case "clubs":
-      return SizedBox.shrink();
+    /* case "clubs":
+      return Iconify(Mdi.olympics, size: 24); */
     case "districts":
       return Iconify(Mdi.home_city_outline, size: 24);
     case "fasnacht":
@@ -64,7 +66,7 @@ Widget getIcon(String category) {
     case "musicvenues":
       return Iconify(Mdi.music, size: 24);
     case "open-air-gym":
-      return SizedBox.shrink();
+      return Iconify(Mdi.gym, size: 24);
     case "orientation":
       return Iconify(Mdi.compass_outline, size: 24);
     case "parks":
@@ -72,23 +74,23 @@ Widget getIcon(String category) {
     case "playgrounds":
       return Icon(Icons.local_play, size: 24);
     case "pools":
-      return SizedBox.shrink();
-    case "public_institutions":
-      return SizedBox.shrink();
+      return Iconify(Mdi.swim, size: 24);
+    /* case "public_institutions":
+      return Iconify(Mdi.building, size: 24); */
     case "quarter-centers":
       return Iconify(Mdi.home_city_outline, size: 24);
     case "rhineswimming":
       return Iconify(Mdi.swim, size: 24);
     case "social-clubs":
-      return SizedBox.shrink();
-    case "sports":
-      return SizedBox.shrink();
-    case "sportsclubs":
-      return SizedBox.shrink();
+      return Iconify(Mdi.talk, size: 24);
+/*     case "sports":
+      return Iconify(Mdi.olympics, size: 24);
+ */    case "sportsclubs":
+      return Iconify(Mdi.olympics, size: 24);
     case "squares":
       return Iconify(SimpleIcons.square, size: 24);
     case "stadiums":
-      return SizedBox.shrink();
+      return Iconify(MaterialSymbols.stadium, size: 24);
     case "streetart":
       return Iconify(Mdi.spray, size: 24);
     case "table-tennis":
@@ -102,11 +104,11 @@ Widget getIcon(String category) {
     case "viewpoints":
       return Iconify(GrommetIcons.form_view_hide, size: 24);
     case "vita-parcours":
-      return SizedBox.shrink();
+      return Iconify(Mdi.run, size: 24);
     case "wells":
       return Iconify(Mdi.water_well_outline, size: 24);
     case "youth-centers":
-      return SizedBox.shrink();
+      return Iconify(Mdi.human_greeting_proximity, size: 24);
 
     default:
       return const SizedBox.shrink();

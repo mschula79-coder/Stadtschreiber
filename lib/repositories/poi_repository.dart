@@ -1,3 +1,4 @@
+import 'package:stadtschreiber/models/address.dart';
 import 'package:stadtschreiber/models/history_entry.dart';
 import 'package:stadtschreiber/models/image_entry.dart';
 import 'package:stadtschreiber/models/poi_metadata.dart';
@@ -197,18 +198,17 @@ class PoiRepository {
 
   Future<void> updatePoiAddressInSupabase(
     String id,
-    Map<String, String?> address,
+    Address address,
   ) async {
     await supabase
         .from('pois')
         .update({
-          'street': address['street'],
-          'house_number': address['house_number'],
-          'postcode': address['postcode'],
-          'city': address['city'],
-          'district': address['district'],
-          'country': address['country'],
-          'display_address': address['display_address'],
+          'street': address.street,
+          'house_number': address.houseNumber,
+          'postcode': address.postcode,
+          'city': address.city,
+          'district': address.district,
+          'country': address.country,
         })
         .eq('id', id);
   }

@@ -1,6 +1,5 @@
 // TODO History as List of decorated textboxes
 // TODO Kategorie Filter
-// TODO Icons
 // TODO Bewertungsschemata
 // TODO Info Popup (© Planetiler, OpenStreetMap, Maplibre...)
 // TODO add poi owner
@@ -11,8 +10,6 @@
 // TODO Polygon and Line colors
 // TODO Polygon consistency check
 // TODO Zoom out animation
-// TODO Modal loading distortion 
-// TODO Adresse editieren
 // TODO implement multiple categories / category for ratings
 
 

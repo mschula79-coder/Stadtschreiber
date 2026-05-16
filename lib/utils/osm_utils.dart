@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:http/http.dart' as http;
+import 'package:stadtschreiber/models/address.dart';
 import '../services/debug_service.dart';
 
-Future<Map<String, String?>?> fetchStructuredAddressFromOSM(
+Future<Address?> fetchStructuredAddressFromOSM(
   double lat,
   double lon,
 ) async {
@@ -28,15 +29,14 @@ Future<Map<String, String?>?> fetchStructuredAddressFromOSM(
 
   final city = addr['city'] ?? addr['town'] ?? addr['village'];
 
-  return {
-    'street': addr['road'] as String?,
-    'house_number': addr['house_number'] as String?,
-    'postcode': addr['postcode'] as String?,
-    'city': city as String?,
-    'district': addr['suburb'] as String?,
-    'country': addr['country'] as String?,
-    'display_address': data['display_name'] as String?,
-  };
+  return Address(
+    street: addr['road'] as String?,
+    houseNumber: addr['house_number'] as String?,
+    postcode: addr['postcode'] as String?,
+    city: city as String?,
+    district: addr['suburb'] as String?,
+    country: addr['country'] as String?,
+  );
 }
 
 Map<String, double> createViewbox(double lat, double lon, int meters) {

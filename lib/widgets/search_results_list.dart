@@ -60,9 +60,9 @@ class SearchResultsList extends StatelessWidget {
                 poi.name,
                 style: const TextStyle(fontSize: 14),
               ),
-              subtitle: poi.displayAddress != null
+              subtitle: poi.address?.displayAddress != null
                   ? Text(
-                      '${poi.city ?? ''}, ${poi.street ?? ''} ${poi.houseNumber ?? ''}',
+                      '${poi.address?.city ?? ''}, ${poi.address?.street ?? ''} ${poi.address?.houseNumber ?? ''}',
                       style: const TextStyle(fontSize: 12),
                     )
                   : null,

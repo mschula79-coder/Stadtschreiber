@@ -34,14 +34,18 @@ class PoiPanelGalleryTab extends ConsumerWidget {
             isEditModeEnabled
                 ? Stack(
                     children: [
-                      TextFormField(
-                        initialValue: selectedPoi.featuredImageUrl ?? '',
-                        readOnly: true,
-                        maxLines: 1,
+                      InputDecorator(
                         decoration: const InputDecoration(
                           labelText: "Featured Image-URL",
                           alignLabelWithHint: true,
+                          isDense: true,
+                          floatingLabelBehavior: FloatingLabelBehavior.always,
                           contentPadding: EdgeInsets.fromLTRB(0, 0, 35, 0),
+                        ),
+                        child: Text(
+                          selectedPoi.featuredImageUrl ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
 

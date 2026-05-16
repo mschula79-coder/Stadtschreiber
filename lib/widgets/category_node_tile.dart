@@ -19,6 +19,7 @@ class PoiCategoryNodeTile extends ConsumerWidget {
     if (hasChildren) {
       return ExpansionTile(
         title: Text(node.label),
+        visualDensity: VisualDensity.compact,
         children: node.children
             .map((child) => PoiCategoryNodeTile(node: child))
             .toList(),
@@ -31,6 +32,7 @@ class PoiCategoryNodeTile extends ConsumerWidget {
 
     return CheckboxListTile(
       title: Text(node.label),
+      visualDensity: VisualDensity.compact,
       value: isSelected,
       onChanged: (checked) async {
         if (checked == null) return;

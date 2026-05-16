@@ -1,7 +1,7 @@
 import 'package:maplibre/maplibre.dart';
+import 'package:stadtschreiber/models/address.dart';
 import 'package:stadtschreiber/models/history_entry.dart';
 import 'package:stadtschreiber/models/image_entry.dart';
-import 'package:stadtschreiber/services/debug_service.dart';
 import 'dart:convert';
 import '../models/article_entry.dart';
 import '../models/poi_metadata.dart';
@@ -16,13 +16,7 @@ class PointOfInterest {
   final List<ArticleEntry> articles;
   final PoiMetadata metadata;
   final double? distance;
-  final String? street;
-  final String? houseNumber;
-  final String? postcode;
-  final String? city;
-  final String? district;
-  final String? country;
-  final String? displayAddress;
+  final Address? address;
   final String? description;
   Map<String, dynamic>? geomArea;
   String geometryType; // 'point' | 'linestring' | 'polygon' | 'multipolygon',
@@ -40,13 +34,7 @@ class PointOfInterest {
     required this.articles,
     required this.metadata,
     this.distance,
-    this.street,
-    this.houseNumber,
-    this.postcode,
-    this.city,
-    this.district,
-    this.country,
-    this.displayAddress,
+    this.address,
     this.description,
     this.geomArea,
     this.geometryType = 'point',
@@ -97,13 +85,14 @@ class PointOfInterest {
             ? raw.toDouble()
             : double.tryParse(raw.toString()) ?? 0.0;
       })(),
-      street: row['street'] as String?,
-      houseNumber: row['house_number'] as String?,
-      postcode: row['postcode'] as String?,
-      city: row['city'] as String?,
-      district: row['district'] as String?,
-      country: row['country'] as String?,
-      displayAddress: row['display_address'] as String?,
+      address: Address(
+        street: row['street'] as String?,
+        houseNumber: row['house_number'] as String?,
+        postcode: row['postcode'] as String?,
+        city: row['city'] as String?,
+        district: row['district'] as String?,
+        country: row['country'] as String?,
+      ),
       description: row['description'] as String?,
       geomArea: row['geom_area'] as Map<String, dynamic>?,
       geometryType:
@@ -128,15 +117,8 @@ class PointOfInterest {
     List<HistoryEntry>? historyEntries,
     List<ArticleEntry>? articles,
     PoiMetadata? metadata,
-    Map<String, String?>? address,
+    Address? address,
     double? distance,
-    String? street,
-    String? houseNumber,
-    String? postcode,
-    String? city,
-    String? district,
-    String? country,
-    String? displayAddress,
     String? description,
     Map<String, dynamic>? geomArea,
     String? geometryType,
@@ -145,30 +127,21 @@ class PointOfInterest {
     bool? hasUnsavedChanges,
     List<ImageEntry>? images,
   }) {
-    DebugService.log("Cloning POI with new values: id=$id, name=$name");
-
     if (geometryType == 'polygon') {
       closePolygonIfNeeded();
     }
 
     // DEBUG NEW ADDRESS CODE
-    if (address != null) {
-      final parsedStreet = address['street'];
-      final parsedHouseNumber = address['house_number'];
-      final parsedPostcode = address['postcode'];
-      final parsedCity = address['city'];
-      final parsedDistrict = address['district'];
-      final parsedCountry = address['country'];
-      final parsedDisplayAddress = address['display_address'];
 
-      street = parsedStreet ?? street;
-      houseNumber = parsedHouseNumber ?? houseNumber;
-      postcode = parsedPostcode ?? postcode;
-      city = parsedCity ?? city;
-      district = parsedDistrict ?? district;
-      country = parsedCountry ?? country;
-      displayAddress = parsedDisplayAddress ?? displayAddress;
-    }
+    final newAddress = Address(
+      street: address?.street ?? this.address?.street,
+      houseNumber: address?.houseNumber ?? this.address?.houseNumber,
+      postcode: address?.postcode ?? this.address?.postcode,
+      city: address?.city ?? this.address?.city,
+      district: address?.district ?? this.address?.district,
+      country: address?.country ?? this.address?.country,
+    );
+
     final newFeatured = clearFeaturedImage == true
         ? null
         : (featuredImageUrl ?? this.featuredImageUrl);
@@ -188,13 +161,7 @@ class PointOfInterest {
       articles: articles ?? List<ArticleEntry>.from(this.articles),
       metadata: metadata ?? this.metadata,
       distance: distance ?? this.distance,
-      street: street ?? this.street,
-      houseNumber: houseNumber ?? this.houseNumber,
-      postcode: postcode ?? this.postcode,
-      city: city ?? this.city,
-      district: district ?? this.district,
-      country: country ?? this.country,
-      displayAddress: displayAddress ?? this.displayAddress,
+      address: newAddress,
       description: description ?? this.description,
       geomArea:
           geomArea ??
@@ -219,13 +186,7 @@ class PointOfInterest {
       'featured_image_url': featuredImageUrl,
       'history': historyEntries.map((e) => e.toJson()).toList(),
       'articles': articles.map((e) => e.toJson()).toList(),
-      'street': street,
-      'house_number': houseNumber,
-      'postcode': postcode,
-      'city': city,
-      'district': district,
-      'country': country,
-      'display_address': displayAddress,
+      'address': address?.toMap(),
       'description': description,
       'geom_area': geomArea,
       'osm_id': osmId,
@@ -462,21 +423,14 @@ class PointOfInterest {
       metadata: PoiMetadata(attributes: json),
 
       // Adressfelder (falls vorhanden)
-      street: tags['addr:street'],
-      houseNumber: tags['addr:housenumber'],
-      postcode: tags['addr:postcode'],
-      city: tags['addr:city'],
-      district: tags['addr:suburb'],
-      country: tags['addr:country'],
-
-      // Display Address
-      displayAddress: [
-        tags['addr:street'],
-        tags['addr:housenumber'],
-        tags['addr:postcode'],
-        tags['addr:city'],
-      ].whereType<String>().join(' '),
-
+      address: Address(
+        street: tags['addr:street'],
+        houseNumber: tags['addr:housenumber'],
+        postcode: tags['addr:postcode'],
+        city: tags['addr:city'],
+        district: tags['addr:suburb'],
+        country: tags['addr:country'],
+      ),
       osmId: json['id'],
       newPoi: true,
       images: [],

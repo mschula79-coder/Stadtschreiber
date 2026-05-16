@@ -26,7 +26,7 @@ class PoiService {
   }
 
   Future<PointOfInterest> ensurePoiHasAddress(PointOfInterest poi) async {
-    if (poi.houseNumber != null && poi.houseNumber!.isNotEmpty) {
+    if (poi.address?.houseNumber != null && poi.address!.houseNumber!.isNotEmpty) {
       return poi;
     }
 
