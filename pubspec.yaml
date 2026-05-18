@@ -27,6 +27,9 @@ dependencies:
   image: ^4.8.0
   cached_network_image: ^3.4.1
   font_awesome_flutter: ^11.0.0
+  intl: ^0.20.2
+  hyphenatorx: ^1.5.11
+  auto_hyphenating_text: ^0.3.1
 
 dev_dependencies:
   flutter_test:

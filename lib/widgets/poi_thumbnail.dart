@@ -2,18 +2,19 @@
 
 import 'package:flutter/material.dart';
 import '../models/poi.dart';
+import 'package:auto_hyphenating_text/auto_hyphenating_text.dart';
 
 class PoiThumbnail extends StatefulWidget {
   final PointOfInterest poi;
   final VoidCallback? onTap;
-  final VoidCallback? onLongPress;  
+  final VoidCallback? onLongPress;
   final ValueChanged<Size>? onSize;
   final bool allowLabel;
 
   const PoiThumbnail({
-    super.key, 
-    required this.poi, 
-    this.onTap, 
+    super.key,
+    required this.poi,
+    this.onTap,
     this.onSize,
     required this.allowLabel,
     this.onLongPress,
@@ -24,7 +25,6 @@ class PoiThumbnail extends StatefulWidget {
 }
 
 class _PoiThumbnailState extends State<PoiThumbnail> {
-
   @override
   void initState() {
     super.initState();
@@ -37,6 +37,7 @@ class _PoiThumbnailState extends State<PoiThumbnail> {
   @override
   Widget build(BuildContext context) {
     final hasPhoto = widget.poi.featuredImageUrl != null;
+
     return GestureDetector(
       onTap: widget.onTap,
       onLongPress: widget.onLongPress,
@@ -66,25 +67,30 @@ class _PoiThumbnailState extends State<PoiThumbnail> {
           ),
           const SizedBox(height: 4),
           widget.allowLabel
-          ?
-          Container(
-            constraints: const BoxConstraints(maxWidth: 100),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Color.fromRGBO(255,255,255,0.7),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              widget.poi.name,
-              maxLines: 2,
-              softWrap: true,
-              overflow: TextOverflow.ellipsis,
-              textWidthBasis: TextWidthBasis.longestLine,
+              ? Container(
+                  constraints: const BoxConstraints(maxWidth: 100),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Color.fromRGBO(255, 255, 255, 0.7),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: AutoHyphenatingText(
+                    widget.poi.name,
+                    maxLines: 2,
+                    /* softWrap: true,
+                    overflow: TextOverflow.ellipsis,
+                    textWidthBasis: TextWidthBasis.longestLine, */
 
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-          )
-          : Container()
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              : Container(),
         ],
       ),
     );

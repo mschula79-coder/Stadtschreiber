@@ -1,4 +1,3 @@
-// TODO History as List of decorated textboxes
 // TODO Kategorie Filter
 // TODO Bewertungsschemata
 // TODO Info Popup (© Planetiler, OpenStreetMap, Maplibre...)

@@ -21,7 +21,7 @@ class PoiRepository {
     final response = await supabase
         .from('pois')
         .select(
-          'id, name, lat, lon, categories, featured_image_url, history, articles, metadata, street, house_number, postcode, city, district, country, display_address, description, geom_area, osm_id, images',
+          'id, name, lat, lon, categories, featured_image_url, history, articles, metadata, street, house_number, postcode, city, district, country, description, geom_area, osm_id, images',
         )
         .overlaps('categories', selectedCategories)
         .order('name');

@@ -24,6 +24,7 @@ import 'package:stadtschreiber/services/geo_json_service.dart';
 import 'package:stadtschreiber/services/debug_service.dart';
 import 'package:stadtschreiber/state/app_state.dart';
 import 'package:stadtschreiber/state/camera_state.dart';
+import 'package:stadtschreiber/widgets/map_credits.dart';
 import 'package:stadtschreiber/widgets/modal_confirm_box.dart';
 import 'package:stadtschreiber/widgets/poi_thumbnails_layer.dart';
 import 'package:stadtschreiber/widgets/map_actions.dart';
@@ -110,9 +111,9 @@ class MapScreenState extends ConsumerState<MapScreen> {
       camera = ref.watch(cameraProvider);
     }
 
-    DebugService.log(
+    /* DebugService.log(
       'Build MapScreen Screen size: ${MediaQuery.of(context).size}\n isPoiGeomEditMode: $isPoiGeomEditMode\nisAdminViewEnabled: $isAdminViewEnabled\nhasSelectedPoi: $hasSelectedPoi\nshowPoiPanel: $showPoiPanel\nisDraggingPoi: $isDraggingPoi\nisDraggingPointMode: $isDraggingPointMode',
-    );
+    ); */
 
     /*     if (!_selectedPoiListenerRegistered) {
       _selectedPoiListenerRegistered = true;
@@ -192,7 +193,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
                 },
 
                 onEvent: (event) async {
-/*                   DebugService.log('MapEvent: $event.runtimeType'); */
+                  /*                   DebugService.log('MapEvent: $event.runtimeType'); */
                   // check for double events and add break if necessary
                   switch (event) {
                     // double click ist bei MapLibreMap deaktiviert!!
@@ -243,9 +244,6 @@ class MapScreenState extends ConsumerState<MapScreen> {
                         else {
                           final newPoi = selectedPoi.copyWith();
 
-                          DebugService.log(
-                            'MapEventLongClick: Long press on POI point, adding new point',
-                          );
                           if (newPoi.geometryType == "Polygon") {
                             newPoi.insertPointIntoPolygon(points, event.point);
                           } else {
@@ -366,12 +364,6 @@ class MapScreenState extends ConsumerState<MapScreen> {
                     default:
                   }
                 },
-                children: [
-                  maplibre.SourceAttribution(
-                    showMapLibre: true,
-                    alignment: Alignment.bottomLeft,
-                  ),
-                ],
               ),
             ),
           ),
@@ -403,7 +395,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
               : PoiThumbnailsLayer(
                   // onTapPoi
                   onTapPoi: (poi) {
-/*                     DebugService.log('Poi selected from screen'); */
+                    /*                     DebugService.log('Poi selected from screen'); */
                     _selectPoi(poi);
                   },
                 ),
@@ -427,6 +419,9 @@ class MapScreenState extends ConsumerState<MapScreen> {
             isAdmin: user.isAdmin,
             isAdminViewEnabled: isAdminViewEnabled,
           ),
+    
+          MapCredits(),
+
           // My Location Blue Dot
           if (userMarkerOffset != null)
             Positioned(
@@ -828,7 +823,7 @@ NEWPOI
 
   /// sets selectedPoi and opens the panel in PoiPanelState and adds the geometry layer for the selected poi (if poi has geometry)
   void _selectPoi(PointOfInterest poi) {
-/*     DebugService.log('MapScreen run _selectPoi(poi)'); */
+    /*     DebugService.log('MapScreen run _selectPoi(poi)'); */
 
     ref.read(selectedPoiProvider.notifier).setPoi(poi);
 
