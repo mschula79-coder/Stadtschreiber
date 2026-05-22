@@ -1,15 +1,11 @@
-// TODO Kategorie Filter
 // TODO Bewertungsschemata
-// TODO Info Popup (© Planetiler, OpenStreetMap, Maplibre...)
+// TODO Top 10
 // TODO add poi owner
 // TODO Login form, Passwort zurücksetzen, registrieren usw.
-// TODO Photo credits
 // TODO Mehrsprachig
-// TODO Multipolygon support für geometrie bearbeitung
-// TODO Polygon and Line colors
-// TODO Polygon consistency check
-// TODO Zoom out animation
 // TODO implement multiple categories / category for ratings
+// TODO Multipolygon support für geometrie bearbeitung, Polygon consistency check
+// TODO Polygon and Line colors
 
 
 

@@ -28,6 +28,11 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
   final TextEditingController _searchController = TextEditingController();
   bool _searchVisible = false;
   String _searchQuery = "";
+  String _categoryFilter = "";
+  final TextEditingController _categoryFilterController =
+      TextEditingController();
+  bool isFilterActive = false;
+  bool expandAll = false;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +76,7 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
               "Suche",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 4),
+            SizedBox(height: 12),
 
             // SEARCH FIELD
             Container(
@@ -154,18 +159,79 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
               ),
 
             // END OF SEARCH RESULTS
-            SizedBox(height: 12),
-
-            // Überschrift Kategorien
-            const Text(
-              "Kategorien",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-
             SizedBox(height: 8),
 
+            // Überschrift Kategorien
+            Row(
+              children: [
+                const Text(
+                  "Kategorien",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                isFilterActive
+                    ? IconButton(
+                        onPressed: () {
+                          setState(() {
+                            isFilterActive = false;
+                            _categoryFilter = "";
+                            _categoryFilterController.clear();
+                            expandAll = false;
+                          });
+                        },
+                        icon: Icon(Icons.filter_alt_off),
+                      )
+                    : IconButton(
+                        onPressed: () {
+                          setState(() {
+                            isFilterActive = true;
+                          });
+                        },
+                        icon: Icon(Icons.filter_alt),
+                      ),
+              ],
+            ),
+
+            isFilterActive
+                ? Column(
+                    children: [
+                      Container(
+                        width: 250,
+                        padding: const EdgeInsets.fromLTRB(6, 0, 4, 0),
+                        margin: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black26, blurRadius: 6),
+                          ],
+                        ),
+
+                        child: TextField(
+                          controller: _categoryFilterController,
+                          decoration: const InputDecoration(
+                            hintText: "Kategorien filtern",
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.fromLTRB(0, 8, 0, 8),
+                            isDense: true,
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              _categoryFilter = value.trim().toLowerCase();
+                              expandAll = _categoryFilter.isNotEmpty;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  )
+                : SizedBox.shrink(),
+
             // Kategorien-Baum
-            ...categories.map((node) => _buildCategoryNode(context, ref, node)),
+            ..._filterCategoryTree(
+              categories,
+              _categoryFilter,
+            ).map((node) => _buildCategoryNode(context, ref, node)),
           ],
         ),
       ),
@@ -173,6 +239,38 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
   }
 
   // ---------- category tree ----------
+  List<CategoryNode> _filterCategoryTree(
+    List<CategoryNode> nodes,
+    String filter,
+  ) {
+    if (filter.isEmpty) return nodes;
+
+    List<CategoryNode> result = [];
+
+    for (final node in nodes) {
+      final labelMatches = node.label.toLowerCase().contains(filter);
+
+      if (node.isLeaf) {
+        if (labelMatches) result.add(node);
+      } else {
+        final filteredChildren = _filterCategoryTree(node.children, filter);
+
+        if (labelMatches || filteredChildren.isNotEmpty) {
+          result.add(
+            CategoryNode(
+              id: node.id,
+              label: node.label,
+              value: node.value,
+              children: filteredChildren,
+              ratingCriteria: node.ratingCriteria,
+            ),
+          );
+        }
+      }
+    }
+
+    return result;
+  }
 
   Widget _buildCategoryNode(
     BuildContext context,
@@ -217,6 +315,7 @@ class _CategoriesMenuState extends ConsumerState<CategoriesMenu> {
             tilePadding: const EdgeInsets.only(left: 0, right: 15),
             childrenPadding: EdgeInsets.zero,
             visualDensity: VisualDensity.compact,
+            initiallyExpanded: expandAll,
             leading: Checkbox(
               value: parentChecked,
               tristate: true,

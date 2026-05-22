@@ -4,10 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:stadtschreiber/models/address.dart';
 import '../services/debug_service.dart';
 
-Future<Address?> fetchStructuredAddressFromOSM(
-  double lat,
-  double lon,
-) async {
+Future<Address?> fetchStructuredAddressFromOSM(double lat, double lon) async {
   final url = Uri.parse(
     'https://nominatim.openstreetmap.org/reverse?lat=$lat&lon=$lon&format=jsonv2&addressdetails=1&zoom=30',
   );
@@ -54,7 +51,7 @@ Map<String, double> createViewbox(double lat, double lon, int meters) {
   };
 }
 
-Future<List<dynamic>> searchNearbyOverpass({
+Future<List<dynamic>> searchNearbyOverpassNamedPlaces({
   required double lat,
   required double lon,
   required String query,
@@ -82,6 +79,50 @@ Future<List<dynamic>> searchNearbyOverpass({
         relation["place"]["name"]($south,$west,$north,$east);
       );
       out center;
+      """;
+
+  final url = Uri.parse("https://overpass-api.de/api/interpreter");
+
+  final response = await http.post(
+    url,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "User-Agent": "StadtschreiberApp/1.0 (Basel)",
+    },
+    body: {"data": overpassQuery},
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception("Overpass error: ${response.statusCode}");
+  }
+
+  final json = jsonDecode(response.body);
+
+  return json["elements"] ?? [];
+}
+
+Future<List<dynamic>> searchNearbyOverpassPois({
+  required double lat,
+  required double lon,
+  required String query,
+}) async {
+  final box = createViewbox(lat, lon, 100);
+
+  final south = box['bottom'];
+  final west = box['left'];
+  final north = box['top'];
+  final east = box['right'];
+
+  // Overpass Query
+  final overpassQuery =
+      """
+      [out:json][timeout:25];
+        (
+          node["name"]($south,$west,$north,$east);
+          way["name"]($south,$west,$north,$east);
+          relation["name"]($south,$west,$north,$east);
+        );
+        out center;
       """;
 
   final url = Uri.parse("https://overpass-api.de/api/interpreter");

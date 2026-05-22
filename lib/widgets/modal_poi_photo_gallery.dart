@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:stadtschreiber/models/image_entry.dart';
 import 'package:stadtschreiber/utils/image_utils.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 
 class PhotoGalleryModal extends StatefulWidget {
   final List<String> imageUrls;
-  final int initialIndex;
+  final String initialUrl;
+  final List<ImageEntry> images;
 
   const PhotoGalleryModal({
     super.key,
     required this.imageUrls,
-    this.initialIndex = 0,
+    required this.initialUrl,
+    required this.images,
   });
 
   @override
@@ -18,7 +22,8 @@ class PhotoGalleryModal extends StatefulWidget {
   static void open(
     BuildContext context, {
     required List<String> imageUrls,
-    int initialIndex = 0,
+    required String initialUrl,
+    required images,
   }) {
     showGeneralDialog(
       context: context,
@@ -28,7 +33,8 @@ class PhotoGalleryModal extends StatefulWidget {
       pageBuilder: (_, _, _) {
         return PhotoGalleryModal(
           imageUrls: imageUrls,
-          initialIndex: initialIndex,
+          initialUrl: initialUrl,
+          images: images,
         );
       },
     );
@@ -37,11 +43,18 @@ class PhotoGalleryModal extends StatefulWidget {
 
 class _PhotoGalleryModalState extends State<PhotoGalleryModal> {
   late final PageController _pageController;
+  int initialIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: widget.initialIndex);
+    initialIndex = widget.images.indexWhere(
+      (img) => img.url == widget.initialUrl,
+    );
+    _pageController = PageController(initialPage: initialIndex);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {});
+    });
   }
 
   @override
@@ -64,7 +77,7 @@ class _PhotoGalleryModalState extends State<PhotoGalleryModal> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: FutureBuilder<Size>(
-                future: getImageSize(widget.imageUrls[widget.initialIndex]),
+                future: getImageSize(widget.imageUrls[initialIndex]),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const Center(
@@ -84,7 +97,47 @@ class _PhotoGalleryModalState extends State<PhotoGalleryModal> {
                           itemCount: widget.imageUrls.length,
                           itemBuilder: (context, index) {
                             final url = widget.imageUrls[index];
-                            return _ZoomableImage(url: url);
+                            return Stack(
+                              children: [
+                                _ZoomableImage(url: url),
+                                Positioned(
+                                  bottom: 8,
+                                  right: 12,
+                                  child: TextButton(
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size(0, 0),
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      alignment: Alignment.centerLeft,
+                                    ),
+                                    onPressed: () async {
+                                      final url =
+                                          widget.images[index].creditsUrl;
+                                      if (url != null) {
+                                        await launchUrl(
+                                          Uri.parse(url),
+                                          mode: LaunchMode.externalApplication,
+                                        );
+                                      }
+                                    },
+                                    child: Text(
+                                      '${widget.images[index].creditsName}',
+                                      textAlign: TextAlign.right,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black54,
+                                            blurRadius: 4,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
                           },
                         ),
 
@@ -112,15 +165,23 @@ class _PhotoGalleryModalState extends State<PhotoGalleryModal> {
           left: size.width * 0.05,
           child: IconButton(
             iconSize: 48,
-            color: Colors.white,
+            color:
+                (_pageController.hasClients
+                        ? (_pageController.page ?? initialIndex)
+                        : initialIndex) <=
+                    0
+                ? Colors.grey
+                : Colors.white,
+
             icon: const Icon(Icons.chevron_left),
-            onPressed: () {
+            onPressed: () async {
               if (_pageController.page! > 0) {
-                _pageController.previousPage(
+                await _pageController.previousPage(
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeInOut,
                 );
               }
+              setState(() {});
             },
           ),
         ),
@@ -130,15 +191,23 @@ class _PhotoGalleryModalState extends State<PhotoGalleryModal> {
           right: size.width * 0.05,
           child: IconButton(
             iconSize: 48,
-            color: Colors.white,
+            color:
+                (_pageController.hasClients
+                        ? (_pageController.page ?? initialIndex)
+                        : initialIndex) >=
+                    widget.imageUrls.length - 1
+                ? Colors.grey
+                : Colors.white,
+
             icon: const Icon(Icons.chevron_right),
-            onPressed: () {
+            onPressed: () async {
               if (_pageController.page! < widget.imageUrls.length - 1) {
-                _pageController.nextPage(
+                await _pageController.nextPage(
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeInOut,
                 );
               }
+              setState(() {});
             },
           ),
         ),
@@ -177,7 +246,9 @@ class _ZoomableImageState extends State<_ZoomableImage> {
           final position = _doubleTapDetails!.localPosition;
 
           _controller.value = Matrix4.identity()
-            ..translateByVector3(vector.Vector3(-position.dx * 1.5, -position.dy * 1.5, 0.0))
+            ..translateByVector3(
+              vector.Vector3(-position.dx * 1.5, -position.dy * 1.5, 0.0),
+            )
             ..scaleByDouble(2.0, 2.0, 1.0, 1.0);
         }
       },

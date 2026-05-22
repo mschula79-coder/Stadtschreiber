@@ -9,7 +9,7 @@ import 'package:stadtschreiber/utils/dialog_utils.dart';
 import 'package:stadtschreiber/utils/image_utils.dart';
 import 'package:stadtschreiber/widgets/_editable_list.dart';
 import 'package:stadtschreiber/widgets/modal_image_edit.dart';
-import 'package:stadtschreiber/widgets/poi_photo_gallery_modal.dart';
+import 'package:stadtschreiber/widgets/modal_poi_photo_gallery.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PoiPanelGalleryTab extends ConsumerWidget {
@@ -20,10 +20,22 @@ class PoiPanelGalleryTab extends ConsumerWidget {
     final selectedPoi = ref.watch(selectedPoiProvider);
     final user = ref.watch(supabaseUserStateProvider);
     final username = user.username;
-    final imageUrls = selectedPoi!.images.map((img) => img.url).toList();
     final panelHeight = ref.read(appStateProvider).panelHeight;
     final isEditModeEnabled = ref.watch(appStateProvider).isPoiEditMode;
+    final galleryImages = selectedPoi!.images
+        .toList();
+    final imageUrlsNotFeatured = selectedPoi.images
+        .map((img) => img.url)
+        .where((url) => url != selectedPoi.featuredImageUrl)
+        .toList();
+    final imageUrls = selectedPoi.images
+        .map((img) => img.url)
+        .toList();
+    final featuredUrl = selectedPoi.featuredImageUrl;
 
+/*     final featuredImageIndex = selectedPoi.images.indexWhere(
+      (img) => img.url == featuredUrl,
+    ); */
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.fromLTRB(10, 15, 10, 5),
@@ -95,52 +107,60 @@ class PoiPanelGalleryTab extends ConsumerWidget {
                 color: Colors.grey,
               ),
             ] else ...[
-              FutureBuilder<Size>(
-                future: getImageSize(selectedPoi.featuredImageUrl!),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return SizedBox(
-                      height: 200,
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
+              GestureDetector(
+                onTap: () => PhotoGalleryModal.open(
+                  context,
+                  imageUrls: imageUrls,
+                  initialUrl: featuredUrl ?? selectedPoi.images[0].url,
+                  images: selectedPoi.images,
+                ),
+                child: FutureBuilder<Size>(
+                  future: getImageSize(selectedPoi.featuredImageUrl!),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return SizedBox(
+                        height: 200,
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
 
-                  final size = snapshot.data!;
-                  final aspectRatio = size.width / size.height;
-                  final isPortrait = size.height > size.width;
+                    final size = snapshot.data!;
+                    final aspectRatio = size.width / size.height;
+                    final isPortrait = size.height > size.width;
 
-                  return Column(
-                    children: [
-                      // Bildcontainer
-                      ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxHeight: isPortrait
-                              ? panelHeight * 0.705
-                              : double.infinity,
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: AspectRatio(
-                            aspectRatio: aspectRatio,
-                            child: Image.network(
-                              selectedPoi.featuredImageUrl!,
-                              fit: BoxFit.cover,
-                              alignment: Alignment.topCenter,
+                    return Column(
+                      children: [
+                        // Bildcontainer
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: isPortrait
+                                ? panelHeight * 0.705
+                                : double.infinity,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: AspectRatio(
+                              aspectRatio: aspectRatio,
+                              child: Image.network(
+                                selectedPoi.featuredImageUrl!,
+                                fit: BoxFit.cover,
+                                alignment: Alignment.topCenter,
+                              ),
                             ),
                           ),
                         ),
-                      ),
 
-                      const SizedBox(height: 15),
-                    ],
-                  );
-                },
+                        const SizedBox(height: 15),
+                      ],
+                    );
+                  },
+                ),
               ),
             ],
             // Liste mit ImageUrls
             if (isEditModeEnabled) ...[
               EditableList<ImageEntry>(
-                items: selectedPoi.images,
+                items: galleryImages,
                 isEditModeEnabled: isEditModeEnabled,
                 onAdd: () async {
                   final newEntry = await showDialog<ImageEntry>(
@@ -248,7 +268,8 @@ class PoiPanelGalleryTab extends ConsumerWidget {
                 },
               ),
             ],
-            // Images
+            // Image previews without featured image
+          
             if (imageUrls.isNotEmpty) ...[
               Padding(
                 padding: EdgeInsets.only(bottom: 15),
@@ -260,14 +281,15 @@ class PoiPanelGalleryTab extends ConsumerWidget {
                     crossAxisSpacing: 4,
                     mainAxisSpacing: 4,
                   ),
-                  itemCount: imageUrls.length,
+                  itemCount: imageUrlsNotFeatured.length,
                   itemBuilder: (context, index) {
-                    final url = imageUrls[index];
+                    final url = imageUrlsNotFeatured[index];
                     return GestureDetector(
                       onTap: () => PhotoGalleryModal.open(
                         context,
                         imageUrls: imageUrls,
-                        initialIndex: index,
+                        initialUrl: url,
+                        images: selectedPoi.images,
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(6),

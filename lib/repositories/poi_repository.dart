@@ -161,9 +161,22 @@ class PoiRepository {
     double lat,
     double lon,
   ) async {
-    if (query.startsWith('nearby')) {
+    
+    if (query.startsWith('nearby pois')) {
       final cleanedQuery = query.substring('nearby'.length).trim();
-      final osmResult = await searchNearbyOverpass(
+      final osmResult = await searchNearbyOverpassPois(
+        query: cleanedQuery,
+        lat: lat,
+        lon: lon,
+      );
+      final List<PointOfInterest> pois = osmResult.map<PointOfInterest>((row) {
+        return PointOfInterest.fromOverpass(row);
+      }).toList();
+      return pois;
+    }
+    if (query.startsWith('nearby named')) {
+      final cleanedQuery = query.substring('nearby'.length).trim();
+      final osmResult = await searchNearbyOverpassNamedPlaces(
         query: cleanedQuery,
         lat: lat,
         lon: lon,

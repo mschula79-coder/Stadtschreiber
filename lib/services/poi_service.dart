@@ -14,7 +14,6 @@ class PoiService {
     // -1 => from OSM Overpass query
     if (poi.id == '-1') {
       final existing = await repo.loadPoiByOSMId(poi.osmId!);
-      // TODO CHECK OB OSM ID ABGLEICH FUNKTIONIERT, DA POIS UND NICHT POI IDS VERGLICHEN WERDEN
       final fresh = existing ?? await repo.saveOSMPoiToSupabase(poi);
       return fresh;
     }
@@ -30,19 +29,15 @@ class PoiService {
       return poi;
     }
 
-    DebugService.log('🟡 Hole Adresse für POI ${poi.id} (${poi.name})…');
-
     final address = await fetchStructuredAddressFromOSM(
       poi.location.lat,
       poi.location.lon,
     );
 
     if (address == null) {
-      DebugService.log('🔴 Konnte keine Adresse von OSM holen.');
       return poi;
     }
 
-    // TODO CHECK OB DOPPELT
     await repo.updatePoiAddressInSupabase(poi.id, address);
 
     return poi.copyWith(address: address);
