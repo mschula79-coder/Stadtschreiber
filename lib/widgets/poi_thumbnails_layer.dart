@@ -119,7 +119,7 @@ class PoiThumbnailsLayer extends ConsumerWidget {
 
             markerWidget = PoiThumbnail(
               poi: poi,
-              allowLabel: true,
+              allowLabel: false,
               onTap: () => onTapPoi(poi),
             );
           } 

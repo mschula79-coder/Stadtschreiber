@@ -47,9 +47,9 @@ class EditableList<T> extends StatelessWidget {
         else
           ...items.map((item) {
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: 0),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(child: itemBuilder(item)),
                   if (isEditModeEnabled) ...[

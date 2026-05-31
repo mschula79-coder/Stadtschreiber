@@ -33,3 +33,31 @@ Future<String?> openEditModal(
     },
   );
 }
+
+Future<bool?> openConfirmDialog(
+  BuildContext context, {
+  required String message,
+  required String optionTrue,
+  required String optionFalse,
+}) {
+
+  return showDialog<bool>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Text('Achtung'),
+        content: Text(message),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(optionTrue),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(optionFalse),
+          ),
+        ],
+      );
+    },
+  );
+}

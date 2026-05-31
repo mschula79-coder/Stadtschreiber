@@ -16,7 +16,7 @@ final criteriaForCategoryProvider =
       categoryId,
     ) async {
       final repo = ref.read(categoriesRepositoryProvider);
-      return repo.loadCriteriaForCategory(categoryId);
+      return repo.criteriaForCategory(categoryId);
     });
 
 final categoryIdBySlugProvider = Provider.family<String?, String>((ref, slug) {
@@ -62,3 +62,16 @@ class CategoriesNotifier extends Notifier<CategoriesStateData> {
     state = state.copyWith(categories: list, slugToId: slugToId);
   }
 }
+
+final categorySlugsForCriterionProvider =
+    FutureProvider.family<List<String>, String>((ref, criterionId) {
+      final repo = ref.read(categoriesRepositoryProvider);
+      return repo.categorySlugsForCriterion(criterionId);
+    });
+
+final globalCriteriaProvider = FutureProvider<List<RatingCriterionDTO>>((
+  ref,
+) async {
+  final repo = ref.watch(categoriesRepositoryProvider);
+  return repo.criteriaListGlobal();
+});

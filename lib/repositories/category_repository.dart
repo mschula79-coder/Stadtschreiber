@@ -1,10 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/category.dart';
 import '../models/category_dto.dart';
-import '../services/debug_service.dart';
 
 class CategoryRepository {
   Future<List<CategoryNode>> loadCategories() async {
@@ -69,11 +67,10 @@ class CategoryRepository {
       label: dto.name,
       value: dto.slug,
       children: children,
-      ratingCriteria: [],
     );
   }
 
-  Future<List<RatingCriterionDTO>> loadCriteriaForCategory(
+  Future<List<RatingCriterionDTO>> criteriaForCategory(
     String categoryId,
   ) async {
     final supabase = Supabase.instance.client;
@@ -90,14 +87,92 @@ class CategoryRepository {
         )
         .toList();
   }
-}
 
-class CategoryState extends ChangeNotifier {
-  List<CategoryNode> categories = [];
+  Future<List<RatingCriterionDTO>> criteriaListGlobal() async {
+    final supabase = Supabase.instance.client;
 
-  void setCategories(List<CategoryNode> list) {
-    categories = list;
-    DebugService.log('CategoryState.setCategories - notifyListeners');
-    notifyListeners();
+    final response = await supabase
+        .from('global_rating_criteria')
+        .select('*')
+        .order('name',ascending: true);
+
+    return response.map<RatingCriterionDTO>((row) {
+      return RatingCriterionDTO.fromJson(row);
+    }).toList();
+  }
+
+  Future<List<String>> categorySlugsForCriterion(String criterionId) async {
+    final supabase = Supabase.instance.client;
+
+    final response = await supabase
+        .from('category_rating_criteria_relations')
+        .select('categories(*)')
+        .eq('criterion_id', criterionId)
+        .order('categories.name');
+
+    return response.map((row) {
+      final data = row['categories'];
+      final slug = data['slug'];
+      if (slug is String) return slug;
+      throw Exception("Invalid row format: $row");
+    }).toList();
+  }
+
+  Future<RatingCriterionDTO> newCriterion(RatingCriterionDTO criterion) async {
+    final supabase = Supabase.instance.client;
+
+    final newCriterionRaw = await supabase
+        .from('global_rating_criteria')
+        .insert({
+          'name': criterion.name,
+          'description': criterion.description,
+          'score_descriptions': criterion.scoreDescriptions,
+        })
+        .select()
+        .single();
+    return RatingCriterionDTO.fromJson(newCriterionRaw);
+  }
+
+  Future<void> updateCriterionCategoryRelation({
+    required String criterionId,
+    required String categoryId,
+    required bool enabled,
+  }) async {
+    final supabase = Supabase.instance.client;
+
+    if (enabled) {
+      await supabase.from('category_rating_criteria_relations').insert({
+        'criterion_id': criterionId,
+        'category_id': categoryId,
+      });
+    } else {
+      await supabase
+          .from('category_rating_criteria_relations')
+          .delete()
+          .eq('criterion_id', criterionId)
+          .eq('category_id', categoryId);
+    }
+  }
+
+  Future<void> updateCriterion(RatingCriterionDTO criterion) async {
+    final supabase = Supabase.instance.client;
+
+    await supabase
+        .from('global_rating_criteria')
+        .update({
+          'name': criterion.name,
+          'description': criterion.description,
+          'score_descriptions': criterion.scoreDescriptions,
+        })
+        .eq('id', criterion.id);
+  }
+
+  Future<void> deleteCriterion(RatingCriterionDTO criterion) async {
+    final supabase = Supabase.instance.client;
+
+    await supabase
+        .from('global_rating_criteria')
+        .delete()
+        .eq('id', criterion.id);
   }
 }

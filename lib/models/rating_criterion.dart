@@ -35,4 +35,22 @@ class RatingCriterionDTO {
       scoreDescriptions: converted,
     );
   }
+
+  RatingCriterionDTO copyWith({
+    String? id,
+    String? name,
+    String? description,
+    Map<int, String>? scoreDescriptions,
+  }) {
+    return RatingCriterionDTO(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      scoreDescriptions: scoreDescriptions ?? this.scoreDescriptions,
+    );
+  }
+}
+
+extension RatingCriterionListX on List<RatingCriterionDTO> {
+  List<String> get names => map((c) => c.name).toList();
 }

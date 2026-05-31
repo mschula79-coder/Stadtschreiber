@@ -37,7 +37,6 @@ class _PoiThumbnailState extends State<PoiThumbnail> {
   @override
   Widget build(BuildContext context) {
     final hasPhoto = widget.poi.featuredImageUrl != null;
-
     return GestureDetector(
       onTap: widget.onTap,
       onLongPress: widget.onLongPress,
