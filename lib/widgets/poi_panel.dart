@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
+import 'package:stadtschreiber/provider/user_favorites_provider.dart';
+import 'package:stadtschreiber/widgets/modal_poi_favorite_edit.dart';
 import 'poi_panel_tabs.dart';
 import '../provider/selected_poi_provider.dart';
 
@@ -29,6 +31,10 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
   Widget build(BuildContext context) {
     final isAdminViewEnabled = ref.watch(appStateProvider).isAdminViewEnabled;
 
+    final favorites = ref.watch(userFavoritesProvider).value ?? [];
+
+    final isFavorite = favorites.any((f) => f.poiID == widget.selectedPoi.id);
+
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -41,6 +47,7 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
           SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
+
             children: [
               SizedBox(width: 18),
               Expanded(
@@ -56,6 +63,34 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    SizedBox(width: 5),
+                    isFavorite
+                        ? IconButton(
+                            icon: Icon(Icons.star, color: Colors.amber),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (_) => PoiFavoriteEditModal(
+                                  poi: widget.selectedPoi,
+                                ),
+                              );
+                            },
+                          )
+                        : IconButton(
+                            icon: Icon(
+                              Icons.star_border,
+                              color: Colors.grey.shade400,
+                            ),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (_) => PoiFavoriteEditModal(
+                                  poi: widget.selectedPoi,
+                                ),
+                              );
+                            },
+                          ),
+
                     SizedBox(width: 5),
                     isAdminViewEnabled
                         ? GestureDetector(

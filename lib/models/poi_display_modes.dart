@@ -3,5 +3,7 @@ enum PoiDisplayMode {
   search,
   overpass,
   top10,
+  manual,
   nearby,
+  standard,
 }

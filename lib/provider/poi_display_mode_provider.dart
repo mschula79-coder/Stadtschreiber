@@ -11,3 +11,9 @@ class PoiDisplayModeNotifier extends Notifier<PoiDisplayMode> {
     state = mode;
   }
 }
+
+final poiDisplayModeProvider =
+    NotifierProvider<PoiDisplayModeNotifier, PoiDisplayMode>(
+  PoiDisplayModeNotifier.new,
+);
+

@@ -16,6 +16,7 @@ import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/poi_service_provider.dart';
 import 'package:stadtschreiber/provider/search_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
+import 'package:stadtschreiber/provider/user_favorites_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_provider.dart';
 import 'package:stadtschreiber/provider/camera_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
@@ -26,6 +27,7 @@ import 'package:stadtschreiber/state/app_state.dart';
 import 'package:stadtschreiber/state/camera_state.dart';
 import 'package:stadtschreiber/widgets/map_credits.dart';
 import 'package:stadtschreiber/widgets/modal_confirm_box.dart';
+import 'package:stadtschreiber/widgets/poi_list_panel.dart';
 import 'package:stadtschreiber/widgets/poi_thumbnails_layer.dart';
 import 'package:stadtschreiber/widgets/map_actions.dart';
 import 'package:stadtschreiber/widgets/poi_panel.dart';
@@ -85,6 +87,9 @@ class MapScreenState extends ConsumerState<MapScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = ref.watch(appStateProvider);
+    // ignore: unused_local_variable
+    final favorites = ref.watch(userFavoritesProvider);
+
     final poiRepository = ref.read(poiRepositoryProvider);
     final dragPoiState = ref.watch(dragPoiProvider);
 
@@ -104,6 +109,9 @@ class MapScreenState extends ConsumerState<MapScreen> {
 
     final bool showPoiPanel =
         hasSelectedPoi && !isPoiGeomEditMode && !isDraggingPoi;
+
+    final bool showPoiList = ref.watch(appStateProvider).isPoiListVisible;
+
     CameraState camera;
     if (isDraggingPoi) {
       camera = ref.read(cameraProvider);
@@ -431,6 +439,10 @@ class MapScreenState extends ConsumerState<MapScreen> {
                 ),
               ),
             ),
+
+          showPoiList
+              ? Align(alignment: Alignment.bottomCenter, child: PoiListPanel())
+              : const SizedBox.shrink(),
 
           // PoiPanel anzeigen, wenn hasSelectedPoi !& isPoiGeomEditMode
           showPoiPanel

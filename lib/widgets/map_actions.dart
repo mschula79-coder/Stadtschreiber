@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/widgets/user_actions_bar.dart';
 import '../services/debug_service.dart';
@@ -42,7 +43,7 @@ class _MapActionsState extends ConsumerState<MapActions> {
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: ()  {
+              onTap: () {
                 setState(() {
                   userActionsExpanded = false;
                 });
@@ -67,6 +68,18 @@ class _MapActionsState extends ConsumerState<MapActions> {
                 },
                 mini: true,
                 child: const Icon(Icons.my_location),
+              ),
+
+              const SizedBox(height: 8),
+
+              // Poi List
+              FloatingActionButton(
+                heroTag: "showList",
+                onPressed: () {
+                  ref.read(appStateProvider.notifier).setPoiListVisible(true);
+                },
+                mini: true,
+                child: Icon(Icons.list_rounded),
               ),
 
               const SizedBox(height: 8),

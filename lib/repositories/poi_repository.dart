@@ -31,6 +31,52 @@ class PoiRepository {
         .toList();
   }
 
+  Future<List<PointOfInterest>> loadTopNPois({
+  required String categoryId,
+  required String criterionId,
+  required int limit,
+}) async {
+  final supabase = Supabase.instance.client;
+
+  // 1) Ratings für dieses Kriterium laden
+  final ratingsRaw = await supabase
+      .from('poi_ratings')
+      .select('poi_id, rating')
+      .eq('criterion_id', criterionId)
+      .order('rating', ascending: false)
+      .limit(limit);
+
+  if (ratingsRaw.isEmpty) return [];
+
+  // 2) POI-IDs extrahieren
+  final poiIds = ratingsRaw.map((r) => r['poi_id'] as String).toList();
+
+  // 3) POIs laden
+  final poisRaw = await supabase
+      .from('pois')
+      .select('*')
+      .inFilter('id', poiIds);
+
+  // 4) POIs in Objekte umwandeln
+  final pois = poisRaw
+      .map<PointOfInterest>((row) => PointOfInterest.fromSupabase(row))
+      .toList();
+
+final filtered = pois
+    .where((p) => p.categories?.contains(categoryId) ?? false)
+    .toList();
+
+  // 6) Reihenfolge wiederherstellen (Top‑N Reihenfolge)
+  filtered.sort((a, b) {
+    final ratingA = ratingsRaw.firstWhere((r) => r['poi_id'] == a.id)['rating'];
+    final ratingB = ratingsRaw.firstWhere((r) => r['poi_id'] == b.id)['rating'];
+    return ratingB.compareTo(ratingA);
+  });
+
+  return filtered;
+}
+
+
   Future<PointOfInterest> saveOSMPoiToSupabase(PointOfInterest poi) async {
     poi.newPoi = true;
     poi.id = '-1';
@@ -161,7 +207,6 @@ class PoiRepository {
     double lat,
     double lon,
   ) async {
-    
     if (query.startsWith('nearby pois')) {
       final cleanedQuery = query.substring('nearby'.length).trim();
       final osmResult = await searchNearbyOverpassPois(
@@ -209,10 +254,7 @@ class PoiRepository {
     }
   }
 
-  Future<void> updatePoiAddressInSupabase(
-    String id,
-    Address address,
-  ) async {
+  Future<void> updatePoiAddressInSupabase(String id, Address address) async {
     await supabase
         .from('pois')
         .update({
@@ -232,7 +274,12 @@ class PoiRepository {
 
     final result = await supabase
         .from('pois')
-        .insert({'name': 'newPOI', 'lat': location.lat, 'lon': location.lon, 'featured_image_url': ''})
+        .insert({
+          'name': 'newPOI',
+          'lat': location.lat,
+          'lon': location.lon,
+          'featured_image_url': '',
+        })
         .select()
         .single();
     final newId = result['id'];
@@ -248,7 +295,7 @@ class PoiRepository {
       geometryType: 'point',
       newPoi: true,
       images: [],
-      featuredImageUrl: ""
+      featuredImageUrl: "",
     );
   }
 

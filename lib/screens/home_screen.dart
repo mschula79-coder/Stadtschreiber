@@ -2,10 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide Consumer;
+import 'package:stadtschreiber/models/poi_display_modes.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
+import 'package:stadtschreiber/provider/categories_menu_provider.dart';
+import 'package:stadtschreiber/provider/poi_display_mode_provider.dart';
+import 'package:stadtschreiber/provider/search_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:stadtschreiber/widgets/categories_menu_content.dart';
+import 'package:stadtschreiber/widgets/visible_pois_menu.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'map_screen.dart';
 
@@ -90,8 +94,19 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
             child: Material(
               elevation: 8,
               borderRadius: BorderRadius.circular(12),
-              child: CategoriesMenu(
-                onClose: () => setState(() => _menuOpen = false),
+              child: VisiblePoisMenu(
+                onClose: () {
+                  // TODO Check all modes
+                  final displayMode = ref.read(poiDisplayModeProvider);
+                  if (displayMode != PoiDisplayMode.categories) {
+                    ref.read(categoriesSelectionProvider.notifier).clear();
+                  }
+                  if (displayMode != PoiDisplayMode.search) {
+                    ref.read(searchSelectionProvider.notifier).clear();
+                  }
+
+                  setState(() => _menuOpen = false);
+                },
               ),
             ),
           ),

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stadtschreiber/main.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
+import 'package:stadtschreiber/widgets/_icon_getter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class UserActionsBar extends ConsumerWidget {
@@ -20,6 +23,7 @@ class UserActionsBar extends ConsumerWidget {
 
     final isAdmin = roles.contains("admin");
     final isAdminViewEnabled = ref.watch(appStateProvider).isAdminViewEnabled;
+    final currentLocale = ref.watch(localeProvider);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -45,6 +49,20 @@ class UserActionsBar extends ConsumerWidget {
                   (_) => false,
                 );
               }
+            },
+          ),
+
+          // Spracheinstellung
+          FloatingActionButton(
+            heroTag: "Sprache",
+            mini: true,
+            child: getIcon(currentLocale.languageCode),
+            onPressed: () {
+              onClose();
+              showModalBottomSheet(
+                context: context,
+                builder: (_) => const _LocaleBar(),
+              );
             },
           ),
 
@@ -247,5 +265,29 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text("Fehler: $e")));
     }
+  }
+}
+
+class _LocaleBar extends ConsumerWidget {
+  const _LocaleBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: const [BoxShadow(blurRadius: 8, color: Colors.black26)],
+      ),
+      child: Column(
+        children: [
+          ...supportedLocales.map((locale) {
+            return Text(locale.languageCode);
+          }),         // Logout
+        ],
+      ),
+    );
   }
 }

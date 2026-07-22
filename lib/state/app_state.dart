@@ -2,27 +2,31 @@ class AppStateData {
   final bool isAdminViewEnabled;
   final bool isPoiGeomEditMode;
   final bool locationPermission;
-  final bool isPoiEditMode;  
+  final bool isPoiEditMode;
   final double panelHeight = 460;
+  final bool isPoiListVisible;
 
   const AppStateData({
     required this.isAdminViewEnabled,
     required this.isPoiGeomEditMode,
     required this.isPoiEditMode,
     required this.locationPermission,
+    required this.isPoiListVisible,
   });
 
   AppStateData copyWith({
     bool? isAdminViewEnabled,
     bool? isPoiGeomEditMode,
     bool? locationPermission,
-    bool? isPoiEditMode
+    bool? isPoiEditMode,
+    bool? isPoiListVisible,
   }) {
     return AppStateData(
       isAdminViewEnabled: isAdminViewEnabled ?? this.isAdminViewEnabled,
       isPoiGeomEditMode: isPoiGeomEditMode ?? this.isPoiGeomEditMode,
       isPoiEditMode: isPoiEditMode ?? this.isPoiEditMode,
       locationPermission: locationPermission ?? this.locationPermission,
+      isPoiListVisible: isPoiListVisible ?? this.isPoiListVisible,
     );
   }
 
@@ -31,5 +35,6 @@ class AppStateData {
     isPoiGeomEditMode: false,
     locationPermission: false,
     isPoiEditMode: false,
+    isPoiListVisible: false,
   );
 }

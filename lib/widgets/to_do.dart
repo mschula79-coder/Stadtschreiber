@@ -1,10 +1,10 @@
-// TODO Top 10
-// TODO Poi Liste
-// TODO Mehrsprachig
+// TODO Mehrsprachigkeit App Modals und Datenbank
 // TODO add poi owner
 // TODO Login form, Passwort zurücksetzen, registrieren usw.
 // TODO Multipolygon support für geometrie bearbeitung, Polygon consistency check
 // TODO Polygon and Line colors
+// TODO Design PoiPanel = PoiListPanel (Shadow), List Button ergänzen
+// TODO Theme
 
 
 

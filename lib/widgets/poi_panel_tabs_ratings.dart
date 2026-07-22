@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stadtschreiber/l10n/app_localizations.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
@@ -37,7 +38,7 @@ class PoiPanelRatingsTab extends ConsumerWidget {
                 Row(
                   children: [
                     Text(
-                      'Bewertung',
+                      AppLocalizations.of(context)?.rating ?? 'rating',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     SizedBox(width: 4),
@@ -62,9 +63,9 @@ class PoiPanelRatingsTab extends ConsumerWidget {
           error: (e, _) => Text("Fehler: $e"),
         );
       }
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.all(12),
-        child: Text('Keine Kategorie gefunden'),
+        child: Text(AppLocalizations.of(context)?.noCategoriesLoaded??'noCategoriesLoaded'),
       );
     }
   }

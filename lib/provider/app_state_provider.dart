@@ -33,6 +33,10 @@ class AppStateNotifier extends Notifier<AppStateData> {
     state = state.copyWith(locationPermission: value);
   }
 
+  void setPoiListVisible(bool value) {
+    state = state.copyWith(isPoiListVisible: value);
+  }
+
 /*   void setUserName(String name) {
     DebugService.log('AppState.setUsername: $name');
     state = state.copyWith(username: name);

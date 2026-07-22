@@ -19,6 +19,7 @@ import 'package:stadtschreiber/widgets/category_node_tile.dart';
 import 'package:stadtschreiber/widgets/modal_address_edit.dart';
 import 'package:stadtschreiber/widgets/modal_bool_features_editor.dart';
 import 'package:stadtschreiber/widgets/modal_string_features_editor.dart';
+import 'package:stadtschreiber/l10n/app_localizations.dart';
 
 class PoiPanelInfoTab extends ConsumerWidget {
   const PoiPanelInfoTab({super.key});
@@ -50,8 +51,8 @@ class PoiPanelInfoTab extends ConsumerWidget {
           Stack(
             children: [
               InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: "Name",
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)?.name,
                   alignLabelWithHint: true,
                   isDense: true,
                   floatingLabelBehavior: FloatingLabelBehavior.always,
@@ -72,7 +73,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
                         onPressed: () async {
                           final newValue = await openEditModal(
                             context,
-                            fieldName: "Name",
+                            fieldName: AppLocalizations.of(context)?.name ?? '',
                             initialValue: selectedPoi.name,
                             maxLines: 1,
                           );
@@ -100,8 +101,8 @@ class PoiPanelInfoTab extends ConsumerWidget {
           Stack(
             children: [
               InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: "Beschreibung",
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)?.description,
                   alignLabelWithHint: true,
                   floatingLabelBehavior: FloatingLabelBehavior.always,
                   isDense: true,
@@ -124,7 +125,8 @@ class PoiPanelInfoTab extends ConsumerWidget {
                     onPressed: () async {
                       final newValue = await openEditModal(
                         context,
-                        fieldName: "Beschreibung",
+                        fieldName:
+                            AppLocalizations.of(context)?.description ?? '',
                         initialValue: selectedPoi.description ?? '',
                         maxLines: 10,
                       );
@@ -152,7 +154,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
             children: [
               InputDecorator(
                 decoration: InputDecoration(
-                  labelText: "Adresse",
+                  labelText: AppLocalizations.of(context)?.address,
                   alignLabelWithHint: true,
                   contentPadding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
                 ),
@@ -203,7 +205,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
             children: [
               InputDecorator(
                 decoration: InputDecoration(
-                  labelText: "Links",
+                  labelText: AppLocalizations.of(context)?.links,
                   alignLabelWithHint: true,
                   contentPadding: isEditModeEnabled
                       ? const EdgeInsets.fromLTRB(0, 8, 35, 5)
@@ -297,7 +299,9 @@ class PoiPanelInfoTab extends ConsumerWidget {
                       final newLinks = await showDialog<Map<String, String>>(
                         context: context,
                         builder: (_) => StringFeaturesEditorDialog(
-                          dialogTitle: "Links bearbeiten",
+                          dialogTitle:
+                              AppLocalizations.of(context)?.editLinks ??
+                              'editLinks',
                           initialValues: selectedPoi.metadata.getLinks(),
                         ),
                       );
@@ -325,7 +329,8 @@ class PoiPanelInfoTab extends ConsumerWidget {
             children: [
               InputDecorator(
                 decoration: InputDecoration(
-                  labelText: "Features",
+                  labelText:
+                      AppLocalizations.of(context)?.features ?? 'features',
                   alignLabelWithHint: true,
                   contentPadding: isEditModeEnabled
                       ? const EdgeInsets.fromLTRB(0, 8, 35, 5)
@@ -380,7 +385,9 @@ class PoiPanelInfoTab extends ConsumerWidget {
                       final newFeatures = await showDialog<Map<String, bool>>(
                         context: context,
                         builder: (_) => BoolFeaturesEditorDialog(
-                          dialogTitle: "Features bearbeiten",
+                          dialogTitle:
+                              AppLocalizations.of(context)?.editFeatures ??
+                              'editFeatures',
                           initialFeatures: selectedPoi.metadata.getFeatures(),
                         ),
                       );
@@ -404,7 +411,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
           if (isEditModeEnabled) ...[
             const SizedBox(height: 20),
             Text(
-              'Kategorien bearbeiten',
+              AppLocalizations.of(context)?.editCategories ?? 'editCategories',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             // Kategorien Liste
@@ -413,7 +420,10 @@ class PoiPanelInfoTab extends ConsumerWidget {
                 final categories = ref.watch(categoriesProvider).categories;
 
                 if (categories.isEmpty) {
-                  return const Text("Keine Kategorien geladen");
+                  return Text(
+                    AppLocalizations.of(context)?.editCategories ??
+                        'editCategories',
+                  );
                 }
 
                 return ListView(
@@ -430,7 +440,8 @@ class PoiPanelInfoTab extends ConsumerWidget {
           if (isEditModeEnabled) ...[
             // Standort und Geometrie
             Text(
-              'Standort und Geometrie',
+              AppLocalizations.of(context)?.locationAndGeometrie ??
+                  'locationAndGeometrie',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 15),
@@ -458,7 +469,10 @@ class PoiPanelInfoTab extends ConsumerWidget {
             // Geometriepunkte bearbeiten
             const SizedBox(height: 5),
             SwitchListTile(
-              title: const Text('Geometriepunkte bearbeiten'),
+              title: Text(
+                AppLocalizations.of(context)?.editGeometryPoints ??
+                    'editGeometryPoints',
+              ),
               contentPadding: const EdgeInsets.only(left: 0, right: 0),
               value: appState.isPoiGeomEditMode,
               onChanged: (newValue) {
@@ -474,9 +488,12 @@ class PoiPanelInfoTab extends ConsumerWidget {
             buildGeometryTypeSelector(context, selectedPoi, ref),
             const SizedBox(height: 5),
 
-            const Text(
-              'Punkte von 2D Geometrien (tippe lange auf die Karte, um weitere Punkte hinzuzufügen):',
+            Text(
+              AppLocalizations.of(context)?.editGeometryPointsInstruction ??
+                  'editGeometryPointsInstruction',
             ),
+
+            // Pointslist
             EditableList<String>(
               items: pointsList,
               isEditModeEnabled: true,
@@ -501,7 +518,10 @@ class PoiPanelInfoTab extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Geometrietyp", style: TextStyle(fontSize: 16)),
+        Text(
+          AppLocalizations.of(context)?.geometryType ?? 'geometryType',
+          style: TextStyle(fontSize: 16),
+        ),
         const SizedBox(height: 8),
 
         RadioGroup<String>(
@@ -519,20 +539,25 @@ class PoiPanelInfoTab extends ConsumerWidget {
           },
           child: Column(
             children: <Widget>[
-              const ListTile(
-                title: Text('Punkt'),
+              ListTile(
+                title: Text(AppLocalizations.of(context)?.point ?? 'point'),
                 leading: Radio<String>(toggleable: true, value: 'point'),
               ),
-              const ListTile(
-                title: Text('Linie'),
+              ListTile(
+                title: Text(AppLocalizations.of(context)?.line ?? 'line'),
                 leading: Radio<String>(toggleable: true, value: 'linestring'),
               ),
-              const ListTile(
-                title: Text('Polygon'),
+              ListTile(
+                title: Text(
+                  AppLocalizations.of(context)?.polygone ?? 'polygone',
+                ),
                 leading: Radio<String>(toggleable: true, value: 'polygon'),
               ),
-              const ListTile(
-                title: Text('MultiPolygon'),
+              ListTile(
+                title: Text(
+                  AppLocalizations.of(context)?.multipolygone ??
+                      'multipolygone',
+                ),
                 leading: Radio<String>(toggleable: true, value: 'multipolygon'),
               ),
             ],

@@ -16,7 +16,7 @@ import 'package:iconify_flutter/icons/simple_icons.dart';
 // ignore: unused_import
 import 'package:iconify_flutter/icons/maki.dart';
 import 'package:iconify_flutter/icons/material_symbols.dart';
-
+import 'package:flutter_svg/flutter_svg.dart';
 /* import 'package:iconify_flutter/icons/cib.dart';
 
  */
@@ -109,7 +109,35 @@ Widget getIcon(String category) {
       return Iconify(Mdi.water_well_outline, size: 24);
     case "youth-centers":
       return Iconify(Mdi.human_greeting_proximity, size: 24);
-
+    
+    // Flaggen für Spracheinstellung
+    case "CH":
+      return SvgPicture.asset(
+        'assets/icons/locale_ch.svg',
+        width: 24,
+        height: 24,
+      );
+      case "de":
+      case "DE":
+      return SvgPicture.asset(
+        'assets/icons/locale_de.svg',
+        width: 24,
+        height: 24,
+      );
+      case "en":
+      case "EN":
+      return SvgPicture.asset(
+        'assets/icons/locale_en.svg',
+        width: 24,
+        height: 24,
+      );
+      case "fr":
+      case "FR":
+      return SvgPicture.asset(
+        'assets/icons/locale_fr.svg',
+        width: 24,
+        height: 24,
+      );
     default:
       return const SizedBox.shrink();
   }
