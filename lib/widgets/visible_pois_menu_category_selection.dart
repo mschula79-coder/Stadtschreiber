@@ -20,7 +20,8 @@ class PoiCategorySelection extends ConsumerStatefulWidget {
   const PoiCategorySelection({super.key, required this.onClose});
 
   @override
-  ConsumerState<PoiCategorySelection> createState() => _PoiCategorySelectionState();
+  ConsumerState<PoiCategorySelection> createState() =>
+      _PoiCategorySelectionState();
 }
 
 class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
@@ -36,205 +37,227 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
     final categories = ref.watch(categoriesProvider).categories;
     final isAdmin = ref.read(supabaseUserStateProvider).isAdmin;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-
-      children: [
-        // Überschrift Kategorien
-        Row(
-          children: [
-            const Text(
-              "Kategorien",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            isFilterActive
-                ? IconButton(
-                    onPressed: () {
-                      setState(() {
-                        isFilterActive = false;
-                        _categoryFilter = "";
-                        _categoryFilterController.clear();
-                        expandAll = false;
-                      });
-                    },
-                    icon: Icon(Icons.filter_alt_off),
-                  )
-                : IconButton(
-                    onPressed: () {
-                      setState(() {
-                        isFilterActive = true;
-                      });
-                    },
-                    icon: Icon(Icons.filter_alt),
-                  ),
-          ],
-        ),
-
-        isFilterActive
-            ? Column(
-                children: [
-                  Container(
-                    width: 250,
-                    padding: const EdgeInsets.fromLTRB(6, 0, 4, 0),
-                    margin: const EdgeInsets.fromLTRB(4, 0, 4, 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: const [
-                        BoxShadow(color: Colors.black26, blurRadius: 6),
-                      ],
-                    ),
-
-                    child: TextField(
-                      controller: _categoryFilterController,
-                      decoration: const InputDecoration(
-                        hintText: "Kategorien filtern",
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.fromLTRB(0, 8, 0, 8),
-                        isDense: true,
-                      ),
-                      onChanged: (value) {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        listTileTheme: const ListTileThemeData(contentPadding: EdgeInsets.zero),
+      ),
+      child: ListTileTheme(
+        contentPadding: EdgeInsets.zero,
+        horizontalTitleGap: 0,
+        minLeadingWidth: 0,
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.only(left: 0, right: 15),
+          childrenPadding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
+          visualDensity: VisualDensity.compact,
+          initiallyExpanded: false,
+          expandedCrossAxisAlignment: CrossAxisAlignment.start,
+          expandedAlignment: Alignment.topLeft,
+          title: Row(
+            children: [
+              const Text(
+                "Kategorien",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              // Filterbutton hinter Textfeld schieben
+              isFilterActive
+                  ? IconButton(
+                      onPressed: () {
                         setState(() {
-                          _categoryFilter = value.trim().toLowerCase();
-                          expandAll = _categoryFilter.isNotEmpty;
+                          isFilterActive = false;
+                          _categoryFilter = "";
+                          _categoryFilterController.clear();
+                          expandAll = false;
                         });
                       },
+                      icon: Icon(Icons.filter_alt_off),
+                    )
+                  : IconButton(
+                      onPressed: () {
+                        setState(() {
+                          isFilterActive = true;
+                        });
+                      },
+                      icon: Icon(Icons.filter_alt),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-              )
-            : SizedBox.shrink(),
+            ],
+          ),
 
-        // Kategorien-Baum
-        ..._filterCategoryTree(
-          categories,
-          _categoryFilter,
-        ).map((node) => _buildCategoryNode(context, ref, node)),
-        isAdmin
-            ? SwitchListTile(
-                title: const Text(
-                  'Bewertungskriterien bearbeiten',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                contentPadding: const EdgeInsets.only(
-                  top: 10,
-                  left: 0,
-                  right: 0,
-                ),
-                value: isAdminViewEnabled,
-                onChanged: (newValue) {
-                  setState(() {
-                    isAdminViewEnabled = !isAdminViewEnabled;
-                  });
-                },
-              )
-            : SizedBox.shrink(),
-        isAdminViewEnabled
-            ? Padding(
-                padding: const EdgeInsets.only(left: 5),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ref
-                        .watch(globalCriteriaProvider)
-                        .when(
-                          data: (ratingCriteria) {
-                            return EditableList<RatingCriterionDTO>(
-                              items: ratingCriteria,
-                              isEditModeEnabled: true,
-                              itemBuilder: (entry) {
-                                return Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                  ),
-                                  child: Text(
-                                    entry.name,
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                );
-                              },
-                              onDelete: (entry) async {
-                                final confirmed = await openConfirmDialog(
-                                  context,
-                                  message:
-                                      'Dies löscht das Kriterium ${entry.name} für alle Kategorien. Willst du das?',
-                                  optionTrue: 'Ja',
-                                  optionFalse: 'Nein',
-                                );
-
-                                if (confirmed == true) {
-                                  ref
-                                      .read(categoriesRepositoryProvider)
-                                      .deleteCriterion(entry);
-                                  ref.invalidate(globalCriteriaProvider);
-                                }
-                              },
-                              onAdd: () async {
-                                final emptyCriterion = RatingCriterionDTO(
-                                  id: const Uuid().v4(),
-                                  name: '',
-                                  description: '',
-                                  scoreDescriptions: {},
-                                );
-
-                                final emptyCriterionWithId = await ref
-                                    .read(categoriesRepositoryProvider)
-                                    .newCriterion(emptyCriterion);
-
-                                if (!context.mounted) return;
-
-                                final newCriterion =
-                                    await showDialog<RatingCriterionDTO>(
-                                      context: context,
-                                      barrierDismissible: false,
-                                      builder: (_) => RatingCriteriaEditModal(
-                                        criterionDTO: emptyCriterionWithId,
-                                      ),
-                                    );
-
-                                if (newCriterion == null) return;
-
-                                await ref
-                                    .read(categoriesRepositoryProvider)
-                                    .updateCriterion(newCriterion);
-                                ref.invalidate(globalCriteriaProvider);
-
-                                return;
-                              },
-                              onEdit: (entry) async {
-                                final edited =
-                                    await showDialog<RatingCriterionDTO>(
-                                      context: context,
-                                      barrierDismissible: false,
-                                      builder: (_) => RatingCriteriaEditModal(
-                                        criterionDTO: entry,
-                                      ),
-                                    );
-
-                                if (edited == null) return;
-
-                                await ref
-                                    .read(categoriesRepositoryProvider)
-                                    .updateCriterion(edited);
-                                ref.invalidate(globalCriteriaProvider);
-
-                                return;
-                              },
-                            );
-                          },
-                          loading: () =>
-                              const CircularProgressIndicator(strokeWidth: 2),
-                          error: (e, st) => Text("Fehler: $e"),
+          children: [
+            // Überschrift Kategorien
+            isFilterActive
+                ? Column(
+                    children: [
+                      Container(
+                        width: 250,
+                        padding: const EdgeInsets.fromLTRB(6, 0, 4, 0),
+                        margin: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black26, blurRadius: 6),
+                          ],
                         ),
-                  ],
-                ),
-              )
-            : SizedBox.shrink(),
-      ],
+
+                        child: TextField(
+                          controller: _categoryFilterController,
+                          decoration: const InputDecoration(
+                            hintText: "Kategorien filtern",
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.fromLTRB(0, 8, 0, 8),
+                            isDense: true,
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              _categoryFilter = value.trim().toLowerCase();
+                              expandAll = _categoryFilter.isNotEmpty;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  )
+                : SizedBox.shrink(),
+
+            // Kategorien-Baum
+            ..._filterCategoryTree(
+              categories,
+              _categoryFilter,
+            ).map((node) => _buildCategoryNode(context, ref, node)),
+            isAdmin
+                ? SwitchListTile(
+                    title: const Text(
+                      'Bewertungskriterien bearbeiten',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.only(
+                      top: 10,
+                      left: 0,
+                      right: 0,
+                    ),
+                    value: isAdminViewEnabled,
+                    onChanged: (newValue) {
+                      setState(() {
+                        isAdminViewEnabled = !isAdminViewEnabled;
+                      });
+                    },
+                  )
+                : SizedBox.shrink(),
+            isAdminViewEnabled
+                ? Padding(
+                    padding: const EdgeInsets.only(left: 5),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ref
+                            .watch(globalCriteriaProvider)
+                            .when(
+                              data: (ratingCriteria) {
+                                return EditableList<RatingCriterionDTO>(
+                                  items: ratingCriteria,
+                                  isEditModeEnabled: true,
+                                  itemBuilder: (entry) {
+                                    return Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        0,
+                                        0,
+                                        0,
+                                        0,
+                                      ),
+                                      child: Text(
+                                        entry.name,
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                    );
+                                  },
+                                  onDelete: (entry) async {
+                                    final confirmed = await openConfirmDialog(
+                                      context,
+                                      message:
+                                          'Dies löscht das Kriterium ${entry.name} für alle Kategorien. Willst du das?',
+                                      optionTrue: 'Ja',
+                                      optionFalse: 'Nein',
+                                    );
+
+                                    if (confirmed == true) {
+                                      ref
+                                          .read(categoriesRepositoryProvider)
+                                          .deleteCriterion(entry);
+                                      ref.invalidate(globalCriteriaProvider);
+                                    }
+                                  },
+                                  onAdd: () async {
+                                    final emptyCriterion = RatingCriterionDTO(
+                                      id: const Uuid().v4(),
+                                      name: '',
+                                      description: '',
+                                      scoreDescriptions: {},
+                                    );
+
+                                    final emptyCriterionWithId = await ref
+                                        .read(categoriesRepositoryProvider)
+                                        .newCriterion(emptyCriterion);
+
+                                    if (!context.mounted) return;
+
+                                    final newCriterion =
+                                        await showDialog<RatingCriterionDTO>(
+                                          context: context,
+                                          barrierDismissible: false,
+                                          builder: (_) =>
+                                              RatingCriteriaEditModal(
+                                                criterionDTO:
+                                                    emptyCriterionWithId,
+                                              ),
+                                        );
+
+                                    if (newCriterion == null) return;
+
+                                    await ref
+                                        .read(categoriesRepositoryProvider)
+                                        .updateCriterion(newCriterion);
+                                    ref.invalidate(globalCriteriaProvider);
+
+                                    return;
+                                  },
+                                  onEdit: (entry) async {
+                                    final edited =
+                                        await showDialog<RatingCriterionDTO>(
+                                          context: context,
+                                          barrierDismissible: false,
+                                          builder: (_) =>
+                                              RatingCriteriaEditModal(
+                                                criterionDTO: entry,
+                                              ),
+                                        );
+
+                                    if (edited == null) return;
+
+                                    await ref
+                                        .read(categoriesRepositoryProvider)
+                                        .updateCriterion(edited);
+                                    ref.invalidate(globalCriteriaProvider);
+
+                                    return;
+                                  },
+                                );
+                              },
+                              loading: () => const CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                              error: (e, st) => Text("Fehler: $e"),
+                            ),
+                      ],
+                    ),
+                  )
+                : SizedBox.shrink(),
+          ],
+        ),
+      ),
     );
   }
 

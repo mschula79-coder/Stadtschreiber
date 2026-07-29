@@ -96,7 +96,6 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
               borderRadius: BorderRadius.circular(12),
               child: VisiblePoisMenu(
                 onClose: () {
-                  // TODO Check all modes
                   final displayMode = ref.read(poiDisplayModeProvider);
                   if (displayMode != PoiDisplayMode.categories) {
                     ref.read(categoriesSelectionProvider.notifier).clear();

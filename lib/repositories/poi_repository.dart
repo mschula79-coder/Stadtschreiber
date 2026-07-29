@@ -34,7 +34,7 @@ class PoiRepository {
   Future<List<PointOfInterest>> loadTopNPois({
   required String categoryId,
   required String criterionId,
-  required int limit,
+  required double limit,
 }) async {
   final supabase = Supabase.instance.client;
 
@@ -44,9 +44,17 @@ class PoiRepository {
       .select('poi_id, rating')
       .eq('criterion_id', criterionId)
       .order('rating', ascending: false)
-      .limit(limit);
+      .limit(limit.toInt());
 
   if (ratingsRaw.isEmpty) return [];
+
+  final data = await supabase
+    .from('categories')
+    .select('slug')
+    .eq('id', categoryId)
+    .single();
+
+final String categoryName = data['slug'] as String;
 
   // 2) POI-IDs extrahieren
   final poiIds = ratingsRaw.map((r) => r['poi_id'] as String).toList();
@@ -63,7 +71,7 @@ class PoiRepository {
       .toList();
 
 final filtered = pois
-    .where((p) => p.categories?.contains(categoryId) ?? false)
+    .where((p) => p.categories?.contains(categoryName) ?? false)
     .toList();
 
   // 6) Reihenfolge wiederherstellen (Top‑N Reihenfolge)
@@ -75,7 +83,6 @@ final filtered = pois
 
   return filtered;
 }
-
 
   Future<PointOfInterest> saveOSMPoiToSupabase(PointOfInterest poi) async {
     poi.newPoi = true;

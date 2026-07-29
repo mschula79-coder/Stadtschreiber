@@ -1,3 +1,6 @@
+import 'package:stadtschreiber/provider/address_lookup_queue_provider.dart';
+import 'package:stadtschreiber/provider/poi_service_provider.dart';
+
 import '../models/poi.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../repositories/poi_repository.dart';
@@ -23,7 +26,19 @@ final searchResultsProvider = FutureProvider.autoDispose
         params.camera.lon,
       );
 
-      return pois;
+      final poiService = ref.read(poiServiceProvider);
+
+      final processed = <PointOfInterest>[];
+
+      for (final poi in pois) {
+        final checked = await poiService.checkForDuplicates(poi);
+
+        ref.read(addressLookupQueueProvider.notifier).enqueue(checked);
+
+        processed.add(checked);
+      }
+
+      return processed;
     });
 
 final searchSelectionProvider =

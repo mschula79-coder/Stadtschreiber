@@ -5,38 +5,22 @@ import 'package:stadtschreiber/provider/categories_menu_provider.dart';
 import 'package:stadtschreiber/provider/manual_pois_provider.dart';
 import 'package:stadtschreiber/provider/poi_display_mode_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
-import 'package:stadtschreiber/provider/poi_top10_provider.dart';
-import 'package:stadtschreiber/provider/search_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 
 final visiblePoisProvider = FutureProvider<List<PointOfInterest>>((ref) async {
   final repo = ref.watch(poiRepositoryProvider);
   final mode = ref.watch(poiDisplayModeProvider);
-  final top10 = ref.watch(top10StateProvider);
 
   final selectedCategories = ref
       .watch(categoriesSelectionProvider)
       .selectedValues;
-  final searchSelection = ref.watch(searchSelectionProvider);
-  final selectedPoi = ref.watch(selectedPoiProvider);
+/*   final searchSelection = ref.watch(searchSelectionProvider);
+ */  final selectedPoi = ref.watch(selectedPoiProvider);
 
   // 1) Suchauswahl hat Vorrang
-  if (searchSelection.isNotEmpty) {
+ /*  if (searchSelection.isNotEmpty) {
     return searchSelection;
-  }
-
-  // ⭐ 2) Top‑10 Modus
-  if (mode == PoiDisplayMode.top10) {
-    if (top10.category == null || top10.criterion == null) {
-      return [];
-    }
-
-    return repo.loadTopNPois(
-      categoryId: top10.category!.id,
-      criterionId: top10.criterion!.id,
-      limit: top10.listLength,
-    );
-  }
+  } */
 
 if (mode == PoiDisplayMode.manual) {
     

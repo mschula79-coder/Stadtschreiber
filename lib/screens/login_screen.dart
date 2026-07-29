@@ -24,8 +24,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final horizontalPadding = width < 600 ? 24.0 : width * 0.3;
-final emailText= AppLocalizations.of(context)!.email;
-final passwordText = AppLocalizations.of(context)!.password;
+    final emailText = AppLocalizations.of(context)!.email;
+    final passwordText = AppLocalizations.of(context)!.password;
 
     return Scaffold(
       body: Center(
@@ -121,13 +121,19 @@ final passwordText = AppLocalizations.of(context)!.password;
   }
 
   Future<void> _register() async {
-    await _authAction(() async {
-      await Supabase.instance.client.auth.signUp(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-    });
-  }
+  final email = emailController.text.trim();
+  final password = passwordController.text.trim();
+
+  await Supabase.instance.client.auth.signUp(
+    email: email,
+    password: password,
+    emailRedirectTo: 'stadtschreiber://auth-callback',
+  );
+
+  // res.user ist jetzt unverifiziert
+  // User muss E-Mail klicken → Deep-Link → verifyOtp()
+}
+
 
   Future<void> _authAction(Future<void> Function() action) async {
     setState(() {

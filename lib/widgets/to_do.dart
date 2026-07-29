@@ -3,8 +3,10 @@
 // TODO Login form, Passwort zurücksetzen, registrieren usw.
 // TODO Multipolygon support für geometrie bearbeitung, Polygon consistency check
 // TODO Polygon and Line colors
-// TODO Design PoiPanel = PoiListPanel (Shadow), List Button ergänzen
+// TODO Design PoiPanel = PoiListPanel (Shadow), List Button ergänzen und Top10 Position
+// Mehrfachselektion PoiList
 // TODO Theme
+// TODO automatisches Scrollen nach expansion im visiblePoismenu fixen
 
 
 

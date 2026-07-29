@@ -6,11 +6,13 @@ import 'package:maplibre/maplibre.dart' as maplibre;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:stadtschreiber/models/poi.dart';
+import 'package:stadtschreiber/models/poi_display_modes.dart';
 import 'package:stadtschreiber/provider/address_lookup_queue_provider.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:stadtschreiber/provider/categories_menu_provider.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
 import 'package:stadtschreiber/provider/map_controller_provider.dart';
+import 'package:stadtschreiber/provider/poi_display_mode_provider.dart';
 import 'package:stadtschreiber/provider/poi_drag_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/poi_service_provider.dart';
@@ -414,6 +416,9 @@ class MapScreenState extends ConsumerState<MapScreen> {
             onRemoveThumbnails: () {
               ref.read(categoriesSelectionProvider.notifier).clear();
               ref.read(searchSelectionProvider.notifier).clear();
+              ref
+                    .read(poiDisplayModeProvider.notifier)
+                    .setMode(PoiDisplayMode.categories);
             },
 
             isAdmin: user.isAdmin,

@@ -6,14 +6,14 @@ class PoiListItem extends StatelessWidget {
   final PointOfInterest poi;
   final VoidCallback onTap;
 
-  const PoiListItem({
-    super.key,
-    required this.poi,
-    required this.onTap,
-  });
+  const PoiListItem({super.key, required this.poi, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    String distanceKm = 'unbekannt';
+    if (poi.distance != null) {
+      distanceKm = '${(poi.distance! / 1000).toStringAsFixed(3)}km' ;
+}
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -27,11 +27,10 @@ class PoiListItem extends StatelessWidget {
               child: SizedBox(
                 width: 60,
                 height: 60,
-                child: (poi.featuredImageUrl != null && poi.featuredImageUrl!.isNotEmpty) 
-                    ? Image.network(
-                        poi.featuredImageUrl!,
-                        fit: BoxFit.cover,
-                      )
+                child:
+                    (poi.featuredImageUrl != null &&
+                        poi.featuredImageUrl!.isNotEmpty)
+                    ? Image.network(poi.featuredImageUrl!, fit: BoxFit.cover)
                     : Container(
                         color: Colors.grey.shade300,
                         child: const Icon(Icons.image_not_supported),
@@ -81,13 +80,10 @@ class PoiListItem extends StatelessWidget {
                       ),
                     ),
 
-                  // Distanz
+                  // Distanz in km
                   Text(
-                    'Entfernung: ${AppLocalizations.of(context)?.distanceFromCenter ??'distanceFromCenter'}${poi.distance}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
+                    '${AppLocalizations.of(context)?.distanceFromCenter ?? 'distanceFromCenter'} $distanceKm',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                 ],
               ),

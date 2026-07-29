@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/poi_display_modes.dart';
 import 'package:stadtschreiber/provider/manual_pois_provider.dart';
 import 'package:stadtschreiber/provider/poi_display_mode_provider.dart';
+import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/widgets/visible_pois_menu_category_selection.dart';
 import 'package:stadtschreiber/widgets/visible_pois_menu_favourites.dart';
 import 'package:stadtschreiber/widgets/visible_pois_menu_search.dart';
@@ -18,9 +19,8 @@ class VisiblePoisMenu extends ConsumerStatefulWidget {
 }
 
 class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
-  bool isFilterActive = false;
-  bool expandAll = false;
-  bool isAdminViewEnabled = false;
+
+  final ScrollController menuScrollController = ScrollController();
 
   @override
   Widget build(BuildContext context) {
@@ -39,11 +39,23 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
 
       // Menuinhalt
       child: SingleChildScrollView(
+        controller: menuScrollController,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+
           children: [
             PoiSearch(
               onClose: widget.onClose,
+              onSelect: (poi) {
+                ref.read(selectedPoiProvider.notifier).setPoi(poi);
+                ref.read(manualPoisProvider.notifier).clear();
+                ref.read(manualPoisProvider.notifier).setPois([poi]);
+
+                ref
+                    .read(poiDisplayModeProvider.notifier)
+                    .setMode(PoiDisplayMode.manual);
+                widget.onClose();
+              },
               onShowAll: (searchResultPois) {
                 ref.read(manualPoisProvider.notifier).setPois(searchResultPois);
                 ref
@@ -52,13 +64,52 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
                 widget.onClose();
               },
             ),
+
             SizedBox(height: 8),
+
             PoiCategorySelection(onClose: widget.onClose),
+
             SizedBox(height: 8),
-            PoiTop10List(onSelect: () {}),
+
+            PoiTop10List(
+              onClose: () {
+                widget.onClose();
+              },
+              onSelect: (poi) {
+                ref.read(selectedPoiProvider.notifier).setPoi(poi);
+                ref.read(manualPoisProvider.notifier).clear();
+                ref.read(manualPoisProvider.notifier).setPois([poi]);
+
+                ref
+                    .read(poiDisplayModeProvider.notifier)
+                    .setMode(PoiDisplayMode.manual);
+                widget.onClose();
+              },
+              onShowAll: (top10Pois) {
+                ref.read(manualPoisProvider.notifier).setPois(top10Pois);
+                ref
+                    .read(poiDisplayModeProvider.notifier)
+                    .setMode(PoiDisplayMode.manual);
+                widget.onClose();
+              },
+            ),
+
             SizedBox(height: 8),
+
             PoiFavouritesList(
+              scrollController: menuScrollController,
               onClose: widget.onClose,
+              onSelect: (poi) {
+                ref.read(selectedPoiProvider.notifier).setPoi(poi);
+                ref.read(manualPoisProvider.notifier).clear();
+                ref.read(manualPoisProvider.notifier).setPois([poi]);
+
+                ref
+                    .read(poiDisplayModeProvider.notifier)
+                    .setMode(PoiDisplayMode.manual);
+                widget.onClose();
+              },
+
               onShowAll: (favPois) {
                 ref.read(manualPoisProvider.notifier).setPois(favPois);
                 ref
