@@ -32,57 +32,67 @@ class PoiRepository {
   }
 
   Future<List<PointOfInterest>> loadTopNPois({
-  required String categoryId,
-  required String criterionId,
-  required double limit,
-}) async {
-  final supabase = Supabase.instance.client;
+    required String categoryId,
+    required String criterionId,
+    required double limit,
+  }) async {
+    final supabase = Supabase.instance.client;
 
-  // 1) Ratings für dieses Kriterium laden
-  final ratingsRaw = await supabase
-      .from('poi_ratings')
-      .select('poi_id, rating')
-      .eq('criterion_id', criterionId)
-      .order('rating', ascending: false)
-      .limit(limit.toInt());
+    // 1) Bayesian-Daten laden
+    final rows = await supabase
+        .from('poi_ratings_bayesian')
+        .select()
+        .eq('criterion_id', criterionId);
 
-  if (ratingsRaw.isEmpty) return [];
+    if (rows.isEmpty) return [];
 
-  final data = await supabase
-    .from('categories')
-    .select('slug')
-    .eq('id', categoryId)
-    .single();
+    // 2) Kategorie-Slug holen
+    final data = await supabase
+        .from('categories')
+        .select('slug')
+        .eq('id', categoryId)
+        .single();
 
-final String categoryName = data['slug'] as String;
+    final String categoryName = data['slug'] as String;
 
-  // 2) POI-IDs extrahieren
-  final poiIds = ratingsRaw.map((r) => r['poi_id'] as String).toList();
+    // 3) POIs laden
+    final poiIds = rows.map((r) => r['poi_id'] as String).toList();
 
-  // 3) POIs laden
-  final poisRaw = await supabase
-      .from('pois')
-      .select('*')
-      .inFilter('id', poiIds);
+    final poisRaw = await supabase
+        .from('pois')
+        .select('*')
+        .inFilter('id', poiIds);
 
-  // 4) POIs in Objekte umwandeln
-  final pois = poisRaw
-      .map<PointOfInterest>((row) => PointOfInterest.fromSupabase(row))
-      .toList();
+    final pois = poisRaw
+        .map<PointOfInterest>((row) => PointOfInterest.fromSupabase(row))
+        .toList();
 
-final filtered = pois
-    .where((p) => p.categories?.contains(categoryName) ?? false)
-    .toList();
+    // 4) Kategorie filtern
+    final filtered = pois
+        .where((p) => p.categories?.contains(categoryName) ?? false)
+        .toList();
 
-  // 6) Reihenfolge wiederherstellen (Top‑N Reihenfolge)
-  filtered.sort((a, b) {
-    final ratingA = ratingsRaw.firstWhere((r) => r['poi_id'] == a.id)['rating'];
-    final ratingB = ratingsRaw.firstWhere((r) => r['poi_id'] == b.id)['rating'];
-    return ratingB.compareTo(ratingA);
-  });
+    // 5) Bayesian Score berechnen
+    double bayesScore(Map<String, dynamic> row) {
+      final R = (row['avg_rating'] as num).toDouble();
+      final v = (row['rating_count'] as num).toDouble();
+      final C = (row['global_avg'] as num).toDouble();
+      final m = (row['m'] as num).toDouble();
 
-  return filtered;
-}
+      return (v / (v + m)) * R + (m / (v + m)) * C;
+    }
+
+    // 6) Sortieren nach Bayesian Score
+    filtered.sort((a, b) {
+      final rowA = rows.firstWhere((r) => r['poi_id'] == a.id);
+      final rowB = rows.firstWhere((r) => r['poi_id'] == b.id);
+
+      return bayesScore(rowB).compareTo(bayesScore(rowA));
+    });
+
+    // 7) Limit anwenden
+    return filtered.take(limit.toInt()).toList();
+  }
 
   Future<PointOfInterest> saveOSMPoiToSupabase(PointOfInterest poi) async {
     poi.newPoi = true;

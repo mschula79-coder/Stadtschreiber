@@ -105,7 +105,7 @@ class _MapActionsState extends ConsumerState<MapActions> {
                   child: const Icon(Icons.add_location),
                 ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 0),
 
               Row(
                 children: [

@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/main.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:stadtschreiber/provider/locale_provider.dart';
+import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/widgets/_icon_getter.dart';
+import 'package:stadtschreiber/widgets/modal_user_edit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class UserActionsBar extends ConsumerWidget {
@@ -18,10 +20,10 @@ class UserActionsBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = Supabase.instance.client.auth.currentUser;
-    final roles = user?.appMetadata['roles'] ?? [];
+    final appUser = ref.read(supabaseUserStateProvider);
 
-    final isAdmin = roles.contains("admin");
+    final isAdmin = appUser.isAdmin;
+
     final isAdminViewEnabled = ref.watch(appStateProvider).isAdminViewEnabled;
     final currentLocale = ref.watch(localeProvider);
 
@@ -109,13 +111,24 @@ class UserActionsBar extends ConsumerWidget {
   }
 }
 
-class _SettingsSheet extends StatelessWidget {
+class _SettingsSheet extends ConsumerWidget {
   const _SettingsSheet();
 
   @override
-  Widget build(BuildContext context) {
-    final user = Supabase.instance.client.auth.currentUser;
-    final roles = user?.appMetadata['roles'] ?? [];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userAuth = Supabase.instance.client.auth.currentUser;
+    final user = ref.read(supabaseUserStateProvider);
+    String role = '';
+
+    if (userAuth == null) return SizedBox.shrink();
+
+    if (user.isAdmin) {
+      role = "Admin";
+    } else if (user.isAuthor) {
+      role = "Admin";
+    } else {
+      role = "Benutzer";
+    }
 
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -123,34 +136,34 @@ class _SettingsSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Benutzername", style: Theme.of(context).textTheme.titleLarge),
+          Text("Benutzer", style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
 
-          Text("Email: ${user?.email}"),
-
-          const SizedBox(height: 8),
-
-          Text("Rollen: ${roles.join(', ')}"),
+          Text("Benutzername: ${user.username}"),
 
           const SizedBox(height: 8),
 
-          // Passwort ändern
-          IconButton(
-            tooltip: "Passwort ändern",
-            icon: const Icon(Icons.lock),
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                builder: (_) => const _ChangePasswordSheet(),
-              );
-            },
-          ),
+          Text("Email: ${userAuth.email}"),
+
+          const SizedBox(height: 8),
+
+          Text("Rolle: $role"),
+
+          const SizedBox(height: 8),
 
           ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(context);
-              // hier kannst du später Profil bearbeiten einbauen
-            },
+            onPressed: () async{
+              final updatedProfile = await showDialog<List<String>>(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (_) => UserEditModal(
+                          email: userAuth.email!,
+                          username: user.username,
+
+                        ),
+                      );  },
+
+                      // TODO update in Supabase profile
             icon: const Icon(Icons.person),
             label: const Text("Profil bearbeiten"),
           ),
@@ -159,11 +172,34 @@ class _SettingsSheet extends StatelessWidget {
 
           ElevatedButton.icon(
             onPressed: () {
-              Navigator.pop(context);
-              // hier kannst du später Passwort ändern einbauen
+              showModalBottomSheet(
+                context: context,
+                builder: (_) => const _ChangePasswordSheet(),
+              );
             },
             icon: const Icon(Icons.lock),
             label: const Text("Passwort ändern"),
+          ),
+
+          const SizedBox(height: 12),
+
+          ElevatedButton.icon(
+            onPressed: () async {
+              final userId = Supabase.instance.client.auth.currentUser!.id;
+
+              await Supabase.instance.client.functions.invoke(
+                'delete-user',
+                body: {'user_id': userId},
+              );
+
+              await Supabase.instance.client.auth.signOut();
+
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, '/login');
+              }
+            },
+            icon: const Icon(Icons.delete_forever),
+            label: const Text("Benutzer löschen"),
           ),
         ],
       ),
@@ -273,7 +309,6 @@ class _LocaleBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -285,7 +320,7 @@ class _LocaleBar extends ConsumerWidget {
         children: [
           ...supportedLocales.map((locale) {
             return Text(locale.languageCode);
-          }),         // Logout
+          }), // Logout
         ],
       ),
     );

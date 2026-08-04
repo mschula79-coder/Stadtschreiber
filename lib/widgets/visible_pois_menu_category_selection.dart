@@ -47,214 +47,185 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
         minLeadingWidth: 0,
         child: ExpansionTile(
           tilePadding: const EdgeInsets.only(left: 0, right: 15),
-          childrenPadding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
+          childrenPadding: const EdgeInsets.fromLTRB(10, 4, 0, 0),
           visualDensity: VisualDensity.compact,
           initiallyExpanded: false,
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           expandedAlignment: Alignment.topLeft,
-          title: Row(
-            children: [
-              const Text(
-                "Kategorien",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              // Filterbutton hinter Textfeld schieben
-              isFilterActive
-                  ? IconButton(
-                      onPressed: () {
-                        setState(() {
-                          isFilterActive = false;
-                          _categoryFilter = "";
-                          _categoryFilterController.clear();
-                          expandAll = false;
-                        });
-                      },
-                      icon: Icon(Icons.filter_alt_off),
-                    )
-                  : IconButton(
-                      onPressed: () {
-                        setState(() {
-                          isFilterActive = true;
-                        });
-                      },
-                      icon: Icon(Icons.filter_alt),
-                    ),
-            ],
+          title: const Text(
+            "Kategorien",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
 
           children: [
-            // Überschrift Kategorien
-            isFilterActive
-                ? Column(
-                    children: [
-                      Container(
-                        width: 250,
-                        padding: const EdgeInsets.fromLTRB(6, 0, 4, 0),
-                        margin: const EdgeInsets.fromLTRB(4, 0, 4, 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: const [
-                            BoxShadow(color: Colors.black26, blurRadius: 6),
-                          ],
-                        ),
-
-                        child: TextField(
-                          controller: _categoryFilterController,
-                          decoration: const InputDecoration(
-                            hintText: "Kategorien filtern",
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.fromLTRB(0, 8, 0, 8),
-                            isDense: true,
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              _categoryFilter = value.trim().toLowerCase();
-                              expandAll = _categoryFilter.isNotEmpty;
-                            });
-                          },
-                        ),
+            // ---------------- FILTER ----------------
+            Container(
+              padding: const EdgeInsets.fromLTRB(6, 0, 4, 0),
+              margin: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black26, blurRadius: 6),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _categoryFilterController,
+                      decoration: const InputDecoration(
+                        hintText: "Kategorien filtern",
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.fromLTRB(0, 8, 0, 8),
+                        isDense: true,
                       ),
-                      const SizedBox(height: 8),
-                    ],
-                  )
-                : SizedBox.shrink(),
+                      onChanged: (value) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!mounted) return;
+                          setState(() {
+                            _categoryFilter = value.trim().toLowerCase();
+                            expandAll = _categoryFilter.isNotEmpty;
+                          });
+                        });
+                      },
+                    ),
+                  ),
 
-            // Kategorien-Baum
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        if (isFilterActive) {
+                          _categoryFilter = "";
+                          _categoryFilterController.clear();
+                          expandAll = false;
+                        }
+                        isFilterActive = !isFilterActive;
+                      });
+                    },
+                    icon: Icon(
+                      isFilterActive ? Icons.filter_alt_off : Icons.filter_alt,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // ---------------- CATEGORY TREE ----------------
             ..._filterCategoryTree(
               categories,
               _categoryFilter,
             ).map((node) => _buildCategoryNode(context, ref, node)),
-            isAdmin
-                ? SwitchListTile(
-                    title: const Text(
-                      'Bewertungskriterien bearbeiten',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.normal,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.only(
-                      top: 10,
-                      left: 0,
-                      right: 0,
-                    ),
-                    value: isAdminViewEnabled,
-                    onChanged: (newValue) {
-                      setState(() {
-                        isAdminViewEnabled = !isAdminViewEnabled;
-                      });
-                    },
-                  )
-                : SizedBox.shrink(),
-            isAdminViewEnabled
-                ? Padding(
-                    padding: const EdgeInsets.only(left: 5),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ref
-                            .watch(globalCriteriaProvider)
-                            .when(
-                              data: (ratingCriteria) {
-                                return EditableList<RatingCriterionDTO>(
-                                  items: ratingCriteria,
-                                  isEditModeEnabled: true,
-                                  itemBuilder: (entry) {
-                                    return Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                        0,
-                                        0,
-                                        0,
-                                        0,
-                                      ),
-                                      child: Text(
-                                        entry.name,
-                                        style: const TextStyle(fontSize: 16),
-                                      ),
-                                    );
-                                  },
-                                  onDelete: (entry) async {
-                                    final confirmed = await openConfirmDialog(
-                                      context,
-                                      message:
-                                          'Dies löscht das Kriterium ${entry.name} für alle Kategorien. Willst du das?',
-                                      optionTrue: 'Ja',
-                                      optionFalse: 'Nein',
-                                    );
 
-                                    if (confirmed == true) {
-                                      ref
-                                          .read(categoriesRepositoryProvider)
-                                          .deleteCriterion(entry);
-                                      ref.invalidate(globalCriteriaProvider);
-                                    }
-                                  },
-                                  onAdd: () async {
-                                    final emptyCriterion = RatingCriterionDTO(
-                                      id: const Uuid().v4(),
-                                      name: '',
-                                      description: '',
-                                      scoreDescriptions: {},
-                                    );
+            // ---------------- ADMIN SWITCH ----------------
+            if (isAdmin)
+              SwitchListTile(
+                title: const Text(
+                  'Bewertungskriterien bearbeiten',
+                  style: TextStyle(fontSize: 16),
+                ),
+                contentPadding: const EdgeInsets.only(top: 10),
+                value: isAdminViewEnabled,
+                onChanged: (newValue) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
+                    setState(() {
+                      isAdminViewEnabled = newValue;
+                    });
+                  });
+                },
+              ),
 
-                                    final emptyCriterionWithId = await ref
-                                        .read(categoriesRepositoryProvider)
-                                        .newCriterion(emptyCriterion);
-
-                                    if (!context.mounted) return;
-
-                                    final newCriterion =
-                                        await showDialog<RatingCriterionDTO>(
-                                          context: context,
-                                          barrierDismissible: false,
-                                          builder: (_) =>
-                                              RatingCriteriaEditModal(
-                                                criterionDTO:
-                                                    emptyCriterionWithId,
-                                              ),
-                                        );
-
-                                    if (newCriterion == null) return;
-
-                                    await ref
-                                        .read(categoriesRepositoryProvider)
-                                        .updateCriterion(newCriterion);
-                                    ref.invalidate(globalCriteriaProvider);
-
-                                    return;
-                                  },
-                                  onEdit: (entry) async {
-                                    final edited =
-                                        await showDialog<RatingCriterionDTO>(
-                                          context: context,
-                                          barrierDismissible: false,
-                                          builder: (_) =>
-                                              RatingCriteriaEditModal(
-                                                criterionDTO: entry,
-                                              ),
-                                        );
-
-                                    if (edited == null) return;
-
-                                    await ref
-                                        .read(categoriesRepositoryProvider)
-                                        .updateCriterion(edited);
-                                    ref.invalidate(globalCriteriaProvider);
-
-                                    return;
-                                  },
-                                );
-                              },
-                              loading: () => const CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                              error: (e, st) => Text("Fehler: $e"),
+            // ---------------- ADMIN CRITERIA LIST ----------------
+            if (isAdminViewEnabled)
+              Padding(
+                padding: const EdgeInsets.only(left: 5),
+                child: ref
+                    .watch(globalCriteriaProvider)
+                    .when(
+                      data: (ratingCriteria) {
+                        return EditableList<RatingCriterionDTO>(
+                          items: ratingCriteria,
+                          isEditModeEnabled: true,
+                          itemBuilder: (entry) => Padding(
+                            padding: const EdgeInsets.all(0),
+                            child: Text(
+                              entry.name,
+                              style: const TextStyle(fontSize: 16),
                             ),
-                      ],
+                          ),
+                          onDelete: (entry) async {
+                            final confirmed = await openConfirmDialog(
+                              context,
+                              message:
+                                  'Dies löscht das Kriterium ${entry.name} für alle Kategorien. Willst du das?',
+                              optionTrue: 'Ja',
+                              optionFalse: 'Nein',
+                            );
+
+                            if (confirmed == true) {
+                              ref
+                                  .read(categoriesRepositoryProvider)
+                                  .deleteCriterion(entry);
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                ref.invalidate(globalCriteriaProvider);
+                              });
+                            }
+                          },
+                          onAdd: () async {
+                            final emptyCriterion = RatingCriterionDTO(
+                              id: const Uuid().v4(),
+                              name: '',
+                              description: '',
+                              scoreDescriptions: {},
+                            );
+
+                            final emptyCriterionWithId = await ref
+                                .read(categoriesRepositoryProvider)
+                                .newCriterion(emptyCriterion);
+
+                            if (!context.mounted) return;
+
+                            final newCriterion =
+                                await showDialog<RatingCriterionDTO>(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (_) => RatingCriteriaEditModal(
+                                    criterionDTO: emptyCriterionWithId,
+                                  ),
+                                );
+
+                            if (newCriterion == null) return;
+
+                            await ref
+                                .read(categoriesRepositoryProvider)
+                                .updateCriterion(newCriterion);
+                            ref.invalidate(globalCriteriaProvider);
+                          },
+                          onEdit: (entry) async {
+                            final edited = await showDialog<RatingCriterionDTO>(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (_) =>
+                                  RatingCriteriaEditModal(criterionDTO: entry),
+                            );
+
+                            if (edited == null) return;
+
+                            await ref
+                                .read(categoriesRepositoryProvider)
+                                .updateCriterion(edited);
+                            ref.invalidate(globalCriteriaProvider);
+                          },
+                        );
+                      },
+                      loading: () =>
+                          const CircularProgressIndicator(strokeWidth: 2),
+                      error: (e, st) => Text("Fehler: $e"),
                     ),
-                  )
-                : SizedBox.shrink(),
+              ),
           ],
         ),
       ),
@@ -268,7 +239,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
   ) {
     if (filter.isEmpty) return nodes;
 
-    List<CategoryNode> result = [];
+    final result = <CategoryNode>[];
 
     for (final node in nodes) {
       final labelMatches = node.label.toLowerCase().contains(filter);
@@ -294,6 +265,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
     return result;
   }
 
+  // ---------- build category node ----------
   Widget _buildCategoryNode(
     BuildContext context,
     WidgetRef ref,
@@ -301,7 +273,6 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
   ) {
     final categoryCheckboxesState = ref.watch(categoriesSelectionProvider);
 
-    // 1st Level Nodes = not isLeaf
     if (!node.isLeaf) {
       final allDescendantLeaves = _collectLeafValues(node);
       final directLeafChildren = node.children
@@ -322,145 +293,69 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
         parentChecked = null;
       }
 
-      return Theme(
-        data: Theme.of(context).copyWith(
-          listTileTheme: const ListTileThemeData(
-            contentPadding: EdgeInsets.zero,
-          ),
-        ),
-        child: ListTileTheme(
-          contentPadding: EdgeInsets.zero,
-          horizontalTitleGap: 0,
-          minLeadingWidth: 0,
-          // 1st Level Nodes
-          child: ExpansionTile(
-            tilePadding: const EdgeInsets.only(left: 0, right: 15),
-            childrenPadding: EdgeInsets.zero,
-            visualDensity: VisualDensity.compact,
-            initiallyExpanded: expandAll,
-            leading: Checkbox(
-              value: parentChecked,
-              tristate: true,
-              onChanged: (checked) {
-                if (checked == true) {
-                  for (final value in directLeafChildren) {
-                    if (!categoryCheckboxesState.isSelected(value)) {
-                      ref
-                          .read(categoriesSelectionProvider.notifier)
-                          .setSelected(value, true);
-                    }
-                  }
-                } else {
-                  for (final value in directLeafChildren) {
-                    if (categoryCheckboxesState.isSelected(value)) {
-                      ref
-                          .read(categoriesSelectionProvider.notifier)
-                          .setSelected(value, false);
-                    }
-                  }
+      return ExpansionTile(
+        tilePadding: const EdgeInsets.only(left: 0, right: 15),
+        childrenPadding: EdgeInsets.zero,
+        visualDensity: VisualDensity.compact,
+        initiallyExpanded: expandAll,
+        leading: Checkbox(
+          value: parentChecked,
+          tristate: true,
+          onChanged: (checked) {
+            if (checked == true) {
+              for (final value in directLeafChildren) {
+                if (!categoryCheckboxesState.isSelected(value)) {
+                  ref
+                      .read(categoriesSelectionProvider.notifier)
+                      .setSelected(value, true);
                 }
-              },
-            ),
-
-            // Category Label
-            title: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(width: 0),
-
-                Expanded(
-                  child: Text(
-                    node.label,
-                    softWrap: true,
-                    maxLines: null,
-                    overflow: TextOverflow.visible,
-                  ),
-                ),
-
-                getIcon(node.value ?? ''),
-              ],
-            ),
-
-            // Next Level Nodes
-            children: node.children
-                .map((child) => _buildCategoryNode(context, ref, child))
-                .toList(),
-          ),
+              }
+            } else {
+              for (final value in directLeafChildren) {
+                if (categoryCheckboxesState.isSelected(value)) {
+                  ref
+                      .read(categoriesSelectionProvider.notifier)
+                      .setSelected(value, false);
+                }
+              }
+            }
+          },
         ),
+        title: Row(
+          children: [
+            Expanded(child: Text(node.label, softWrap: true, maxLines: null)),
+            getIcon(node.value ?? ''),
+          ],
+        ),
+        children: node.children
+            .map((child) => _buildCategoryNode(context, ref, child))
+            .toList(),
       );
     }
-    // 2nd level
-    else {
-      final isChecked =
-          node.value != null && categoryCheckboxesState.isSelected(node.value!);
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CheckboxListTile(
-            contentPadding: const EdgeInsets.only(top: 0, left: 4, right: 15),
-            value: isChecked,
-            visualDensity: VisualDensity.compact,
-            onChanged: (checked) {
-              if (node.value == null) return;
-              ref
-                  .read(categoriesSelectionProvider.notifier)
-                  .setSelected(node.value!, checked ?? false);
-            },
-            secondary: getIcon(node.value!),
-            controlAffinity: ListTileControlAffinity.leading,
-            title: Text(node.label, softWrap: true, maxLines: null),
-          ),
-          isAdminViewEnabled
-              ? Padding(
-                  padding: const EdgeInsets.only(left: 32),
-                  child: ref
-                      .watch(globalCriteriaProvider)
-                      .when(
-                        data: (criteria) {
-                          return Column(
-                            children: criteria.map((criterion) {
-                              final isAssigned = ref
-                                  .watch(criteriaForCategoryProvider(node.id))
-                                  .maybeWhen(
-                                    data: (list) =>
-                                        list.any((c) => c.id == criterion.id),
-                                    orElse: () => false,
-                                  );
+    // Leaf node
+    final isChecked =
+        node.value != null && categoryCheckboxesState.isSelected(node.value!);
 
-                              return CheckboxListTile(
-                                value: isAssigned,
-                                visualDensity: VisualDensity.compact,
-                                title: Text(criterion.name),
-                                controlAffinity:
-                                    ListTileControlAffinity.leading,
-                                onChanged: (checked) {
-                                  ref
-                                      .read(categoriesRepositoryProvider)
-                                      .updateCriterionCategoryRelation(
-                                        criterionId: criterion.id,
-                                        categoryId: node.id,
-                                        enabled: checked ?? false,
-                                      );
-                                  ref.invalidate(
-                                    criteriaForCategoryProvider(node.id),
-                                  );
-                                },
-                              );
-                            }).toList(),
-                          );
-                        },
-                        loading: () => const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        error: (e, st) => Text("Fehler: $e"),
-                      ),
-                )
-              : SizedBox.shrink(),
-        ],
-      );
-    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CheckboxListTile(
+          contentPadding: const EdgeInsets.only(top: 0, left: 4, right: 15),
+          value: isChecked,
+          visualDensity: VisualDensity.compact,
+          onChanged: (checked) {
+            if (node.value == null) return;
+            ref
+                .read(categoriesSelectionProvider.notifier)
+                .setSelected(node.value!, checked ?? false);
+          },
+          secondary: getIcon(node.value!),
+          controlAffinity: ListTileControlAffinity.leading,
+          title: Text(node.label),
+        ),
+      ],
+    );
   }
 
   List<String> _collectLeafValues(CategoryNode node) {

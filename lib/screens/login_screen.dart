@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/l10n/app_localizations.dart';
 import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/widgets/_icon_getter.dart';
+import 'package:stadtschreiber/widgets/modal_message_box.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:stadtschreiber/main.dart' show supportedLocales;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -19,6 +21,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   bool loading = false;
   String? errorMessage;
+  bool checkEmail = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEmail();
+  }
+
+  Future<void> _loadEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    emailController.text = prefs.getString('last_email') ?? '';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +49,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(AppLocalizations.of(context)!.hello),
+                if (loading) const CircularProgressIndicator(),
+
+                // Hello
+                Text(
+                  AppLocalizations.of(context)!.hello,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
+                ),
                 const Text(
                   "Stadtschreiber Basel",
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
@@ -61,7 +81,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 0),
 
                 if (errorMessage != null)
                   Text(
@@ -69,40 +89,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     style: const TextStyle(color: Colors.red),
                   ),
 
-                if (loading)
-                  const CircularProgressIndicator()
-                else
-                  Column(
-                    children: [
-                      buildLanguageDropdown(context, ref),
-                      const SizedBox(height: 8),
+                // 🔥 Passwort zurücksetzen
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: _resetPassword,
+                      child: Text(
+                        AppLocalizations.of(context)!.passwordForgotten,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: _login,
+                      style: ElevatedButton.styleFrom(),
+                      child: Text(AppLocalizations.of(context)!.login),
+                    ),
 
-                      ElevatedButton(
-                        onPressed: _login,
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 48),
-                        ),
-                        child: Text(AppLocalizations.of(context)!.login),
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton(
-                        onPressed: _register,
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 48),
-                        ),
-                        child: Text(AppLocalizations.of(context)!.register),
-                      ),
-                      const SizedBox(height: 16),
+                    SizedBox(width: 20),
 
-                      // 🔥 Passwort zurücksetzen
-                      TextButton(
-                        onPressed: _resetPassword,
-                        child: Text(
-                          AppLocalizations.of(context)!.passwordForgotten,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (passwordController.value.text.length >= 8) {
+                          await _askUsernameAndRegister();
+                        } else {
+                          messageBox(
+                            context,
+                            'Bitte Passwort mit min. 8 Zeichen setzen',
+                            '',
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(),
+                      child: Text(AppLocalizations.of(context)!.register),
+                    ),
+                  ],
+                ),
+                checkEmail
+                    ? Text(
+                        'Bitte prüfe deine E-Mail und klicke auf den Bestätigungslink. Prüfe auch den Spamordner.',
+                        style: const TextStyle(color: Colors.red),
+                      )
+                    : const SizedBox.shrink(),
+
+                const SizedBox(height: 40),
+
+                buildLanguageDropdown(context, ref),
               ],
             ),
           ),
@@ -118,22 +153,83 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         password: passwordController.text.trim(),
       );
     });
+
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('last_email', emailController.text.trim());
+  }
+
+  Future<void> _askUsernameAndRegister() async {
+    final usernameCtrl = TextEditingController();
+
+    final username = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Username wählen"),
+        content: TextField(
+          controller: usernameCtrl,
+          decoration: const InputDecoration(
+            labelText: "Username",
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Abbrechen"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context, usernameCtrl.text.trim());
+            },
+            child: const Text("Weiter"),
+          ),
+        ],
+      ),
+    );
+
+    if (username == null || username.isEmpty) return;
+
+    // Username speichern
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('pending_username', username);
+
+    // Jetzt normal registrieren
+    await _register();
   }
 
   Future<void> _register() async {
-  final email = emailController.text.trim();
-  final password = passwordController.text.trim();
+    setState(() {
+      loading = true;
+      errorMessage = null;
+    });
 
-  await Supabase.instance.client.auth.signUp(
-    email: email,
-    password: password,
-    emailRedirectTo: 'stadtschreiber://auth-callback',
-  );
+    try {
+      await Supabase.instance.client.auth.signUp(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+        emailRedirectTo: 'stadtschreiber://auth-callback',
+      );
 
-  // res.user ist jetzt unverifiziert
-  // User muss E-Mail klicken → Deep-Link → verifyOtp()
-}
+      final prefs = await SharedPreferences.getInstance();
+      prefs.setString('last_email', emailController.text.trim());
 
+      // Kein session check hier!
+      // User muss E-Mail bestätigen → Deep-Link → verifyOtp()
+
+      setState(() {
+        errorMessage = null;
+      });
+    } catch (e) {
+      setState(() {
+        errorMessage = e.toString();
+      });
+    } finally {
+      setState(() {
+        loading = false;
+        checkEmail = true;
+      });
+    }
+  }
 
   Future<void> _authAction(Future<void> Function() action) async {
     setState(() {
@@ -161,7 +257,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _resetPassword() async {
-    final emailCtrl = TextEditingController();
+    final emailCtrl = TextEditingController(text: emailController.text);
 
     await showDialog(
       context: context,
@@ -199,7 +295,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final message = AppLocalizations.of(context)!.resetLinkSent;
 
     try {
-      await Supabase.instance.client.auth.resetPasswordForEmail(email);
+      await Supabase.instance.client.auth.resetPasswordForEmail(
+        email,
+        redirectTo: 'stadtschreiber://auth-callback',
+      );
 
       messenger.showSnackBar(SnackBar(content: Text(message)));
     } catch (e) {

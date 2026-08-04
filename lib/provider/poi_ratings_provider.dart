@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/poi_rating__dto.dart';
+import 'package:stadtschreiber/models/poi_ratings_with_stats.dart';
+import 'package:stadtschreiber/provider/poi_ratings_stats_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/repositories/poi_rating_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -62,3 +64,68 @@ final poiUserRatingsProvider =
 final poiRatingRepositoryProvider = Provider((ref) {
   return PoiRatingRepository();
 });
+
+final ratingCriteriaProvider =
+    FutureProvider.family<Map<String, String>, String>((ref, poiId) async {
+  final supabase = Supabase.instance.client;
+
+  final response = await supabase
+      .from('global_rating_criteria')
+      .select('id, name');
+
+  return {
+    for (final row in response)
+      row['id'] as String: row['name'] as String,
+  };
+});
+
+final poiRatingsWithStatsProvider =
+    FutureProvider.family<List<PoiRatingWithStats>, String>((ref, poiId) async {
+  final stats = await ref.watch(poiRatingStatsProvider(poiId).future);
+  final userRatings = await ref.watch(poiUserRatingsProvider(poiId).future);
+
+  // Kriterien laden
+  final supabase = Supabase.instance.client;
+  final criteriaRaw =
+      await supabase.from('global_rating_criteria').select('id, name');
+
+  final criteriaNames = {
+    for (final row in criteriaRaw)
+      row['id'] as String: row['name'] as String,
+  };
+
+  // Ergebnisliste
+  final result = <PoiRatingWithStats>[];
+
+  for (final entry in stats) {
+    final criterionId = entry.criterionId;
+
+    final userEntry = userRatings[criterionId];
+
+    // Bayesian Score
+    final m = 5.0;
+    final R = entry.avgRating;
+    final v = entry.ratingCount.toDouble();
+    final C = stats.map((s) => s.avgRating).reduce((a, b) => a + b) /
+        stats.length;
+
+    final bayes = (v / (v + m)) * R + (m / (v + m)) * C;
+
+    result.add(
+      PoiRatingWithStats(
+        criterionId: criterionId,
+        criterionName: criteriaNames[criterionId] ?? 'Unbekannt',
+        avgRating: entry.avgRating,
+        ratingCount: entry.ratingCount,
+        commentCount: entry.commentsCount,
+        userRating: userEntry?.ratingScore.toDouble(),
+        userComment: userEntry?.comment,
+        bayesianScore: bayes,
+      ),
+    );
+  }
+
+  return result;
+});
+
+

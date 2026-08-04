@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/l10n/app_localizations.dart';
 import 'package:stadtschreiber/models/poi.dart';
+import 'package:stadtschreiber/provider/poi_ratings_provider.dart';
 
-class PoiListItem extends StatelessWidget {
+class PoiListItem extends ConsumerWidget {
   final PointOfInterest poi;
   final VoidCallback onTap;
 
   const PoiListItem({super.key, required this.poi, required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     String distanceKm = 'unbekannt';
     if (poi.distance != null) {
-      distanceKm = '${(poi.distance! / 1000).toStringAsFixed(3)}km' ;
-}
+      distanceKm = '${(poi.distance! / 1000).toStringAsFixed(3)}km';
+    }
+
+    final poiRatingsAsync = ref.watch(poiRatingsWithStatsProvider(poi.id));
+
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -83,6 +88,38 @@ class PoiListItem extends StatelessWidget {
                   // Distanz in km
                   Text(
                     '${AppLocalizations.of(context)?.distanceFromCenter ?? 'distanceFromCenter'} $distanceKm',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+
+                  poiRatingsAsync.when(
+                    loading: () => CircularProgressIndicator(),
+                    error: (e, _) => Text("Fehler: $e"),
+                    data: (ratings) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ...ratings.map(
+                            (r) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${r.criterionName}: ${r.avgRating} (${r.ratingCount})',
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  SizedBox(height: 4),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+
+                  Text(
+                    'hallo',
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                 ],

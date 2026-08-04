@@ -4,14 +4,16 @@ import 'package:stadtschreiber/provider/supabase_user_profile_provider.dart';
 class SupabaseUserState {
   final String username;
   final bool isAdmin;
+  final bool isAuthor;
   final bool loading;
   final String userid;
 
   SupabaseUserState({
     required this.username,
     required this.isAdmin,
+    required this.isAuthor,
     required this.loading,
-    required this.userid
+    required this.userid,
   });
 }
 
@@ -25,18 +27,21 @@ final supabaseUserStateProvider = Provider<SupabaseUserState>((ref) {
       userid: profile?.id ?? '',
       isAdmin: profile?.isAdmin ?? false,
       loading: false,
+      isAuthor: profile?.isAuthor ?? false,
     ),
     loading: () => SupabaseUserState(
       username: '',
       userid: '',
       isAdmin: false,
       loading: true,
+      isAuthor: false
     ),
     error: (_, _) => SupabaseUserState(
       username: '',
       userid: '',
       isAdmin: false,
       loading: false,
+      isAuthor: false,  
     ),
   );
 });
