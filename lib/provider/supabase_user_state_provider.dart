@@ -1,47 +1,84 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:stadtschreiber/provider/supabase_user_profile_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'supabase_user_profile_provider.dart';
 
 class SupabaseUserState {
+  final String userid;
   final String username;
   final bool isAdmin;
   final bool isAuthor;
   final bool loading;
-  final String userid;
 
   SupabaseUserState({
+    required this.userid,
     required this.username,
     required this.isAdmin,
     required this.isAuthor,
     required this.loading,
-    required this.userid,
   });
+
+  factory SupabaseUserState.loadingState() => SupabaseUserState(
+        userid: '',
+        username: '',
+        isAdmin: false,
+        isAuthor: false,
+        loading: true,
+      );
+
+  factory SupabaseUserState.loggedOut() => SupabaseUserState(
+        userid: '',
+        username: '',
+        isAdmin: false,
+        isAuthor: false,
+        loading: false,
+      );
 }
 
-/// DIESEN PROVIDER IM UI NUTZEN
-final supabaseUserStateProvider = Provider<SupabaseUserState>((ref) {
-  final profileAsync = ref.watch(supabaseUserProfileLoaderProvider);
+final supabaseUserStateProvider =
+    NotifierProvider<SupabaseUserStateNotifier, SupabaseUserState>(
+  SupabaseUserStateNotifier.new,
+);
 
-  return profileAsync.when(
-    data: (profile) => SupabaseUserState(
-      username: profile?.username ?? '',
-      userid: profile?.id ?? '',
-      isAdmin: profile?.isAdmin ?? false,
+class SupabaseUserStateNotifier extends Notifier<SupabaseUserState> {
+  @override
+  SupabaseUserState build() {
+    final auth = Supabase.instance.client.auth;
+
+    state = SupabaseUserState.loadingState();
+
+    final session = auth.currentSession;
+    if (session?.user != null) {
+      _loadProfile(session!.user.id);
+    } else {
+      state = SupabaseUserState.loggedOut();
+    }
+
+    auth.onAuthStateChange.listen((data) {
+      final event = data.event;
+      final session = data.session;
+
+      if (event == AuthChangeEvent.signedIn && session?.user != null) {
+        _loadProfile(session!.user.id);
+      }
+
+      if (event == AuthChangeEvent.signedOut) {
+        state = SupabaseUserState.loggedOut();
+      }
+    });
+
+    return state;
+  }
+
+  Future<void> _loadProfile(String userId) async {
+    final profileAsync =
+        await ref.read(supabaseUserProfileLoaderProvider.future);
+
+    state = SupabaseUserState(
+      userid: userId,
+      username: profileAsync?.username ?? '',
+      isAdmin: profileAsync?.isAdmin ?? false,
+      isAuthor: profileAsync?.isAuthor ?? false,
       loading: false,
-      isAuthor: profile?.isAuthor ?? false,
-    ),
-    loading: () => SupabaseUserState(
-      username: '',
-      userid: '',
-      isAdmin: false,
-      loading: true,
-      isAuthor: false
-    ),
-    error: (_, _) => SupabaseUserState(
-      username: '',
-      userid: '',
-      isAdmin: false,
-      loading: false,
-      isAuthor: false,  
-    ),
-  );
-});
+    );
+  }
+}

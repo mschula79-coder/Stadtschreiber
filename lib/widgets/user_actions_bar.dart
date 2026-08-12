@@ -58,7 +58,7 @@ class UserActionsBar extends ConsumerWidget {
           FloatingActionButton(
             heroTag: "Sprache",
             mini: true,
-            child: getIcon(currentLocale.languageCode),
+            child: getIcon(currentLocale.languageCode, 24, null),
             onPressed: () {
               onClose();
               showModalBottomSheet(

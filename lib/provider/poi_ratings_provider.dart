@@ -67,65 +67,73 @@ final poiRatingRepositoryProvider = Provider((ref) {
 
 final ratingCriteriaProvider =
     FutureProvider.family<Map<String, String>, String>((ref, poiId) async {
-  final supabase = Supabase.instance.client;
+      final supabase = Supabase.instance.client;
 
-  final response = await supabase
-      .from('global_rating_criteria')
-      .select('id, name');
+      final response = await supabase
+          .from('global_rating_criteria')
+          .select('id, name');
 
-  return {
-    for (final row in response)
-      row['id'] as String: row['name'] as String,
-  };
-});
+      return {
+        for (final row in response) row['id'] as String: row['name'] as String,
+      };
+    });
 
 final poiRatingsWithStatsProvider =
     FutureProvider.family<List<PoiRatingWithStats>, String>((ref, poiId) async {
-  final stats = await ref.watch(poiRatingStatsProvider(poiId).future);
-  final userRatings = await ref.watch(poiUserRatingsProvider(poiId).future);
+      final stats = await ref.watch(poiRatingStatsProvider(poiId).future);
 
-  // Kriterien laden
-  final supabase = Supabase.instance.client;
-  final criteriaRaw =
-      await supabase.from('global_rating_criteria').select('id, name');
+      if (stats.isEmpty) {
+        return [];
+      }
 
-  final criteriaNames = {
-    for (final row in criteriaRaw)
-      row['id'] as String: row['name'] as String,
-  };
+      final supabase = Supabase.instance.client;
+      final criteriaRaw = await supabase
+          .from('global_rating_criteria')
+          .select();
 
-  // Ergebnisliste
-  final result = <PoiRatingWithStats>[];
+      final criteriaNames = {
+        for (final row in criteriaRaw as List<dynamic>)
+          row['id'] as String: row['name'] as String,
+      };
 
-  for (final entry in stats) {
-    final criterionId = entry.criterionId;
+      // Nur Stats behalten, deren Kriterien existieren
+      final filteredStats = stats
+          .where((s) => criteriaNames.containsKey(s.criterionId))
+          .toList();
 
-    final userEntry = userRatings[criterionId];
+      if (filteredStats.isEmpty) {
+        return [];
+      }
 
-    // Bayesian Score
-    final m = 5.0;
-    final R = entry.avgRating;
-    final v = entry.ratingCount.toDouble();
-    final C = stats.map((s) => s.avgRating).reduce((a, b) => a + b) /
-        stats.length;
+      // Durchschnitt für Bayesian Score
+      final C =
+          filteredStats.map((s) => s.avgRating).reduce((a, b) => a + b) /
+          filteredStats.length;
 
-    final bayes = (v / (v + m)) * R + (m / (v + m)) * C;
+      final result = <PoiRatingWithStats>[];
 
-    result.add(
-      PoiRatingWithStats(
-        criterionId: criterionId,
-        criterionName: criteriaNames[criterionId] ?? 'Unbekannt',
-        avgRating: entry.avgRating,
-        ratingCount: entry.ratingCount,
-        commentCount: entry.commentsCount,
-        userRating: userEntry?.ratingScore.toDouble(),
-        userComment: userEntry?.comment,
-        bayesianScore: bayes,
-      ),
-    );
-  }
+      for (final entry in filteredStats) {
+        final criterionId = entry.criterionId;
 
-  return result;
-});
+        final m = 5.0;
+        final R = entry.avgRating;
+        final v = entry.ratingCount.toDouble();
 
+        final bayes = (v / (v + m)) * R + (m / (v + m)) * C;
 
+        result.add(
+          PoiRatingWithStats(
+            criterionId: criterionId,
+            criterionName: criteriaNames[criterionId]!,
+            avgRating: entry.avgRating,
+            ratingCount: entry.ratingCount,
+            commentCount: entry.commentsCount,
+            userRating: null, // ⭐ entfernt
+            userComment: null, // ⭐ entfernt
+            bayesianScore: bayes,
+          ),
+        );
+      }
+
+      return result;
+    });

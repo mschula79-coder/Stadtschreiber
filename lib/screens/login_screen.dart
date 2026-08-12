@@ -329,7 +329,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             value: locale,
             child: Row(
               children: [
-                getIcon(locale.countryCode ?? locale.languageCode),
+                getIcon(locale.countryCode ?? locale.languageCode, 24, null),
                 SizedBox(width: 8),
                 Text(switch (locale.countryCode) {
                   'CH' => 'Schweizerdeutsch',

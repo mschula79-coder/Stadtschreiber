@@ -105,7 +105,6 @@ class _MyAppState extends ConsumerState<MyApp> {
     );
 
     if (recoveryResult.user != null) {
-      print("Recovery erfolgreich");
 
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/reset-password');

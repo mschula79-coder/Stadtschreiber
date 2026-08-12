@@ -8,6 +8,10 @@ final userFavoriteListsProvider =
       List<(UserFavoritesListDTO, List<UserFavoriteDTO>)>,
       String
     >((ref, userID) async {
+      if (userID.isEmpty) {
+        return [];
+      }
+
       final supabase = Supabase.instance.client;
 
       // 1) Favoriten-Listen laden
@@ -44,13 +48,11 @@ final userFavoriteListsProvider =
 final toggleFavoriteProvider = Provider((ref) {
   final supabase = Supabase.instance.client;
 
-  return (
-    {
-      required String poiId,
-      required String listId,
-      required bool add,
-    }
-  ) async {
+  return ({
+    required String poiId,
+    required String listId,
+    required bool add,
+  }) async {
     if (add) {
       await supabase.from('favorites').insert({
         'poi_id': poiId,
@@ -66,31 +68,22 @@ final toggleFavoriteProvider = Provider((ref) {
   };
 });
 
-
 final editFavoriteListsListProvider = Provider((ref) {
   final supabase = Supabase.instance.client;
 
-  return (
-    {
-      required String listId,
-      required String listname,
-      required bool add,
-      required String userID
-    }
-  ) async {
-
-
-
+  return ({
+    required String listId,
+    required String listname,
+    required bool add,
+    required String userID,
+  }) async {
     if (add) {
       await supabase.from('favorite_lists').insert({
         'user_id': userID,
-        'name': listname
+        'name': listname,
       });
     } else {
-      await supabase
-          .from('favorite_lists')
-          .delete()
-          .eq('id', listId);
+      await supabase.from('favorite_lists').delete().eq('id', listId);
     }
   };
 });

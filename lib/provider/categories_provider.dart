@@ -75,3 +75,19 @@ final globalCriteriaProvider = FutureProvider<List<RatingCriterionDTO>>((
   final repo = ref.watch(categoriesRepositoryProvider);
   return repo.criteriaListGlobal();
 });
+
+final categoryLabelBySlugProvider =
+    Provider.family<String?, String>((ref, slug) {
+  final categories = ref.watch(categoriesProvider).categories;
+
+  String? search(List<CategoryNode> nodes) {
+    for (final node in nodes) {
+      if (node.value == slug) return node.label; // ⭐ label statt id
+      final result = search(node.children);
+      if (result != null) return result;
+    }
+    return null;
+  }
+
+  return search(categories);
+});

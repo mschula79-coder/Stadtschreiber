@@ -7,13 +7,13 @@ import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/user_favorite_lists_provider.dart';
 import 'package:stadtschreiber/widgets/poi_list_item.dart';
 
-class PoiFavouritesList extends ConsumerStatefulWidget {
+class PoiFavoritesList extends ConsumerStatefulWidget {
   final ScrollController scrollController;
   final VoidCallback onClose;
   final void Function(List<PointOfInterest>) onShowAll;
   final void Function(PointOfInterest) onSelect;
 
-  const PoiFavouritesList({
+  const PoiFavoritesList({
     super.key,
     required this.scrollController,
     required this.onClose,
@@ -22,10 +22,10 @@ class PoiFavouritesList extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<PoiFavouritesList> createState() => _PoiFavouritesListState();
+  ConsumerState<PoiFavoritesList> createState() => _PoiFavoritesListState();
 }
 
-class _PoiFavouritesListState extends ConsumerState<PoiFavouritesList> {
+class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
   void _scrollToTile(GlobalKey key) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final context = key.currentContext;
@@ -71,14 +71,37 @@ class _PoiFavouritesListState extends ConsumerState<PoiFavouritesList> {
           initiallyExpanded: false,
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           expandedAlignment: Alignment.topLeft,
-          title: const Text(
-            "Favoriten",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          title: Row(
+            children: [
+              Icon(Icons.star, color: Colors.grey.shade600),
+              SizedBox(width: 8),
+
+              Expanded(
+                child: const Text(
+                  "Favoriten",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
           ),
+
           children: [
             const SizedBox(height: 0),
             favoriteListsAsync.when(
               data: (listOfFavoriteLists) {
+                if (listOfFavoriteLists.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      "Keine Favoritenlisten vorhanden",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  );
+                }
+
                 List<PointOfInterest> favPois = [];
 
                 return Column(

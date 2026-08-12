@@ -8,6 +8,7 @@ import 'package:stadtschreiber/provider/categories_provider.dart';
 import 'package:stadtschreiber/provider/poi_top10_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/utils/category_utils.dart';
+import 'package:stadtschreiber/widgets/_icon_getter.dart';
 import 'package:stadtschreiber/widgets/poi_list_item.dart';
 
 class PoiTop10List extends ConsumerStatefulWidget {
@@ -51,9 +52,20 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           expandedAlignment: Alignment.topLeft,
           // Überschrift
-          title: const Text(
-            "Top10",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          title: Row(
+            children: [
+              getIcon("ranking", 20, Colors.grey.shade600),
+              /*                 Icon(Icons.play_circle_sharp, color: Colors.grey.shade600),
+ */
+              SizedBox(width: 8),
+
+              Expanded(
+                child: const Text(
+                  "Top10",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
           ),
 
           children: [

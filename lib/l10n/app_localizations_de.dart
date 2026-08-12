@@ -36,7 +36,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get description => 'Description';
 
   @override
-  String get distanceFromCenter => 'Distance from map center: ';
+  String get distanceFromCenter => 'Entfernung zur Kartenmitte';
 
   @override
   String get distance => 'Distanz';

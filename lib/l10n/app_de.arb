@@ -20,6 +20,7 @@
   "selectCategory": "Kategorie auswählen",
   "noResults": "Keine Ergebnisse gefunden",
   "distance": "Distanz",
+  "distanceFromCenter": "Entfernung zur Kartenmitte",
   "address": "Adresse",
   "city": "Stadt",
   "street": "Straße",

@@ -52,9 +52,20 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
           initiallyExpanded: false,
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           expandedAlignment: Alignment.topLeft,
-          title: const Text(
-            "Kategorien",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          title: Row(
+            children: [
+              /*                 Icon(Icons.category, color: Colors.grey.shade600),
+ */
+              Icon(Icons.category, color: Colors.grey.shade600),
+              SizedBox(width: 8),
+
+              Expanded(
+                child: const Text(
+                  "Kategorien",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
           ),
 
           children: [
@@ -202,8 +213,11 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                             await ref
                                 .read(categoriesRepositoryProvider)
                                 .updateCriterion(newCriterion);
+
                             ref.invalidate(globalCriteriaProvider);
+                            return;
                           },
+
                           onEdit: (entry) async {
                             final edited = await showDialog<RatingCriterionDTO>(
                               context: context,
@@ -218,6 +232,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                                 .read(categoriesRepositoryProvider)
                                 .updateCriterion(edited);
                             ref.invalidate(globalCriteriaProvider);
+                            return;
                           },
                         );
                       },
@@ -324,7 +339,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
         title: Row(
           children: [
             Expanded(child: Text(node.label, softWrap: true, maxLines: null)),
-            getIcon(node.value ?? ''),
+            getIcon(node.value ?? '', 24, null),
           ],
         ),
         children: node.children
@@ -350,7 +365,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                 .read(categoriesSelectionProvider.notifier)
                 .setSelected(node.value!, checked ?? false);
           },
-          secondary: getIcon(node.value!),
+          secondary: getIcon(node.value!, 24, null),
           controlAffinity: ListTileControlAffinity.leading,
           title: Text(node.label),
         ),

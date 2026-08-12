@@ -58,10 +58,20 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
           initiallyExpanded: false,
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           expandedAlignment: Alignment.topLeft,
-          title: const Text(
-            "Suche",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          title: Row(
+            children: [
+              Icon(Icons.search, color: Colors.grey.shade600),
+              SizedBox(width: 8),
+
+              Expanded(
+                child: const Text(
+                  "Suche",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
           ),
+
           children: [
             SizedBox(height: 3),
 
@@ -135,7 +145,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                               poi: foundPois[index],
                               onTap: () async {
                                 final poi = foundPois[index];
-                                
+
                                 _handlePoiSelection(poi);
 
                                 ref

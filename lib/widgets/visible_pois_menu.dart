@@ -5,7 +5,7 @@ import 'package:stadtschreiber/provider/manual_pois_provider.dart';
 import 'package:stadtschreiber/provider/poi_display_mode_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/widgets/visible_pois_menu_category_selection.dart';
-import 'package:stadtschreiber/widgets/visible_pois_menu_favourites.dart';
+import 'package:stadtschreiber/widgets/visible_pois_menu_favorites.dart';
 import 'package:stadtschreiber/widgets/visible_pois_menu_search.dart';
 import 'package:stadtschreiber/widgets/visible_pois_menu_top10.dart';
 
@@ -19,7 +19,6 @@ class VisiblePoisMenu extends ConsumerStatefulWidget {
 }
 
 class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
-
   final ScrollController menuScrollController = ScrollController();
 
   @override
@@ -66,7 +65,6 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
             ),
 
             SizedBox(height: 8),
-
             PoiCategorySelection(onClose: widget.onClose),
 
             SizedBox(height: 8),
@@ -96,20 +94,18 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
 
             SizedBox(height: 8),
 
-            PoiFavouritesList(
+            PoiFavoritesList(
               scrollController: menuScrollController,
               onClose: widget.onClose,
               onSelect: (poi) {
                 ref.read(selectedPoiProvider.notifier).setPoi(poi);
                 ref.read(manualPoisProvider.notifier).clear();
                 ref.read(manualPoisProvider.notifier).setPois([poi]);
-
                 ref
                     .read(poiDisplayModeProvider.notifier)
                     .setMode(PoiDisplayMode.manual);
                 widget.onClose();
               },
-
               onShowAll: (favPois) {
                 ref.read(manualPoisProvider.notifier).setPois(favPois);
                 ref

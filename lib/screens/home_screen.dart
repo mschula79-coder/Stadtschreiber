@@ -39,12 +39,21 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
     super.initState();
     WakelockPlus.enable();
 
-    ensureLocationPermission();
+    _initPermissions();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       setState(() => _menuInitialized = true);
       ref.read(appStateProvider.notifier).setAdminViewEnabled(true);
     });
+  }
+
+  Future<void> _initPermissions() async {
+    final granted = await ensureLocationPermission();
+
+    if (!mounted) return;
+
+    ref.read(appStateProvider.notifier).setLocationPermission(granted);
   }
 
   @override
@@ -58,8 +67,15 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
       if (!adminInitialized && !next.loading) {
         adminInitialized = true;
 
-        debugPrint('SupabaseUserState changed: $previous → $next');
-
+        debugPrint(
+          'SupabaseUserState changed:\n'
+          '  userid: ${next.userid}\n'
+          '  email: ${next.username}\n'
+          '  username: ${next.username}\n'
+          '  isAdmin: ${next.isAdmin}\n'
+          '  isAuthor: ${next.isAuthor}\n'
+          '  loading: ${next.loading}',
+        );
         /*         ref.read(appStateProvider.notifier).setAdminViewEnabled(next.isAdmin);*/
       }
     });
@@ -115,34 +131,21 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
   }
 
   Future<bool> ensureLocationPermission() async {
-    // 1. Check if location services are enabled
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      ref.read(appStateProvider.notifier).setLocationPermission(false);
-      return false;
-    }
+    if (!serviceEnabled) return false;
 
-    // 2. Check current permission
     LocationPermission permission = await Geolocator.checkPermission();
 
-    // 3. Request permission if needed
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
 
-    // 4. Handle deniedForever
     if (permission == LocationPermission.deniedForever) {
-      ref.read(appStateProvider.notifier).setLocationPermission(false);
       return false;
     }
 
-    // 5. Permission granted?
-    final granted =
-        permission == LocationPermission.always ||
+    return permission == LocationPermission.always ||
         permission == LocationPermission.whileInUse;
-
-    ref.read(appStateProvider.notifier).setLocationPermission(granted);
-    return granted;
   }
 
   void toggleCategoryMenu() {
