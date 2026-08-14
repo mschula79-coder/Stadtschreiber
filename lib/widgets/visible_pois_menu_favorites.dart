@@ -64,20 +64,26 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
         contentPadding: EdgeInsets.zero,
         horizontalTitleGap: 0,
         minLeadingWidth: 0,
+        minVerticalPadding: 0,
         child: ExpansionTile(
           tilePadding: const EdgeInsets.only(left: 0, right: 15),
-          childrenPadding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
+          childrenPadding: EdgeInsets.zero,
           visualDensity: VisualDensity.compact,
           initiallyExpanded: false,
+
+          // ⭐ Fix 1: verhindert zusätzliches Padding + Animation
+          collapsedShape: const Border(),
+          shape: const Border(),
+
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           expandedAlignment: Alignment.topLeft,
+
           title: Row(
             children: [
               Icon(Icons.star, color: Colors.grey.shade600),
-              SizedBox(width: 8),
-
-              Expanded(
-                child: const Text(
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
                   "Favoriten",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
@@ -87,11 +93,12 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
 
           children: [
             const SizedBox(height: 0),
+
             favoriteListsAsync.when(
               data: (listOfFavoriteLists) {
                 if (listOfFavoriteLists.isEmpty) {
                   return Padding(
-                    padding: const EdgeInsets.all(12),
+                    padding: EdgeInsets.zero,
                     child: Text(
                       "Keine Favoritenlisten vorhanden",
                       style: TextStyle(
@@ -114,7 +121,12 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
                     return ExpansionTile(
                       key: tileKey,
                       title: Text(listDTO.name),
-                      tilePadding: const EdgeInsets.only(left: 0, right: 12),
+                      tilePadding: const EdgeInsets.only(left: 0, right: 15),
+
+                      // ⭐ Fix 1 auch für die inneren Tiles
+                      collapsedShape: const Border(),
+                      shape: const Border(),
+
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,7 +142,7 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
                                     data: (poi) {
                                       if (poi == null) {
                                         return const Padding(
-                                          padding: EdgeInsets.all(4),
+                                          padding: EdgeInsets.zero,
                                           child: Text("POI not found"),
                                         );
                                       }
@@ -143,6 +155,7 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
                                           widget.onSelect(poi);
                                           widget.onClose();
                                         },
+                                        paddingLeft: 0,
                                       );
                                     },
                                     loading: () => const Padding(

@@ -12,8 +12,9 @@ import 'package:stadtschreiber/widgets/_icon_getter.dart';
 class PoiListItem extends ConsumerWidget {
   final PointOfInterest poi;
   final VoidCallback onTap;
+  final double? paddingLeft;
 
-  const PoiListItem({super.key, required this.poi, required this.onTap});
+  const PoiListItem({super.key, required this.poi, required this.onTap, this.paddingLeft});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -55,7 +56,7 @@ class PoiListItem extends ConsumerWidget {
               children: [
                 // Thumbnail
                 Padding(
-                  padding: EdgeInsetsGeometry.fromLTRB(10, 0, 0, 0),
+                  padding: EdgeInsetsGeometry.fromLTRB(paddingLeft ?? 12, 0, 0, 0),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: SizedBox(

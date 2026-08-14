@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/poi_display_modes.dart';
+import 'package:stadtschreiber/models/poi_selection_modes.dart';
 import 'package:stadtschreiber/provider/manual_pois_provider.dart';
 import 'package:stadtschreiber/provider/poi_display_mode_provider.dart';
+import 'package:stadtschreiber/provider/poi_selection_mode_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/widgets/visible_pois_menu_category_selection.dart';
 import 'package:stadtschreiber/widgets/visible_pois_menu_favorites.dart';
@@ -53,6 +55,9 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
                 ref
                     .read(poiDisplayModeProvider.notifier)
                     .setMode(PoiDisplayMode.manual);
+                ref
+                    .read(poiSelectionModeProvider.notifier)
+                    .setMode(PoiSelectionMode.single);
                 widget.onClose();
               },
               onShowAll: (searchResultPois) {
@@ -60,19 +65,29 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
                 ref
                     .read(poiDisplayModeProvider.notifier)
                     .setMode(PoiDisplayMode.manual);
+
+                ref
+                    .read(poiSelectionModeProvider.notifier)
+                    .setMode(PoiSelectionMode.search);
                 widget.onClose();
               },
             ),
 
             SizedBox(height: 8),
-            PoiCategorySelection(onClose: widget.onClose),
+            PoiCategorySelection(
+              onClose: () {
+                widget.onClose;
+                
+              },
+            ),
 
             SizedBox(height: 8),
 
             PoiTop10List(
               onClose: () {
-                widget.onClose();
+                widget.onClose;
               },
+
               onSelect: (poi) {
                 ref.read(selectedPoiProvider.notifier).setPoi(poi);
                 ref.read(manualPoisProvider.notifier).clear();
@@ -81,6 +96,11 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
                 ref
                     .read(poiDisplayModeProvider.notifier)
                     .setMode(PoiDisplayMode.manual);
+
+                ref
+                    .read(poiSelectionModeProvider.notifier)
+                    .setMode(PoiSelectionMode.single);
+
                 widget.onClose();
               },
               onShowAll: (top10Pois) {
@@ -88,12 +108,17 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
                 ref
                     .read(poiDisplayModeProvider.notifier)
                     .setMode(PoiDisplayMode.manual);
+
+                ref
+                    .read(poiSelectionModeProvider.notifier)
+                    .setMode(PoiSelectionMode.top10);
+
                 widget.onClose();
               },
             ),
 
             SizedBox(height: 8),
-
+// TODO wenn visiblePois.isEmpty => ausgrauen des listen buttons
             PoiFavoritesList(
               scrollController: menuScrollController,
               onClose: widget.onClose,
@@ -104,6 +129,9 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
                 ref
                     .read(poiDisplayModeProvider.notifier)
                     .setMode(PoiDisplayMode.manual);
+                    ref
+                    .read(poiSelectionModeProvider.notifier)
+                    .setMode(PoiSelectionMode.single);
                 widget.onClose();
               },
               onShowAll: (favPois) {
@@ -111,6 +139,9 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
                 ref
                     .read(poiDisplayModeProvider.notifier)
                     .setMode(PoiDisplayMode.manual);
+                    ref
+                    .read(poiSelectionModeProvider.notifier)
+                    .setMode(PoiSelectionMode.favorites);
                 widget.onClose();
               },
             ),
