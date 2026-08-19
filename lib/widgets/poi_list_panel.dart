@@ -54,6 +54,9 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
                   itemCount: visiblePois.length,
                   itemBuilder: (context, index) {
                     return PoiListItem(
+                      imageWidth: 140,
+                      imageHeight: 105,
+                      paddingLeft: 16,
                       poi: visiblePois[index],
                       onTap: () {
                         ref
@@ -89,7 +92,7 @@ class PoiListHeader extends ConsumerWidget {
       case PoiSelectionMode.categories:
         final slug =ref.read(selectedCategoriesProvider)[0] ;
         final cat = ref.read(categoryLabelBySlugProvider(slug)); 
-        headline = 'Liste der $cat';
+        headline = '$cat';
       case PoiSelectionMode.search:
         headline = 'Suchergebnis';
       case PoiSelectionMode.favorites:

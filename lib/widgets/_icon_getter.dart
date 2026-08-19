@@ -43,7 +43,7 @@ Widget getIcon(String category, double? iconsize, Color? color) {
     return Iconify(Mdi.image_filter_center_focus, size: iconsize ?? 24, color: color ?? Colors.black);
     case "districts":
       return Iconify(Mdi.home_city_outline, size: iconsize ?? 24, color: color ?? Colors.black);
-    case "Familienfreundlichkeit":
+    case "Sport und Spiel":
       return Iconify(Mdi.family, size: iconsize ?? 24, color: color ?? Colors.black);
     case "Regionalität":
       return Iconify(FluentMdl2.location_outline, size: iconsize ?? 24, color: color ?? Colors.black);

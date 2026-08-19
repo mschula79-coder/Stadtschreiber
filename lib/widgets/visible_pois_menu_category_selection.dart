@@ -334,6 +334,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                 }
               }
             }
+            widget.onClose();
           },
         ),
         title: Row(
@@ -364,6 +365,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
             ref
                 .read(categoriesSelectionProvider.notifier)
                 .setSelected(node.value!, checked ?? false);
+            widget.onClose();
           },
           secondary: getIcon(node.value!, 24, null),
           controlAffinity: ListTileControlAffinity.leading,

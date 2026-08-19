@@ -13,8 +13,17 @@ class PoiListItem extends ConsumerWidget {
   final PointOfInterest poi;
   final VoidCallback onTap;
   final double? paddingLeft;
+  final double? imageWidth;
+  final double? imageHeight;
 
-  const PoiListItem({super.key, required this.poi, required this.onTap, this.paddingLeft});
+  const PoiListItem({
+    super.key,
+    required this.poi,
+    required this.onTap,
+    this.paddingLeft,
+    this.imageWidth,
+    this.imageHeight,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,22 +61,30 @@ class PoiListItem extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Thumbnail
                 Padding(
-                  padding: EdgeInsetsGeometry.fromLTRB(paddingLeft ?? 12, 0, 0, 0),
+                  padding: EdgeInsetsGeometry.fromLTRB(
+                    paddingLeft ?? 12,
+                    0,
+                    0,
+                    0,
+                  ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: SizedBox(
-                      width: 90,
-                      height: 90,
+                      width: imageWidth ?? 120,
+                      height: imageHeight ?? 120,
                       child:
                           (poi.featuredImageUrl != null &&
                               poi.featuredImageUrl!.isNotEmpty)
                           ? Image.network(
                               poi.featuredImageUrl!,
-                              fit: BoxFit.cover,
+                              fit: BoxFit
+                                  .cover, // ⭐ füllt das Rechteck vollständig
+                              alignment:
+                                  Alignment.center, // ⭐ zentriert den Crop
                             )
                           : Container(
                               color: Colors.grey.shade300,
@@ -76,7 +93,7 @@ class PoiListItem extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
 
                 // Textbereich
                 Expanded(
@@ -84,7 +101,7 @@ class PoiListItem extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Name
-                      SizedBox(height: 4),
+                      SizedBox(height: 0),
                       Text(
                         poi.name,
                         maxLines: 1,
@@ -94,44 +111,8 @@ class PoiListItem extends ConsumerWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-
-                      poiRatingsAsync.when(
-                        loading: () => CircularProgressIndicator(),
-                        error: (e, st) => Text("Fehler: ${e.toString()}"),
-                        data: (ratings) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ...ratings.map(
-                                (r) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          getIcon(r.criterionName, 16, Colors.grey.shade600),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            '${r.criterionName}: ${r.avgRating} (${r.ratingCount})',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey.shade600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-
-                      // Adresse
+                      
+// Adresse
                       if (poi.address?.displayAddress() != null)
                         Text(
                           poi.address?.displayAddress() ?? '',
@@ -142,6 +123,7 @@ class PoiListItem extends ConsumerWidget {
                             color: Colors.grey.shade700,
                           ),
                         ),
+
 
                       // Distanz in km
                       Row(
@@ -161,7 +143,11 @@ class PoiListItem extends ConsumerWidget {
                                   children: [
                                     const SizedBox(width: 10),
 
-                                    getIcon("airplane", 16, Colors.grey.shade600),
+                                    getIcon(
+                                      "airplane",
+                                      16,
+                                      Colors.grey.shade600,
+                                    ),
                                     const SizedBox(width: 2),
                                     Text(
                                       distanceMeKm,
@@ -175,6 +161,56 @@ class PoiListItem extends ConsumerWidget {
                               : const SizedBox.shrink(),
                         ],
                       ),
+                      
+                      SizedBox(height: 0),
+
+
+                      poiRatingsAsync.when(
+                        loading: () => const CircularProgressIndicator(),
+                        error: (e, st) => Text("Fehler: ${e.toString()}"),
+                        data: (ratings) {
+                          return Wrap(
+                            spacing: 4, // Abstand zwischen Items
+                            runSpacing: 0, // Abstand zwischen Zeilen
+                            children: [
+                              for (int i = 0; i < ratings.length; i++)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    getIcon(
+                                      ratings[i].criterionName,
+                                      16,
+                                      Colors.grey.shade600,
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      '${ratings[i].criterionName}: '
+                                      '${ratings[i].avgRating} (${ratings[i].ratingCount})',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+
+                                    // ⭐ Komma nur zwischen Items, nicht am Ende
+                                    if (i < ratings.length - 1)
+                                      const Text(
+                                        ',',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+
+                      
+                      /* SizedBox(height: 4),
+
 
                       // Kategorien
                       if (poi.categories != null && poi.categories!.isNotEmpty)
@@ -186,7 +222,7 @@ class PoiListItem extends ConsumerWidget {
                             fontSize: 12,
                             color: Colors.grey.shade700,
                           ),
-                        ),
+                        ), */
                     ],
                   ),
                 ),

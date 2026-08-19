@@ -106,8 +106,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
                 : Duration.zero,
             curve: Curves.easeOut,
             top: _menuOpen ? 10 : -3000, // Menü fährt rein/raus
-            right: 0,
-            width: MediaQuery.of(context).size.width * 0.75,
+            right: 20,
+            width: MediaQuery.of(context).size.width -40,
             child: Material(
               elevation: 8,
               borderRadius: BorderRadius.circular(12),

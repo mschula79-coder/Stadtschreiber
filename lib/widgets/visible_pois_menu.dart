@@ -46,7 +46,7 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
 
           children: [
             PoiSearch(
-              onClose: widget.onClose,
+              onClose:() => widget.onClose(),
               onSelect: (poi) {
                 ref.read(selectedPoiProvider.notifier).setPoi(poi);
                 ref.read(manualPoisProvider.notifier).clear();
@@ -76,7 +76,7 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
             SizedBox(height: 8),
             PoiCategorySelection(
               onClose: () {
-                widget.onClose;
+                widget.onClose();
                 
               },
             ),
@@ -85,7 +85,7 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
 
             PoiTop10List(
               onClose: () {
-                widget.onClose;
+                widget.onClose();
               },
 
               onSelect: (poi) {
@@ -121,7 +121,7 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
 // TODO wenn visiblePois.isEmpty => ausgrauen des listen buttons
             PoiFavoritesList(
               scrollController: menuScrollController,
-              onClose: widget.onClose,
+              onClose:() =>  widget.onClose(),
               onSelect: (poi) {
                 ref.read(selectedPoiProvider.notifier).setPoi(poi);
                 ref.read(manualPoisProvider.notifier).clear();
