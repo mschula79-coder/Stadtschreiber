@@ -29,6 +29,9 @@ class PoiCategoryNodeTile extends ConsumerWidget {
       return ExpansionTile(
         title: Text(node.label),
         visualDensity: VisualDensity.compact,
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: EdgeInsets.zero,
+        leading: SizedBox.shrink(), // falls du kein Icon hast
         children: node.children
             .map(
               (child) => PoiCategoryNodeTile(
@@ -40,6 +43,8 @@ class PoiCategoryNodeTile extends ConsumerWidget {
             .toList(),
       );
     }
+
+    // Kriterien bearbeiten
 
     final slug = node.value!;
 
@@ -55,7 +60,7 @@ class PoiCategoryNodeTile extends ConsumerWidget {
     bool? isSelected;
 
     if (isCriterionMode == null || isCriterionMode == false) {
-        isSelected = poi!.categories?.contains(slug);
+      isSelected = poi!.categories?.contains(slug);
     } else if (isCriterionMode!) {
       isSelected = criterionCategories.contains(slug);
     }

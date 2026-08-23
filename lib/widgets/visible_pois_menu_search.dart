@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:stadtschreiber/models/poi.dart';
+import 'package:stadtschreiber/models/poi_display_modes.dart';
+import 'package:stadtschreiber/models/poi_selection_modes.dart';
 import 'package:stadtschreiber/provider/camera_provider.dart';
+import 'package:stadtschreiber/provider/poi_display_mode_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/search_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
+import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
 import 'package:stadtschreiber/widgets/poi_list_item.dart';
 
 class PoiSearch extends ConsumerStatefulWidget {
@@ -27,6 +31,9 @@ class PoiSearch extends ConsumerStatefulWidget {
 class _PoiSearchState extends ConsumerState<PoiSearch> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
+  final ExpansibleController expansionController = ExpansibleController();
+
+  PoiSelectionMode? _lastMode;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +50,19 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
       )),
     );
 
+    final mode = ref.watch(visiblePoisMenuStateProvider).poiSelectionMode;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_lastMode != mode) {
+        if (mode == PoiSelectionMode.search) {
+          expansionController.expand();
+        } else {
+          expansionController.collapse();
+        }
+        _lastMode = mode;
+      }
+    });
+
     return Theme(
       data: Theme.of(context).copyWith(
         listTileTheme: const ListTileThemeData(contentPadding: EdgeInsets.zero),
@@ -56,8 +76,27 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
           childrenPadding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
           visualDensity: VisualDensity.compact,
           initiallyExpanded: false,
+          controller: expansionController,
+
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           expandedAlignment: Alignment.topLeft,
+          onExpansionChanged: (value) {
+            ref
+                .read(visiblePoisMenuStateProvider.notifier)
+                .setTileExpanded("search", value);
+
+            if (value) {
+              ref
+                  .read(visiblePoisMenuStateProvider.notifier)
+                  .setPoiEditMode(PoiSelectionMode.search);
+            } else {
+              ref
+                  .read(poiDisplayModeProvider.notifier)
+                  .setMode(PoiDisplayMode.manual);
+              expansionController.collapse();
+            }
+          },
+
           title: Row(
             children: [
               Icon(Icons.search, color: Colors.grey.shade600),
@@ -76,7 +115,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
             SizedBox(height: 3),
 
             Container(
-              width: 250,
+              width: 300,
               padding: const EdgeInsets.fromLTRB(6, 0, 4, 0),
               margin: const EdgeInsets.fromLTRB(4, 0, 4, 4),
               decoration: BoxDecoration(

@@ -37,6 +37,10 @@ class AppStateNotifier extends Notifier<AppStateData> {
     state = state.copyWith(isPoiListVisible: value);
   }
 
+  void setMapScreenHeight(double value) {
+    state = state.copyWith(mapScreenHeight: value);
+  }
+
 /*   void setUserName(String name) {
     DebugService.log('AppState.setUsername: $name');
     state = state.copyWith(username: name);
@@ -47,3 +51,4 @@ final appStateProvider = NotifierProvider<AppStateNotifier, AppStateData>(
   AppStateNotifier.new,
   name: 'appStateProvider',
 );
+

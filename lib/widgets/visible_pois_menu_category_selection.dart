@@ -1,11 +1,15 @@
+// ignore_for_file: unused_local_variable
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stadtschreiber/models/poi_selection_modes.dart';
 
 import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:stadtschreiber/provider/categories_menu_provider.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
 import 'package:stadtschreiber/provider/category_repository_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
+import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
 import 'package:stadtschreiber/utils/dialog_utils.dart';
 import 'package:stadtschreiber/widgets/_editable_list.dart';
 import 'package:stadtschreiber/widgets/_icon_getter.dart';
@@ -31,11 +35,27 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
   bool isFilterActive = false;
   bool expandAll = false;
   bool isAdminViewEnabled = false;
+  final ExpansibleController expansionController = ExpansibleController();
+  PoiSelectionMode? _lastMode;
+
 
   @override
   Widget build(BuildContext context) {
     final categories = ref.watch(categoriesProvider).categories;
     final isAdmin = ref.read(supabaseUserStateProvider).isAdmin;
+
+    final mode = ref.watch(visiblePoisMenuStateProvider).poiSelectionMode;
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_lastMode != mode) {
+        if (mode == PoiSelectionMode.categories) {
+          expansionController.expand();
+        } else {
+          expansionController.collapse();
+        }
+        _lastMode = mode;
+      }
+    });
 
     return Theme(
       data: Theme.of(context).copyWith(
@@ -47,11 +67,25 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
         minLeadingWidth: 0,
         child: ExpansionTile(
           tilePadding: const EdgeInsets.only(left: 0, right: 15),
-          childrenPadding: const EdgeInsets.fromLTRB(10, 4, 0, 0),
+          childrenPadding: const EdgeInsets.fromLTRB(4, 4, 0, 0),
           visualDensity: VisualDensity.compact,
           initiallyExpanded: false,
+          controller: expansionController,
+
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           expandedAlignment: Alignment.topLeft,
+          onExpansionChanged: (value) {
+            ref
+                .read(visiblePoisMenuStateProvider.notifier)
+                .setTileExpanded("categories", value);
+
+            if (value) {
+              ref
+                  .read(visiblePoisMenuStateProvider.notifier)
+                  .setPoiEditMode(PoiSelectionMode.categories);
+            }
+          },
+
           title: Row(
             children: [
               /*                 Icon(Icons.category, color: Colors.grey.shade600),
@@ -288,6 +322,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
   ) {
     final categoryCheckboxesState = ref.watch(categoriesSelectionProvider);
 
+    // Parents
     if (!node.isLeaf) {
       final allDescendantLeaves = _collectLeafValues(node);
       final directLeafChildren = node.children
@@ -313,7 +348,9 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
         childrenPadding: EdgeInsets.zero,
         visualDensity: VisualDensity.compact,
         initiallyExpanded: expandAll,
-        leading: Checkbox(
+
+        leading: getIcon(node.value ?? '', 28, null),
+        /* Checkbox(
           value: parentChecked,
           tristate: true,
           onChanged: (checked) {
@@ -336,11 +373,20 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
             }
             widget.onClose();
           },
-        ),
+        ), */
         title: Row(
           children: [
-            Expanded(child: Text(node.label, softWrap: true, maxLines: null)),
-            getIcon(node.value ?? '', 24, null),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                node.label,
+                softWrap: true,
+                maxLines: null,
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+            /*             getIcon(node.value ?? '', 24, null),
+ */
           ],
         ),
         children: node.children
@@ -360,6 +406,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
           contentPadding: const EdgeInsets.only(top: 0, left: 4, right: 15),
           value: isChecked,
           visualDensity: VisualDensity.compact,
+
           onChanged: (checked) {
             if (node.value == null) return;
             ref
@@ -369,7 +416,10 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
           },
           secondary: getIcon(node.value!, 24, null),
           controlAffinity: ListTileControlAffinity.leading,
-          title: Text(node.label),
+          title: Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text(node.label),
+          ),
         ),
       ],
     );

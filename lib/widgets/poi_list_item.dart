@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maplibre/maplibre.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/provider/camera_provider.dart';
-import 'package:stadtschreiber/provider/categories_provider.dart';
 import 'package:stadtschreiber/provider/poi_ratings_provider.dart';
 import 'package:stadtschreiber/provider/user_location_state_provider.dart';
 import 'package:stadtschreiber/services/geo_service.dart';
@@ -27,9 +26,12 @@ class PoiListItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final camera = ref.watch(cameraProvider);
+    final cameraPosition = ref.watch(cameraPositionPanelCorrectedProvider);
 
-    final distance = geoDistanceMeters(poi.location, camera.getLocation());
+    
+
+
+    final distance = geoDistanceMeters(poi.location,cameraPosition);
 
     final myLocation = ref.watch(userLocationStateProvider);
 
@@ -48,10 +50,10 @@ class PoiListItem extends ConsumerWidget {
 
     final poiRatingsAsync = ref.watch(poiRatingsWithStatsProvider(poi.id));
 
-    final labels = poi.categories!
+    /* final labels = poi.categories!
         .map((slug) => ref.watch(categoryLabelBySlugProvider(slug)))
         .whereType<String>()
-        .toList();
+        .toList(); */
 
     return Column(
       children: [
@@ -104,15 +106,15 @@ class PoiListItem extends ConsumerWidget {
                       SizedBox(height: 0),
                       Text(
                         poi.name,
-                        maxLines: 1,
+                        maxLines: 99,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      
-// Adresse
+
+                      // Adresse
                       if (poi.address?.displayAddress() != null)
                         Text(
                           poi.address?.displayAddress() ?? '',
@@ -123,7 +125,6 @@ class PoiListItem extends ConsumerWidget {
                             color: Colors.grey.shade700,
                           ),
                         ),
-
 
                       // Distanz in km
                       Row(
@@ -161,9 +162,8 @@ class PoiListItem extends ConsumerWidget {
                               : const SizedBox.shrink(),
                         ],
                       ),
-                      
-                      SizedBox(height: 0),
 
+                      SizedBox(height: 0),
 
                       poiRatingsAsync.when(
                         loading: () => const CircularProgressIndicator(),
@@ -208,7 +208,6 @@ class PoiListItem extends ConsumerWidget {
                         },
                       ),
 
-                      
                       /* SizedBox(height: 4),
 
 

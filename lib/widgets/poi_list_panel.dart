@@ -28,8 +28,9 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
   Widget build(BuildContext context) {
     /*     final width = MediaQuery.of(context).size.width; */
     /*     final horizontalPadding = width < 600 ? 24.0 : width * 0.3;*/
-
-    final visiblePoisAsync = ref.watch(visiblePoisProvider);
+    /*     final visiblePoisAsync = ref.watch(visiblePoisProvider);
+ */
+    final visiblePois = ref.watch(sortedVisiblePoisProvider);
 
     return Container(
       decoration: const BoxDecoration(
@@ -47,7 +48,7 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
           ),
           SizedBox(height: 16),
 
-          Expanded(
+          /*           Expanded(
             child: visiblePoisAsync.when(
               data: (visiblePois) {
                 return ListView.builder(
@@ -71,6 +72,25 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
               error: (err, stack) => Text("Fehler: $err"),
             ),
           ),
+ */
+          Expanded(
+            child: ListView.builder(
+              itemCount: visiblePois.length,
+              itemBuilder: (context, index) {
+                return PoiListItem(
+                  imageWidth: 140,
+                  imageHeight: 105,
+                  paddingLeft: 16,
+                  poi: visiblePois[index],
+                  onTap: () {
+                    ref
+                        .read(selectedPoiProvider.notifier)
+                        .setPoi(visiblePois[index]);
+                  },
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
@@ -81,7 +101,6 @@ class PoiListHeader extends ConsumerWidget {
   final VoidCallback onClose;
 
   const PoiListHeader({super.key, required this.onClose});
-// TODO DistancefromMapcenter um poi list panel korrigieren
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     String headline;
@@ -90,8 +109,8 @@ class PoiListHeader extends ConsumerWidget {
       case PoiSelectionMode.top10:
         headline = 'Top 10';
       case PoiSelectionMode.categories:
-        final slug =ref.read(selectedCategoriesProvider)[0] ;
-        final cat = ref.read(categoryLabelBySlugProvider(slug)); 
+        final slug = ref.read(selectedCategoriesProvider)[0];
+        final cat = ref.read(categoryLabelBySlugProvider(slug));
         headline = '$cat';
       case PoiSelectionMode.search:
         headline = 'Suchergebnis';

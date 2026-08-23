@@ -861,6 +861,7 @@ NEWPOI
     final poi = ref.read(selectedPoiProvider);
     if (poi == null) return;
     final screenSize = MediaQuery.of(context).size;
+
     final halfWidth = screenSize.width / 2;
 
     final screenTop = mapController!.toLngLat(Offset(halfWidth, 0)).lat;

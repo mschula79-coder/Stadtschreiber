@@ -10,6 +10,7 @@ import 'package:stadtschreiber/provider/poi_display_mode_provider.dart';
 import 'package:stadtschreiber/provider/poi_selection_mode_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
 import 'package:stadtschreiber/widgets/visible_pois_menu.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'map_screen.dart';
@@ -39,13 +40,15 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
   void initState() {
     super.initState();
     WakelockPlus.enable();
-
     _initPermissions();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _menuInitialized = true);
       ref.read(appStateProvider.notifier).setAdminViewEnabled(true);
+      ref
+          .read(appStateProvider.notifier)
+          .setMapScreenHeight(MediaQuery.of(context).size.height - 35);
     });
   }
 
@@ -81,6 +84,12 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
       }
     });
 
+    final expandedTiles = ref.watch(visiblePoisMenuStateProvider).expandedTiles;
+
+    final anyExpanded = expandedTiles.values.any((v) => v == true);
+
+    final paddingWidth = anyExpanded ? 40 : 150;
+
     return Scaffold(
       appBar: MainAppBar(
         filterButtonKey: _filterKey,
@@ -102,27 +111,31 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
           // Das Menü selbst
           AnimatedPositioned(
             duration: _menuInitialized
-                ? Duration(milliseconds: 200)
+                ? Duration(milliseconds: 500)
                 : Duration.zero,
             curve: Curves.easeOut,
-            top: _menuOpen ? 10 : -3000, // Menü fährt rein/raus
+            top: _menuOpen ? 10 : -1000,
             right: 20,
-            width: MediaQuery.of(context).size.width -40,
-            child: Material(
-              elevation: 8,
-              borderRadius: BorderRadius.circular(12),
-              child: VisiblePoisMenu(
-                onClose: () {
-                  final displayMode = ref.read(poiDisplayModeProvider);
-                  if (displayMode != PoiDisplayMode.categories) {
-                    ref.read(categoriesSelectionProvider.notifier).clear();
-                  } else {
-                    ref
-                        .read(poiSelectionModeProvider.notifier)
-                        .setMode(PoiSelectionMode.categories);
-                  }
-                  setState(() => _menuOpen = false);
-                },
+            child: AnimatedContainer(
+              duration: Duration(milliseconds: 500),
+              curve: Curves.easeOut,
+              width: MediaQuery.of(context).size.width - paddingWidth,
+              child: Material(
+                elevation: 8,
+                borderRadius: BorderRadius.circular(12),
+                child: VisiblePoisMenu(
+                  onClose: () {
+                    final displayMode = ref.read(poiDisplayModeProvider);
+                    if (displayMode != PoiDisplayMode.categories) {
+                      ref.read(categoriesSelectionProvider.notifier).clear();
+                    } else {
+                      ref
+                          .read(poiSelectionModeProvider.notifier)
+                          .setMode(PoiSelectionMode.categories);
+                    }
+                    setState(() => _menuOpen = false);
+                  },
+                ),
               ),
             ),
           ),

@@ -20,7 +20,7 @@ class CategoryDto {
       id: json['id'],
       slug: json['slug'],
       name: json['name'],
-      sortOrder: json['sort_order'] ?? 0,
+      sortOrder: json['sort_order'] ?? 9999,
       iconSource: json['icon_source'],
       iconName: json['icon_name'],
     );

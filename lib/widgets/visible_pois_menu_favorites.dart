@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/poi.dart';
+import 'package:stadtschreiber/models/poi_selection_modes.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/user_favorite_lists_provider.dart';
+import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
 import 'package:stadtschreiber/widgets/poi_list_item.dart';
 
 class PoiFavoritesList extends ConsumerStatefulWidget {
@@ -26,6 +28,9 @@ class PoiFavoritesList extends ConsumerStatefulWidget {
 }
 
 class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
+  final ExpansibleController expansionController = ExpansibleController();
+  PoiSelectionMode? _lastMode;
+
   void _scrollToTile(GlobalKey key) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final context = key.currentContext;
@@ -56,6 +61,18 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
     final userID = ref.watch(supabaseUserStateProvider).userid;
     final favoriteListsAsync = ref.watch(userFavoriteListsProvider(userID));
 
+    final mode = ref.watch(visiblePoisMenuStateProvider).poiSelectionMode;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_lastMode != mode) {
+        if (mode == PoiSelectionMode.favorites) {
+          expansionController.expand();
+        } else {
+          expansionController.collapse();
+        }
+      }
+    });
+
     return Theme(
       data: Theme.of(context).copyWith(
         listTileTheme: const ListTileThemeData(contentPadding: EdgeInsets.zero),
@@ -70,6 +87,18 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
           childrenPadding: EdgeInsets.zero,
           visualDensity: VisualDensity.compact,
           initiallyExpanded: false,
+          controller: expansionController,
+
+          onExpansionChanged: (value) {
+            ref
+                .read(visiblePoisMenuStateProvider.notifier)
+                .setTileExpanded("favorites", value);
+            if (value) {
+              ref
+                  .read(visiblePoisMenuStateProvider.notifier)
+                  .setPoiEditMode(PoiSelectionMode.favorites);
+            } 
+          },
 
           // ⭐ Fix 1: verhindert zusätzliches Padding + Animation
           collapsedShape: const Border(),

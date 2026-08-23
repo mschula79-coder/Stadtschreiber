@@ -14,7 +14,10 @@ import 'package:stadtschreiber/widgets/visible_pois_menu_top10.dart';
 class VisiblePoisMenu extends ConsumerStatefulWidget {
   final VoidCallback onClose;
 
-  const VisiblePoisMenu({super.key, required this.onClose});
+  const VisiblePoisMenu({
+    super.key,
+    required this.onClose,
+  });
 
   @override
   ConsumerState<VisiblePoisMenu> createState() => _VisiblePoisMenuState();
@@ -46,7 +49,7 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
 
           children: [
             PoiSearch(
-              onClose:() => widget.onClose(),
+              onClose: () => widget.onClose(),
               onSelect: (poi) {
                 ref.read(selectedPoiProvider.notifier).setPoi(poi);
                 ref.read(manualPoisProvider.notifier).clear();
@@ -74,10 +77,10 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
             ),
 
             SizedBox(height: 8),
+
             PoiCategorySelection(
               onClose: () {
                 widget.onClose();
-                
               },
             ),
 
@@ -118,10 +121,10 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
             ),
 
             SizedBox(height: 8),
-// TODO wenn visiblePois.isEmpty => ausgrauen des listen buttons
+            // TODO wenn visiblePois.isEmpty => ausgrauen des listen buttons
             PoiFavoritesList(
               scrollController: menuScrollController,
-              onClose:() =>  widget.onClose(),
+              onClose: () => widget.onClose(),
               onSelect: (poi) {
                 ref.read(selectedPoiProvider.notifier).setPoi(poi);
                 ref.read(manualPoisProvider.notifier).clear();
@@ -129,7 +132,7 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
                 ref
                     .read(poiDisplayModeProvider.notifier)
                     .setMode(PoiDisplayMode.manual);
-                    ref
+                ref
                     .read(poiSelectionModeProvider.notifier)
                     .setMode(PoiSelectionMode.single);
                 widget.onClose();
@@ -139,7 +142,7 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
                 ref
                     .read(poiDisplayModeProvider.notifier)
                     .setMode(PoiDisplayMode.manual);
-                    ref
+                ref
                     .read(poiSelectionModeProvider.notifier)
                     .setMode(PoiSelectionMode.favorites);
                 widget.onClose();

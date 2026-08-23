@@ -74,3 +74,31 @@ Map<String, double> createViewbox(double lat, double lon, int meters) {
     "bottom": lat - dLat,
   };
 }
+
+double geoDistanceMetersCorrected({
+  required Geographic a,
+  required Geographic b,
+  required double zoom,
+  required double pixelOffsetX,
+  required double pixelOffsetY,
+}) {
+  final metersPerPx = metersPerPixel(b.lat, zoom);
+
+  final dxMeters = pixelOffsetX * metersPerPx;
+  final dyMeters = pixelOffsetY * metersPerPx;
+
+  final correctedLat = b.lat + metersToLat(dyMeters);
+  final correctedLon = b.lon + metersToLon(dxMeters, b.lat);
+
+  final correctedPoint = Geographic(lon: correctedLon, lat: correctedLat);
+
+  return geoDistanceMeters(a, correctedPoint);
+}
+
+double metersToLat(double meters) {
+  return meters / 110540.0;
+}
+double metersToLon(double meters, double lat) {
+  return meters / (111320.0 * math.cos(lat * math.pi / 180));
+}
+

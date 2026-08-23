@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/l10n/app_localizations.dart';
 import 'package:stadtschreiber/models/category.dart';
 import 'package:stadtschreiber/models/poi.dart';
+import 'package:stadtschreiber/models/poi_selection_modes.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
 import 'package:stadtschreiber/provider/poi_top10_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
+import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
 import 'package:stadtschreiber/utils/category_utils.dart';
 import 'package:stadtschreiber/widgets/_icon_getter.dart';
 import 'package:stadtschreiber/widgets/poi_list_item.dart';
@@ -31,10 +33,25 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
   double top10ListLength = 10;
   CategoryNode? top10Category;
   RatingCriterionDTO? top10Criterion;
+  final ExpansibleController expansionController = ExpansibleController();
+  PoiSelectionMode? _lastMode;
 
   @override
   Widget build(BuildContext context) {
     final top10ListAsync = ref.watch(top10PoisProvider);
+
+    final mode = ref.watch(visiblePoisMenuStateProvider).poiSelectionMode;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_lastMode != mode) {
+        if (mode == PoiSelectionMode.top10) {
+          expansionController.expand();
+        } else {
+          expansionController.collapse();
+        }
+        _lastMode = mode;
+      }
+    });
 
     return Theme(
       data: Theme.of(context).copyWith(
@@ -49,8 +66,20 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
           childrenPadding: EdgeInsets.fromLTRB(0, 0, 0, 0),
           visualDensity: VisualDensity.compact,
           initiallyExpanded: false,
+          controller: expansionController,
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           expandedAlignment: Alignment.topLeft,
+          onExpansionChanged: (value) {
+            ref
+                .read(visiblePoisMenuStateProvider.notifier)
+                .setTileExpanded("top10", value);
+
+            if (value) {
+              ref
+                  .read(visiblePoisMenuStateProvider.notifier)
+                  .setPoiEditMode(PoiSelectionMode.top10);
+            }
+          },
           // Überschrift
           title: Row(
             children: [

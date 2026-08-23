@@ -5,6 +5,7 @@ class AppStateData {
   final bool isPoiEditMode;
   final double panelHeight = 460;
   final bool isPoiListVisible;
+  final double mapScreenHeight = 0;
 
   const AppStateData({
     required this.isAdminViewEnabled,
@@ -12,6 +13,7 @@ class AppStateData {
     required this.isPoiEditMode,
     required this.locationPermission,
     required this.isPoiListVisible,
+    double? mapScreenHeight,
   });
 
   AppStateData copyWith({
@@ -20,6 +22,7 @@ class AppStateData {
     bool? locationPermission,
     bool? isPoiEditMode,
     bool? isPoiListVisible,
+    double ? mapScreenHeight,
   }) {
     return AppStateData(
       isAdminViewEnabled: isAdminViewEnabled ?? this.isAdminViewEnabled,
@@ -27,6 +30,7 @@ class AppStateData {
       isPoiEditMode: isPoiEditMode ?? this.isPoiEditMode,
       locationPermission: locationPermission ?? this.locationPermission,
       isPoiListVisible: isPoiListVisible ?? this.isPoiListVisible,
+      mapScreenHeight: mapScreenHeight ?? this.mapScreenHeight,
     );
   }
 

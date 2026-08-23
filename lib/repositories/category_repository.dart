@@ -1,4 +1,5 @@
 import 'package:stadtschreiber/models/rating_criterion.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/category.dart';
@@ -42,7 +43,11 @@ class CategoryRepository {
           ..sort((a, b) {
             final dtoA = categories[a.id]!;
             final dtoB = categories[b.id]!;
-            return dtoA.sortOrder.compareTo(dtoB.sortOrder);
+
+            final orderCompare = dtoA.sortOrder.compareTo(dtoB.sortOrder);
+            if (orderCompare != 0) return orderCompare;
+
+            return germanCompare(dtoA.name, dtoB.name);
           });
 
     return roots;
@@ -94,7 +99,7 @@ class CategoryRepository {
     final response = await supabase
         .from('global_rating_criteria')
         .select('*')
-        .order('name',ascending: true);
+        .order('name', ascending: true);
 
     return response.map<RatingCriterionDTO>((row) {
       return RatingCriterionDTO.fromJson(row);
