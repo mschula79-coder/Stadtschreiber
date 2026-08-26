@@ -39,15 +39,20 @@ class _RatingListItemState extends ConsumerState<RatingListItem> {
     final commentsAsync = ref.watch(poiRatingsProvider(widget.poiId));
 
     return Column(
+      
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Text Criterion Name + Comment show/hide button + rate button
         Text(criterionName, style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
+        criterionDescription.isNotEmpty
+        ? const SizedBox(height: 8)
+        : SizedBox.shrink(),
 
         // Criterion description
-        Text(criterionDescription),
-        const SizedBox(height: 8),
+        criterionDescription.isNotEmpty
+        ? Text(criterionDescription)
+        : SizedBox.shrink(),
+        const SizedBox(height: 0),
 
         // List of Rating Stars, average score and no. of ratings
         PoiRatingStatsBuilder(

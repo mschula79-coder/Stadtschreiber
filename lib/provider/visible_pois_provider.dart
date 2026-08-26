@@ -71,6 +71,6 @@ final sortedVisiblePoisProvider = Provider<List<PointOfInterest>>((ref) {
       return sorted;
     },
     loading: () => [],
-    error: (_, __) => [],
+    error: (_, _) => [],
   );
 });

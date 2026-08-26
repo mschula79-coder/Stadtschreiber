@@ -4,6 +4,7 @@ import 'package:stadtschreiber/main.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
+import 'package:stadtschreiber/provider/user_profile_repository_provider.dart';
 import 'package:stadtschreiber/widgets/_icon_getter.dart';
 import 'package:stadtschreiber/widgets/modal_user_edit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -20,7 +21,7 @@ class UserActionsBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appUser = ref.read(supabaseUserStateProvider);
+    final appUser = ref.watch(supabaseUserStateProvider);
 
     final isAdmin = appUser.isAdmin;
 
@@ -117,7 +118,7 @@ class _SettingsSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAuth = Supabase.instance.client.auth.currentUser;
-    final user = ref.read(supabaseUserStateProvider);
+    final user = ref.watch(supabaseUserStateProvider);
     String role = '';
 
     if (userAuth == null) return SizedBox.shrink();
@@ -152,18 +153,52 @@ class _SettingsSheet extends ConsumerWidget {
           const SizedBox(height: 8),
 
           ElevatedButton.icon(
-            onPressed: () async{
+            onPressed: () async {
               final updatedProfile = await showDialog<List<String>>(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (_) => UserEditModal(
-                          email: userAuth.email!,
-                          username: user.username,
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => UserEditModal(
+                  email: userAuth.email!,
+                  username: user.username,
+                ),
+              );
 
-                        ),
-                      );  },
+              if (!context.mounted) return;
+              if (updatedProfile == null) return;
 
-                      // TODO update in Supabase profile
+              final newName = updatedProfile[0];
+              final newEmail = updatedProfile[1];
+
+              final repo = ref.read(userRepositoryProvider);
+
+              bool changed = false;
+
+              // Username ändern
+              if (newName != user.username) {
+                await repo.updateUsername(newName);
+                changed = true;
+              }
+
+              // E-Mail ändern
+              if (newEmail != userAuth.email) {
+                await repo.updateEmail(newEmail);
+                changed = true;
+
+                if (!context.mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Bitte bestätige deine neue E-Mail-Adresse."),
+                  ),
+                );
+              }
+
+              if (changed) {
+                await ref
+                    .read(supabaseUserStateProvider.notifier)
+                    .loadProfile(userAuth.id);
+              }
+            },
             icon: const Icon(Icons.person),
             label: const Text("Profil bearbeiten"),
           ),

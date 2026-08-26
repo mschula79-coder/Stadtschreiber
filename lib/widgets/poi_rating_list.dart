@@ -13,17 +13,15 @@ class PoiRatingList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16,8,16,0),
       itemCount: criteria.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 0),
       itemBuilder: (context, index) {
         final criterion = criteria[index];
         // Widget
-        return RatingListItem(
-          criterion: criterion,
-          poiId: poi.id,
-          
-        );
+        return RatingListItem(criterion: criterion, poiId: poi.id);
       },
     );
   }

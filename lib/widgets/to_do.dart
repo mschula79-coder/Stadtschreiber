@@ -1,3 +1,4 @@
+// Test UpdateProfile Email
 // TODO Mehrsprachigkeit App Modals und Datenbank
 // TODO add poi owner
 // TODO Konto löschen button, check ob user vorhanden
@@ -9,6 +10,7 @@
 // Multi category bewertung
 // TODO automatisches Scrollen nach expansion im visiblePoismenu fixen
 // TODO wenn ich in den link zum passwort zurücksetzen drücke, kehrt die app zum login screen zurück. kann ich in diesem fall eine meldung einblenden dass ein neues passwort einzutragen ist?
+// variable poi list panel
 
 class ToDo {
   String id;

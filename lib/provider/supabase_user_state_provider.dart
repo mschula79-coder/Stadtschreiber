@@ -18,26 +18,26 @@ class SupabaseUserState {
   });
 
   factory SupabaseUserState.loadingState() => SupabaseUserState(
-        userid: '',
-        username: '',
-        isAdmin: false,
-        isAuthor: false,
-        loading: true,
-      );
+    userid: '',
+    username: '',
+    isAdmin: false,
+    isAuthor: false,
+    loading: true,
+  );
 
   factory SupabaseUserState.loggedOut() => SupabaseUserState(
-        userid: '',
-        username: '',
-        isAdmin: false,
-        isAuthor: false,
-        loading: false,
-      );
+    userid: '',
+    username: '',
+    isAdmin: false,
+    isAuthor: false,
+    loading: false,
+  );
 }
 
 final supabaseUserStateProvider =
     NotifierProvider<SupabaseUserStateNotifier, SupabaseUserState>(
-  SupabaseUserStateNotifier.new,
-);
+      SupabaseUserStateNotifier.new,
+    );
 
 class SupabaseUserStateNotifier extends Notifier<SupabaseUserState> {
   @override
@@ -48,7 +48,7 @@ class SupabaseUserStateNotifier extends Notifier<SupabaseUserState> {
 
     final session = auth.currentSession;
     if (session?.user != null) {
-      _loadProfile(session!.user.id);
+      loadProfile(session!.user.id);
     } else {
       state = SupabaseUserState.loggedOut();
     }
@@ -58,7 +58,7 @@ class SupabaseUserStateNotifier extends Notifier<SupabaseUserState> {
       final session = data.session;
 
       if (event == AuthChangeEvent.signedIn && session?.user != null) {
-        _loadProfile(session!.user.id);
+        loadProfile(session!.user.id);
       }
 
       if (event == AuthChangeEvent.signedOut) {
@@ -69,9 +69,12 @@ class SupabaseUserStateNotifier extends Notifier<SupabaseUserState> {
     return state;
   }
 
-  Future<void> _loadProfile(String userId) async {
-    final profileAsync =
-        await ref.read(supabaseUserProfileLoaderProvider.future);
+  Future<void> loadProfile(String userId) async {
+    ref.invalidate(supabaseUserProfileLoaderProvider);
+    
+    final profileAsync = await ref.read(
+      supabaseUserProfileLoaderProvider.future,
+    );
 
     state = SupabaseUserState(
       userid: userId,
