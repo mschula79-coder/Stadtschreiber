@@ -9,7 +9,13 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
+  String get add => 'Add';
+
+  @override
   String get address => 'Address';
+
+  @override
+  String get attention => 'Attention';
 
   @override
   String get allRated => 'All rated Pois';
@@ -24,10 +30,24 @@ class AppLocalizationsFr extends AppLocalizations {
   String get categories => 'Categories';
 
   @override
+  String get checkEmail =>
+      'Please check your email and click the confirmation link. Also check your spam folder.';
+
+  @override
   String get city => 'City';
 
   @override
+  String get chooseUserName => 'Choose username';
+
+  @override
   String get confirm => 'Confirm';
+
+  @override
+  String get confirmDeletionOfPoint =>
+      'Do you really intend to delete the point?';
+
+  @override
+  String get goOn => 'Continue';
 
   @override
   String get delete => 'Delete';
@@ -36,13 +56,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get description => 'Description';
 
   @override
-  String get distanceFromCenter => 'Distance from map center: ';
-
-  @override
   String get distance => 'Distance';
 
   @override
+  String get distanceFromCenter => 'Distance from map center: ';
+
+  @override
   String get editCategories => 'Edit categories';
+
+  @override
+  String get editFeatures => 'Edit features';
 
   @override
   String get editGeometryPoints => 'Edit geometry points';
@@ -53,9 +76,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get editLinks => 'Edit links';
-
-  @override
-  String get editFeatures => 'Edit features';
 
   @override
   String get email => 'Email';
@@ -94,16 +114,26 @@ class AppLocalizationsFr extends AppLocalizations {
   String get logout => 'Logout';
 
   @override
+  String get moveMapMessage =>
+      'Move the map to reposition the point. When you release it, the change will be saved.';
+
+  @override
   String get multipolygone => 'MultiPolygone';
 
   @override
   String get name => 'Name';
 
   @override
+  String get newPassword => 'new password';
+
+  @override
   String get no => 'No';
 
   @override
   String get noCategoriesLoaded => 'No categories loaded';
+
+  @override
+  String get noEntries => 'no entries';
 
   @override
   String get noResults => 'No results found';
@@ -116,6 +146,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get password => 'Password';
+
+  @override
+  String get pleaseEnterPassword => 'Please enter password';
 
   @override
   String get passwordForgotten => 'Forgot password?';
@@ -151,13 +184,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get selectCategory => 'Select category';
 
   @override
-  String get selectionIncomplete => 'Selection incomplete';
+  String get selectLengthOfPoiList => 'Select length of Poi List';
 
   @override
   String get selectRatingCriterion => 'Select rating criterion';
 
   @override
-  String get selectLengthOfPoiList => 'Select length of Poi List';
+  String get selectionIncomplete => 'Selection incomplete';
+
+  @override
+  String get setNewPassword => 'Set new password';
 
   @override
   String get send => 'Send';
@@ -166,7 +202,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get showTop10 => 'Show Top10 List';
 
   @override
+  String get finishEditMode => 'Finish Edit Mode';
+
+  @override
+  String get finishDragMode => 'Finish Drag Mode';
+
+  @override
   String get street => 'Street';
+
+  @override
+  String get userName => 'Username ';
 
   @override
   String get yes => 'Yes';

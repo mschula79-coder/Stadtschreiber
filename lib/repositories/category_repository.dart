@@ -11,7 +11,7 @@ class CategoryRepository {
 
     final catListRaw = await supabase
         .from('categories')
-        .select('id, slug, name, sort_order, icon_source, icon_name')
+        .select('id, slug, name, sort_order')
         .eq('is_active', true)
         .order('name', ascending: true);
 

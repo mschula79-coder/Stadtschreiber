@@ -224,30 +224,33 @@ class PoiRepository {
     double lat,
     double lon,
   ) async {
-    if (query.startsWith('nearby pois')) {
-      final cleanedQuery = query.substring('nearby'.length).trim();
-      final osmResult = await searchNearbyOverpassPois(
-        query: cleanedQuery,
+    if (query.startsWith('osm tag')) {
+      final cleanedQuery = query.substring('osm tag'.length).trim();
+      final osmResult = await searchNearbyOverpassTag(
         lat: lat,
         lon: lon,
+        cleanedQuery: cleanedQuery,        
       );
       final List<PointOfInterest> pois = osmResult.map<PointOfInterest>((row) {
         return PointOfInterest.fromOverpass(row);
       }).toList();
       return pois;
     }
-    if (query.startsWith('nearby named')) {
-      final cleanedQuery = query.substring('nearby'.length).trim();
-      final osmResult = await searchNearbyOverpassNamedPlaces(
-        query: cleanedQuery,
+
+if (query.startsWith('osm')) {
+      final cleanedQuery = query.substring('osm'.length).trim();
+      final osmResult = await searchNearbyOverpassName(
         lat: lat,
         lon: lon,
+        searchTerm: cleanedQuery,        
       );
       final List<PointOfInterest> pois = osmResult.map<PointOfInterest>((row) {
         return PointOfInterest.fromOverpass(row);
       }).toList();
       return pois;
     }
+
+
     if (query.startsWith('nearby buildings')) {
       final cleanedQuery = query.substring('nearby buildings'.length).trim();
       final osmResult = await searchNearbyOverpassBuildings(

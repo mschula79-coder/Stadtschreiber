@@ -1,7 +1,7 @@
 name: stadtschreiber
 description: "Stadschreiber"
 publish_to: 'none'
-version: 0.2.0+16
+version: 0.2.0+17
 
 environment:
   sdk: ^3.10.1
@@ -53,6 +53,7 @@ flutter:
     - assets/fonts/
     - assets/data/categories.json
     - assets/icons/
+    - assets/data/
 
   fonts:
     - family: Open Sans Regular

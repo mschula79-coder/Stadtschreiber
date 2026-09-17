@@ -22,7 +22,7 @@ class AppRoot extends ConsumerWidget {
         }
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, st) => Center(child: Text('Auth-Fehler: $e')),
+      error: (e, st) => Center(child: Text('Auth-Error: $e')),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/models/poi_display_modes.dart';
@@ -9,7 +10,9 @@ import 'package:stadtschreiber/provider/poi_display_mode_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/search_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
+import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
+import 'package:stadtschreiber/widgets/modal_message_box.dart';
 import 'package:stadtschreiber/widgets/poi_list_item.dart';
 
 class PoiSearch extends ConsumerStatefulWidget {
@@ -63,6 +66,8 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
       }
     });
 
+    final isAdmin = ref.watch(supabaseUserStateProvider).isAdmin;
+
     return Theme(
       data: Theme.of(context).copyWith(
         listTileTheme: const ListTileThemeData(contentPadding: EdgeInsets.zero),
@@ -108,6 +113,14 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
+              isAdmin
+                  ? IconButton(
+                      onPressed: () {
+                        showTagInfoModal();
+                      },
+                      icon: Icon(Icons.question_mark),
+                    )
+                  : SizedBox.shrink(),
             ],
           ),
 
@@ -230,5 +243,22 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
     setState(() {
       _searchController.clear();
     });
+  }
+
+  Future<void> showTagInfoModal() async {
+    final osmKeysJson = await rootBundle.loadString('assets/data/osm_keys.json');
+
+    if (!mounted) return;
+
+    final message =
+        'Suche nach benannten Objekten:\n'
+        '"osm name" Suchbegriff\n\n'
+        '\n\n'
+        'Suche nach tags:\n'
+        'OSM tag key=value (value optional) Suchbegriff\n\n'
+        'Verfügbare Keys & Values:\n\n'
+        '$osmKeysJson';
+
+    messageBox(context, message, 'Hinweis für Admin Suchsyntax');
   }
 }

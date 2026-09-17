@@ -14,8 +14,6 @@ import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
 import 'package:stadtschreiber/widgets/visible_pois_menu.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'map_screen.dart';
-
-import '../services/debug_service.dart';
 import '../widgets/main_app_bar.dart';
 
 class MyHomePage extends ConsumerStatefulWidget {
@@ -62,7 +60,6 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
-    DebugService.log('Build HomeScreen');
 
     bool adminInitialized = false;
 

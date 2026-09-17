@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:stadtschreiber/l10n/app_localizations.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -16,19 +17,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Neues Passwort setzen")),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.setNewPassword)),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            const Text("Bitte gib dein neues Passwort ein."),
+            Text(AppLocalizations.of(context)!.pleaseEnterPassword),
             const SizedBox(height: 16),
 
             TextField(
               controller: passwordCtrl,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: "Neues Passwort",
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.newPassword,
                 border: OutlineInputBorder(),
               ),
             ),
@@ -42,7 +43,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               onPressed: loading ? null : _savePassword,
               child: loading
                   ? const CircularProgressIndicator()
-                  : const Text("Speichern"),
+                  :  Text(AppLocalizations.of(context)!.save),
             ),
           ],
         ),

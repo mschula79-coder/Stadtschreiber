@@ -9,10 +9,16 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get add => 'Add';
+
+  @override
   String get address => 'Adresse';
 
   @override
-  String get allRated => 'All rated Pois';
+  String get attention => 'Attention';
+
+  @override
+  String get allRated => 'Alle bewerteten Orte';
 
   @override
   String get authenticationFailed => 'Authentifizierung fehlgeschlagen';
@@ -24,38 +30,52 @@ class AppLocalizationsDe extends AppLocalizations {
   String get categories => 'Kategorien';
 
   @override
+  String get checkEmail =>
+      'Bitte prüfe deine E-Mail und klicke auf den Bestätigungslink. Prüfe auch den Spamordner.';
+
+  @override
   String get city => 'Stadt';
+
+  @override
+  String get chooseUserName => 'Username wählen';
 
   @override
   String get confirm => 'Bestätigen';
 
   @override
+  String get confirmDeletionOfPoint =>
+      'Do you really intend to delete the point?';
+
+  @override
+  String get goOn => 'Weiter';
+
+  @override
   String get delete => 'Löschen';
 
   @override
-  String get description => 'Description';
-
-  @override
-  String get distanceFromCenter => 'Entfernung zur Kartenmitte';
+  String get description => 'Beschreibung';
 
   @override
   String get distance => 'Distanz';
 
   @override
-  String get editCategories => 'Edit categories';
+  String get distanceFromCenter => 'Entfernung zur Kartenmitte';
 
   @override
-  String get editGeometryPoints => 'Edit geometry points';
+  String get editCategories => 'Kategorien bearbeiten';
+
+  @override
+  String get editFeatures => 'Eigenschaften bearbeiten';
+
+  @override
+  String get editGeometryPoints => 'Geometriepunkte bearbeiten';
 
   @override
   String get editGeometryPointsInstruction =>
-      'Tap and hold on the map location, where you want add or edit a point';
+      'Tippe und halte auf die Kartenposition, an der du einen Punkt hinzufügen oder bearbeiten möchtest';
 
   @override
-  String get editLinks => 'Edit links';
-
-  @override
-  String get editFeatures => 'Edit features';
+  String get editLinks => 'Links bearbeiten';
 
   @override
   String get email => 'E-Mail';
@@ -64,10 +84,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get error => 'Fehler';
 
   @override
-  String get features => 'Features';
+  String get features => 'Eigenschaften';
 
   @override
-  String get geometryType => 'Type of geometry';
+  String get geometryType => 'Geometrietyp';
 
   @override
   String get hello => 'Hallo';
@@ -76,7 +96,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get houseNumber => 'Hausnummer';
 
   @override
-  String get line => 'Line';
+  String get line => 'Linie';
 
   @override
   String get links => 'Links';
@@ -85,7 +105,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get loading => 'Laden…';
 
   @override
-  String get locationAndGeometrie => 'Location and geometry';
+  String get locationAndGeometrie => 'Ort und Geometrie';
 
   @override
   String get login => 'Anmelden';
@@ -94,16 +114,26 @@ class AppLocalizationsDe extends AppLocalizations {
   String get logout => 'Abmelden';
 
   @override
-  String get multipolygone => 'MultiPolygone';
+  String get moveMapMessage =>
+      'Move the map to reposition the point. When you release it, the change will be saved.';
+
+  @override
+  String get multipolygone => 'Multipolygon';
 
   @override
   String get name => 'Name';
 
   @override
+  String get newPassword => 'new password';
+
+  @override
   String get no => 'Nein';
 
   @override
-  String get noCategoriesLoaded => 'No categories loaded';
+  String get noCategoriesLoaded => 'Keine Kategorien geladen';
+
+  @override
+  String get noEntries => 'no entries';
 
   @override
   String get noResults => 'Keine Ergebnisse gefunden';
@@ -118,19 +148,22 @@ class AppLocalizationsDe extends AppLocalizations {
   String get password => 'Passwort';
 
   @override
+  String get pleaseEnterPassword => 'Please enter password';
+
+  @override
   String get passwordForgotten => 'Passwort vergessen?';
 
   @override
   String get poiList => 'Liste der angezeigten Orte';
 
   @override
-  String get point => 'Point';
+  String get point => 'Punkt';
 
   @override
-  String get polygone => 'Polygone';
+  String get polygone => 'Polygon';
 
   @override
-  String get rating => 'Rating';
+  String get rating => 'Bewertung';
 
   @override
   String get register => 'Registrieren';
@@ -151,22 +184,34 @@ class AppLocalizationsDe extends AppLocalizations {
   String get selectCategory => 'Kategorie auswählen';
 
   @override
-  String get selectionIncomplete => 'Selection incomplete';
+  String get selectLengthOfPoiList => 'Länge der POI-Liste auswählen';
 
   @override
-  String get selectRatingCriterion => 'Select rating criterion';
+  String get selectRatingCriterion => 'Bewertungskriterium auswählen';
 
   @override
-  String get selectLengthOfPoiList => 'Select length of Poi List';
+  String get selectionIncomplete => 'Auswahl unvollständig';
+
+  @override
+  String get setNewPassword => 'Set new password';
 
   @override
   String get send => 'Senden';
 
   @override
-  String get showTop10 => 'Show Top10 List';
+  String get showTop10 => 'Top-10-Liste anzeigen';
+
+  @override
+  String get finishEditMode => 'Finish Edit Mode';
+
+  @override
+  String get finishDragMode => 'Finish Drag Mode';
 
   @override
   String get street => 'Straße';
+
+  @override
+  String get userName => 'Benutzername';
 
   @override
   String get yes => 'Ja';

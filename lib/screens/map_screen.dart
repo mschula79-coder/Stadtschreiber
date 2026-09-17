@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:maplibre/maplibre.dart' as maplibre;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stadtschreiber/l10n/app_localizations.dart';
 
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/models/poi_display_modes.dart';
@@ -121,23 +122,8 @@ class MapScreenState extends ConsumerState<MapScreen> {
       camera = ref.watch(cameraProvider);
     }
 
-    /* DebugService.log(
-      'Build MapScreen Screen size: ${MediaQuery.of(context).size}\n isPoiGeomEditMode: $isPoiGeomEditMode\nisAdminViewEnabled: $isAdminViewEnabled\nhasSelectedPoi: $hasSelectedPoi\nshowPoiPanel: $showPoiPanel\nisDraggingPoi: $isDraggingPoi\nisDraggingPointMode: $isDraggingPointMode',
-    ); */
-
-    /*     if (!_selectedPoiListenerRegistered) {
-      _selectedPoiListenerRegistered = true;
-      _registerSelectedPoiListener();
-    }
-
-    if (!_visiblePoisListenerRegistered) {
-      _visiblePoisListenerRegistered = true;
-      _registerVisiblePoisListener();
-    } */
-
     // isPoiGeomEditMode => add points layer
     if (selectedPoi != null) {
-      DebugService.log('SelectedPoi: $selectedPoi.name');
 
       ref.listen<AppStateData>(appStateProvider, (previous, next) {
         debugPrint('AppStateData changed: $previous → $next');
@@ -389,7 +375,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
                             .read(dragPoiProvider.notifier)
                             .stopDraggingPointMode();
                       },
-                      child: Text('Edit Mode beenden'),
+                      child: Text(AppLocalizations.of(context)!.finishEditMode),
                     ),
                   ),
                 )
@@ -472,7 +458,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
               right: 0,
               child: Center(
                 child: ElevatedButton(
-                  child: Text('Drag Mode beenden'),
+                  child: Text(AppLocalizations.of(context)!.finishDragMode),
                   onPressed: () {
                     final dragPoi = ref.read(dragPoiProvider).dragPoi;
                     if (dragPoi == null) return;
@@ -502,8 +488,8 @@ class MapScreenState extends ConsumerState<MapScreen> {
                       onPressed: () async {
                         final confirmed = await confirmBox(
                           context,
-                          'Willst du den Punkt wirklich löschen?',
-                          'Achtung',
+                          AppLocalizations.of(context)!.confirmDeletionOfPoint,
+                          AppLocalizations.of(context)!.attention,
                         );
                         if (confirmed) {
                           final index = ref
@@ -546,8 +532,8 @@ class MapScreenState extends ConsumerState<MapScreen> {
                   right: 0,
                   child: Center(
                     widthFactor: 0.6,
-                    child: Text(
-                      'Bewege die Karte, um den Punkt neu zu positionieren. Beim loslassen wird die Änderung gespeichert.',
+                    child: 
+                    Text(AppLocalizations.of(context)!.moveMapMessage,
                       style: TextStyle(
                         color: Colors.black,
                         fontSize: 12,

@@ -6,7 +6,8 @@ Future<void> messageBox(BuildContext context, String message, String? title) {
     builder: (context) {
       return AlertDialog(
         title: Text(title ?? ''),
-        content: Text(message),
+        content: SingleChildScrollView(child: Text(message)),
+
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

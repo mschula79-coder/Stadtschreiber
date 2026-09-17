@@ -3,16 +3,12 @@ class CategoryDto {
   final String slug;
   final String name;
   final int sortOrder;
-  final String? iconSource;
-  final String? iconName;
 
   CategoryDto({
     required this.id,
     required this.slug,
     required this.name,
     required this.sortOrder,
-    this.iconSource,
-    this.iconName,
   });
 
   factory CategoryDto.fromJson(Map<String, dynamic> json) {
@@ -21,8 +17,6 @@ class CategoryDto {
       slug: json['slug'],
       name: json['name'],
       sortOrder: json['sort_order'] ?? 9999,
-      iconSource: json['icon_source'],
-      iconName: json['icon_name'],
     );
   }
 }

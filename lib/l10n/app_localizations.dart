@@ -101,11 +101,23 @@ abstract class AppLocalizations {
     Locale('fr'),
   ];
 
+  /// No description provided for @add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
   /// No description provided for @address.
   ///
   /// In en, this message translates to:
   /// **'Address'**
   String get address;
+
+  /// No description provided for @attention.
+  ///
+  /// In en, this message translates to:
+  /// **'Attention'**
+  String get attention;
 
   /// No description provided for @allRated.
   ///
@@ -131,17 +143,41 @@ abstract class AppLocalizations {
   /// **'Categories'**
   String get categories;
 
+  /// No description provided for @checkEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Please check your email and click the confirmation link. Also check your spam folder.'**
+  String get checkEmail;
+
   /// No description provided for @city.
   ///
   /// In en, this message translates to:
   /// **'City'**
   String get city;
 
+  /// No description provided for @chooseUserName.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose username'**
+  String get chooseUserName;
+
   /// No description provided for @confirm.
   ///
   /// In en, this message translates to:
   /// **'Confirm'**
   String get confirm;
+
+  /// No description provided for @confirmDeletionOfPoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you really intend to delete the point?'**
+  String get confirmDeletionOfPoint;
+
+  /// No description provided for @goOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get goOn;
 
   /// No description provided for @delete.
   ///
@@ -155,23 +191,29 @@ abstract class AppLocalizations {
   /// **'Description'**
   String get description;
 
-  /// No description provided for @distanceFromCenter.
-  ///
-  /// In en, this message translates to:
-  /// **'Distance from map center: '**
-  String get distanceFromCenter;
-
   /// No description provided for @distance.
   ///
   /// In en, this message translates to:
   /// **'Distance'**
   String get distance;
 
+  /// No description provided for @distanceFromCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance from map center: '**
+  String get distanceFromCenter;
+
   /// No description provided for @editCategories.
   ///
   /// In en, this message translates to:
   /// **'Edit categories'**
   String get editCategories;
+
+  /// No description provided for @editFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit features'**
+  String get editFeatures;
 
   /// No description provided for @editGeometryPoints.
   ///
@@ -190,12 +232,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Edit links'**
   String get editLinks;
-
-  /// No description provided for @editFeatures.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit features'**
-  String get editFeatures;
 
   /// No description provided for @email.
   ///
@@ -269,6 +305,12 @@ abstract class AppLocalizations {
   /// **'Logout'**
   String get logout;
 
+  /// No description provided for @moveMapMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the map to reposition the point. When you release it, the change will be saved.'**
+  String get moveMapMessage;
+
   /// No description provided for @multipolygone.
   ///
   /// In en, this message translates to:
@@ -281,6 +323,12 @@ abstract class AppLocalizations {
   /// **'Name'**
   String get name;
 
+  /// No description provided for @newPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'new password'**
+  String get newPassword;
+
   /// No description provided for @no.
   ///
   /// In en, this message translates to:
@@ -292,6 +340,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No categories loaded'**
   String get noCategoriesLoaded;
+
+  /// No description provided for @noEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'no entries'**
+  String get noEntries;
 
   /// No description provided for @noResults.
   ///
@@ -316,6 +370,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Password'**
   String get password;
+
+  /// No description provided for @pleaseEnterPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter password'**
+  String get pleaseEnterPassword;
 
   /// No description provided for @passwordForgotten.
   ///
@@ -383,11 +443,11 @@ abstract class AppLocalizations {
   /// **'Select category'**
   String get selectCategory;
 
-  /// No description provided for @selectionIncomplete.
+  /// No description provided for @selectLengthOfPoiList.
   ///
   /// In en, this message translates to:
-  /// **'Selection incomplete'**
-  String get selectionIncomplete;
+  /// **'Select length of Poi List'**
+  String get selectLengthOfPoiList;
 
   /// No description provided for @selectRatingCriterion.
   ///
@@ -395,11 +455,17 @@ abstract class AppLocalizations {
   /// **'Select rating criterion'**
   String get selectRatingCriterion;
 
-  /// No description provided for @selectLengthOfPoiList.
+  /// No description provided for @selectionIncomplete.
   ///
   /// In en, this message translates to:
-  /// **'Select length of Poi List'**
-  String get selectLengthOfPoiList;
+  /// **'Selection incomplete'**
+  String get selectionIncomplete;
+
+  /// No description provided for @setNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Set new password'**
+  String get setNewPassword;
 
   /// No description provided for @send.
   ///
@@ -413,11 +479,29 @@ abstract class AppLocalizations {
   /// **'Show Top10 List'**
   String get showTop10;
 
+  /// No description provided for @finishEditMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish Edit Mode'**
+  String get finishEditMode;
+
+  /// No description provided for @finishDragMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish Drag Mode'**
+  String get finishDragMode;
+
   /// No description provided for @street.
   ///
   /// In en, this message translates to:
   /// **'Street'**
   String get street;
+
+  /// No description provided for @userName.
+  ///
+  /// In en, this message translates to:
+  /// **'Username '**
+  String get userName;
 
   /// No description provided for @yes.
   ///

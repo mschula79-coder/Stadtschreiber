@@ -129,10 +129,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ],
                 ),
                 checkEmail
-                    ? Text(
-                        'Bitte prüfe deine E-Mail und klicke auf den Bestätigungslink. Prüfe auch den Spamordner.',
-                        style: const TextStyle(color: Colors.red),
-                      )
+                    ? Text(AppLocalizations.of(context)!.checkEmail,
+                      style: TextStyle(color: Colors.red))
                     : const SizedBox.shrink(),
 
                 const SizedBox(height: 40),
@@ -164,24 +162,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final username = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Username wählen"),
+        title: Text(AppLocalizations.of(context)!.chooseUserName),
         content: TextField(
           controller: usernameCtrl,
-          decoration: const InputDecoration(
-            labelText: "Username",
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.userName,
             border: OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Abbrechen"),
+            child: Text(AppLocalizations.of(context)!.cancel,
+),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context, usernameCtrl.text.trim());
             },
-            child: const Text("Weiter"),
+            child: Text(AppLocalizations.of(context)!.goOn,),
           ),
         ],
       ),

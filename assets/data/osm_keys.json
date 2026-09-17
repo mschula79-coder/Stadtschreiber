@@ -1,0 +1,63 @@
+{
+  "amenity": [
+    "restaurant",
+    "cafe",
+    "bar",
+    "fountain",
+    "drinking_water",
+    "school",
+    "hospital",
+    "parking"
+  ],
+  "historic": [
+    "monument",
+    "memorial",
+    "statue",
+    "castle",
+    "ruins"
+  ],
+  "tourism": [
+    "attraction",
+    "museum",
+    "artwork",
+    "viewpoint"
+  ],
+  "shop": [
+    "supermarket",
+    "bakery",
+    "clothes",
+    "butcher"
+  ],
+  "leisure": [
+    "park",
+    "playground",
+    "sports_centre"
+  ],
+  "man_made": [
+    "statue",
+    "obelisk",
+    "tower"
+  ],
+  "natural": [
+    "tree",
+    "spring",
+    "rock"
+  ],
+  "highway": [
+    "bus_stop",
+    "crossing",
+    "footway"
+  ],
+  "place": [
+    "village",
+    "town",
+    "city",
+    "square"
+  ],
+  "building": [
+    "yes",
+    "residential",
+    "commercial",
+    "church"
+  ]
+}

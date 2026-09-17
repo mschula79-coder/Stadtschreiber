@@ -51,82 +51,81 @@ Map<String, double> createViewbox(double lat, double lon, int meters) {
   };
 }
 
-Future<List<dynamic>> searchNearbyOverpassNamedPlaces({
+Future<List<dynamic>> searchNearbyOverpassTag({
   required double lat,
   required double lon,
-  required String query,
+  required String cleanedQuery,
 }) async {
-  final box = createViewbox(lat, lon, 100);
-
-  final south = box['bottom'];
-  final west = box['left'];
-  final north = box['top'];
-  final east = box['right'];
-
-  // Overpass Query
-  final overpassQuery =
-      """
-      [out:json][timeout:25];
-      (
-        way["building"]["name"]($south,$west,$north,$east);
-        relation["building"]["name"]($south,$west,$north,$east);
-
-        way["highway"]["name"]($south,$west,$north,$east);
-        relation["highway"]["name"]($south,$west,$north,$east);
-
-        node["place"]["name"]($south,$west,$north,$east);
-        way["place"]["name"]($south,$west,$north,$east);
-        relation["place"]["name"]($south,$west,$north,$east);
-      );
-      out center;
-      """;
-
-  final url = Uri.parse("https://overpass-api.de/api/interpreter");
-
-  final response = await http.post(
-    url,
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "User-Agent": "StadtschreiberApp/1.0 (Basel)",
-    },
-    body: {"data": overpassQuery},
+  final overpassQuery = buildOverpassQueryForTag(
+    lat: lat,
+    lon: lon,
+    query: cleanedQuery,
   );
 
-  if (response.statusCode != 200) {
-    throw Exception("Overpass error: ${response.statusCode}");
+  final servers = [
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass-api.de/api/interpreter",
+  ];
+
+  print(overpassQuery);
+
+  for (final s in servers) {
+    final url = Uri.parse(s);
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent": "StadtschreiberApp/1.0 (Basel)",
+        },
+        body: {"data": overpassQuery},
+      );
+
+      print("Server: $s");
+      print(response.body);
+
+      if (response.statusCode == 200 && response.body.isNotEmpty) {
+        final json = jsonDecode(response.body);
+        return json["elements"] ?? [];
+      }
+    } catch (_) {
+      // try next server
+    }
   }
 
-  final json = jsonDecode(response.body);
-
-  return json["elements"] ?? [];
+  throw Exception("Overpass error: all servers failed");
 }
 
-Future<List<dynamic>> searchNearbyOverpassPois({
+Future<List<dynamic>> searchNearbyOverpassName({
   required double lat,
   required double lon,
-  required String query,
+  required String searchTerm,
 }) async {
-  final box = createViewbox(lat, lon, 100);
+  final bbox = createViewbox(lat, lon, 500);
 
-  final south = box['bottom'];
-  final west = box['left'];
-  final north = box['top'];
-  final east = box['right'];
+  final south = bbox['bottom'];
+  final west = bbox['left'];
+  final north = bbox['top'];
+  final east = bbox['right'];
 
-  // Overpass Query
   final overpassQuery =
-      """
-      [out:json][timeout:25];
-        (
-          node["name"]($south,$west,$north,$east);
-          way["name"]($south,$west,$north,$east);
-          relation["name"]($south,$west,$north,$east);
-        );
-        out center;
-      """;
+      '''
+[out:json][timeout:5];
+(
+  node["name"~"$searchTerm",i]($south,$west,$north,$east);
+  way["name"~"$searchTerm",i]($south,$west,$north,$east);
+  relation["name"~"$searchTerm",i]($south,$west,$north,$east);
+);
+out center;
+''';
+
+  print(overpassQuery);
 
   final url = Uri.parse("https://overpass-api.de/api/interpreter");
 
+/*   final url = Uri.parse("https://overpass.kumi.systems/api/interpreter");
+ */
   final response = await http.post(
     url,
     headers: {
@@ -136,13 +135,103 @@ Future<List<dynamic>> searchNearbyOverpassPois({
     body: {"data": overpassQuery},
   );
 
-  if (response.statusCode != 200) {
-    throw Exception("Overpass error: ${response.statusCode}");
+  print(response.statusCode);
+  print(response.body);
+
+  if (response.statusCode == 200 && response.body.isNotEmpty) {
+    final json = jsonDecode(response.body);
+    return json["elements"] ?? [];
+  }
+  return [];
+}
+
+String buildOverpassQueryForTag({
+  required double lat,
+  required double lon,
+  required String query, // cleanedQuery
+}) {
+  final box = createViewbox(lat, lon, 500);
+
+  final south = box['bottom'];
+  final west = box['left'];
+  final north = box['top'];
+  final east = box['right'];
+
+  // Zerlegen: key=value suchbegriff
+  String key;
+  String? value;
+  String? searchTerm;
+
+  // 1. key=value suchbegriff
+  if (query.contains('=')) {
+    final parts = query.split(' ');
+    final keyValue = parts.first; // amenity=restaurant
+    final kv = keyValue.split('=');
+
+    key = kv[0].trim();
+    value = kv[1].trim();
+
+    if (parts.length > 1) {
+      searchTerm = parts.sublist(1).join(' ').trim();
+    }
+  }
+  // 2. key suchbegriff
+  else {
+    final parts = query.split(' ');
+    key = parts.first.trim();
+
+    if (parts.length > 1) {
+      searchTerm = parts.sublist(1).join(' ').trim();
+    }
   }
 
-  final json = jsonDecode(response.body);
+  // Query für key=value + optional suchbegriff
+  if (value != null) {
+    if (searchTerm != null && searchTerm.isNotEmpty) {
+      return """
+[out:json][timeout:5];
+(
+  node["$key"="$value"]["name"~"$searchTerm",i]($south,$west,$north,$east);
+  way["$key"="$value"]["name"~"$searchTerm",i]($south,$west,$north,$east);
+  relation["$key"="$value"]["name"~"$searchTerm",i]($south,$west,$north,$east);
+);
+out center;
+""";
+    }
 
-  return json["elements"] ?? [];
+    return """
+[out:json][timeout:5];
+(
+  node["$key"="$value"]($south,$west,$north,$east);
+  way["$key"="$value"]($south,$west,$north,$east);
+  relation["$key"="$value"]($south,$west,$north,$east);
+);
+out center;
+""";
+  }
+
+  // Query für nur key + optional suchbegriff
+  if (searchTerm != null && searchTerm.isNotEmpty) {
+    return """
+[out:json][timeout:5];
+(
+  node["$key"]["name"~"$searchTerm",i]($south,$west,$north,$east);
+  way["$key"]["name"~"$searchTerm",i]($south,$west,$north,$east);
+  relation["$key"]["name"~"$searchTerm",i]($south,$west,$north,$east);
+);
+out center;
+""";
+  }
+
+  return """
+[out:json][timeout:5];
+(
+  node["$key"]($south,$west,$north,$east);
+  way["$key"]($south,$west,$north,$east);
+  relation["$key"]($south,$west,$north,$east);
+);
+out center;
+""";
 }
 
 Future<List<dynamic>> searchNearbyOverpassBuildings({
@@ -160,7 +249,7 @@ Future<List<dynamic>> searchNearbyOverpassBuildings({
   // Overpass Query
   final overpassQuery =
       """
-      [out:json][timeout:25];
+      [out:json][timeout:5];
       (
         way["building"]($south,$west,$north,$east);
         relation["building"]($south,$west,$north,$east);
