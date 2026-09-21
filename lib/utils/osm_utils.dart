@@ -67,7 +67,6 @@ Future<List<dynamic>> searchNearbyOverpassTag({
     "https://overpass-api.de/api/interpreter",
   ];
 
-  print(overpassQuery);
 
   for (final s in servers) {
     final url = Uri.parse(s);
@@ -81,9 +80,6 @@ Future<List<dynamic>> searchNearbyOverpassTag({
         },
         body: {"data": overpassQuery},
       );
-
-      print("Server: $s");
-      print(response.body);
 
       if (response.statusCode == 200 && response.body.isNotEmpty) {
         final json = jsonDecode(response.body);
@@ -120,8 +116,6 @@ Future<List<dynamic>> searchNearbyOverpassName({
 out center;
 ''';
 
-  print(overpassQuery);
-
   final url = Uri.parse("https://overpass-api.de/api/interpreter");
 
 /*   final url = Uri.parse("https://overpass.kumi.systems/api/interpreter");
@@ -134,9 +128,6 @@ out center;
     },
     body: {"data": overpassQuery},
   );
-
-  print(response.statusCode);
-  print(response.body);
 
   if (response.statusCode == 200 && response.body.isNotEmpty) {
     final json = jsonDecode(response.body);

@@ -186,7 +186,12 @@ class PointOfInterest {
       'featured_image_url': featuredImageUrl,
       'history': historyEntries.map((e) => e.toJson()).toList(),
       'articles': articles.map((e) => e.toJson()).toList(),
-      'address': address?.toMap(),
+      'street': address?.street,
+      'house_number':  address?.houseNumber,
+      'postcode':address?.postcode,
+      'city': address?.city,
+      'district': address?.district,
+      'country': address?.country,
       'description': description,
       'geom_area': geomArea,
       'osm_id': osmId,
@@ -392,7 +397,7 @@ class PointOfInterest {
     return ((px - projX) * (px - projX) + (py - projY) * (py - projY)).abs();
   }
 
-  factory PointOfInterest.fromOverpass(Map<String, dynamic> json) {
+  factory PointOfInterest.fromOSM(Map<String, dynamic> json) {
     final tags = json['tags'] ?? {};
 
     // Koordinaten:

@@ -232,7 +232,7 @@ class PoiRepository {
         cleanedQuery: cleanedQuery,        
       );
       final List<PointOfInterest> pois = osmResult.map<PointOfInterest>((row) {
-        return PointOfInterest.fromOverpass(row);
+        return PointOfInterest.fromOSM(row);
       }).toList();
       return pois;
     }
@@ -245,7 +245,7 @@ if (query.startsWith('osm')) {
         searchTerm: cleanedQuery,        
       );
       final List<PointOfInterest> pois = osmResult.map<PointOfInterest>((row) {
-        return PointOfInterest.fromOverpass(row);
+        return PointOfInterest.fromOSM(row);
       }).toList();
       return pois;
     }
@@ -259,7 +259,7 @@ if (query.startsWith('osm')) {
         lon: lon,
       );
       final List<PointOfInterest> pois = osmResult.map<PointOfInterest>((row) {
-        return PointOfInterest.fromOverpass(row);
+        return PointOfInterest.fromOSM(row);
       }).toList();
       return pois;
     } else {
