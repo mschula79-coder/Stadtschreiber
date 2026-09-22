@@ -1,3 +1,5 @@
+// ignore_for_file: unused_local_variable
+
 import 'dart:io';
 import 'package:geo_osm_pbf/geo_osm_pbf.dart';
 import 'package:maplibre/maplibre.dart';
@@ -19,36 +21,43 @@ class OsmPbfPoiImportService {
 
   // ⭐ Fortschritt
   int processed = 0;
-  int estimatedTotal = 50000;
+  int total = 0;
 
   void updateProgress(Function(String) onStatus) {
-    if (processed > 1000) {
-      estimatedTotal = processed * 2;
-    }
-    onStatus("$processed von $estimatedTotal Objekten verarbeitet");
+    onStatus("$processed von $total§ Objekten verarbeitet");
   }
 
-  /*   bool isPoi(Map<String, String>? tags) {
-    if (tags == null || tags.isEmpty) return false;
-
-    return tags.containsKey('amenity') ||
-        tags.containsKey('shop') ||
-        tags.containsKey('tourism') ||
-        tags.containsKey('historic') ||
-        tags.containsKey('leisure');
-  }
- */
   bool isPoi(Map<String, String>? tags) {
     if (tags == null || tags.isEmpty) return false;
 
+    // ⭐ Kein POI ohne Namen
+    final name = tags['name'];
+    if (name == null || name.trim().isEmpty) return false;
+
     final amenity = tags['amenity'];
-    /*     final building = tags['building'];
- */
+    final building = tags['building'];
+    final tourism = '[tourism]';
+    final historic = '[historic]';
+    final leisure = '[leisure]';
+
     // Nur Restaurants, Cafés und öffentliche Gebäude
-    /*     return amenity == 'restaurant' || amenity == 'cafe' || building == 'public';
+    /*     return 
+    amenity == 'restaurant' 
+    || amenity == 'cafe' 
+    || building == 'public'
+    || historic.isNotEmpty;
+    ||
+    ||
+    ||;
 
  */
-    return amenity == 'fountain';
+    return building == 'government';
+
+    /* 
+erledigt 21.09.2026:leisure
+    return building == 'fountain';
+
+ */
   }
 
   Geographic? calculateRelationCenter(List<int> refs) {
@@ -75,7 +84,8 @@ class OsmPbfPoiImportService {
     required String filePath,
   }) async {
     final file = File(filePath);
-
+    total = await countPoiCandidates(filePath);
+    
     await parser.parse(
       file.path,
 
@@ -96,7 +106,8 @@ class OsmPbfPoiImportService {
         processed++;
         updateProgress(onStatus);
 
-        if (importedNode) return; // ⭐ nur 1 Node importieren
+        /*         if (importedNode) return; // ⭐ nur 1 Node importieren
+ */
         if (!isPoi(node.tags)) return;
 
         importedNode = true;
@@ -128,7 +139,8 @@ class OsmPbfPoiImportService {
         processed++;
         updateProgress(onStatus);
 
-        if (importedRelation) return; // ⭐ nur 1 Relation importieren
+        /*         if (importedRelation) return; // ⭐ nur 1 Relation importieren
+ */
         if (!isPoi(rel.tags)) return;
 
         importedRelation = true;
@@ -152,5 +164,26 @@ class OsmPbfPoiImportService {
     );
 
     return "OSM POI Import abgeschlossen (TESTMODE)";
+  }
+
+  Future<int> countPoiCandidates(String filePath) async {
+    int count = 0;
+
+    await parser.parse(
+      filePath,
+      readNodes: false,
+      readWays: false,
+      readRelations: true,
+
+      onTaggedNode: (node) {
+        if (isPoi(node.tags)) count++;
+      },
+
+      onRelation: (rel) {
+        if (isPoi(rel.tags)) count++;
+      },
+    );
+
+    return count;
   }
 }

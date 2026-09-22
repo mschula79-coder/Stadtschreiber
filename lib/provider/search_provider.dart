@@ -33,6 +33,7 @@ final searchResultsProvider = FutureProvider.autoDispose
       for (final poi in pois) {
         final checked = await poiService.checkForDuplicates(poi);
 
+        // TODO check if still necessary
         ref.read(addressLookupQueueProvider.notifier).enqueue(checked);
 
         processed.add(checked);

@@ -219,7 +219,7 @@ class PoiRepository {
     return PointOfInterest.fromSupabase(result);
   }
 
-  Future<List<PointOfInterest>> searchPois(
+  Future<List<PointOfInterest>> searchPoisOverpass(
     String query,
     double lat,
     double lon,
@@ -229,7 +229,7 @@ class PoiRepository {
       final osmResult = await searchNearbyOverpassTag(
         lat: lat,
         lon: lon,
-        cleanedQuery: cleanedQuery,        
+        cleanedQuery: cleanedQuery,
       );
       final List<PointOfInterest> pois = osmResult.map<PointOfInterest>((row) {
         return PointOfInterest.fromOSM(row);
@@ -237,19 +237,18 @@ class PoiRepository {
       return pois;
     }
 
-if (query.startsWith('osm')) {
+    if (query.startsWith('osm')) {
       final cleanedQuery = query.substring('osm'.length).trim();
       final osmResult = await searchNearbyOverpassName(
         lat: lat,
         lon: lon,
-        searchTerm: cleanedQuery,        
+        searchTerm: cleanedQuery,
       );
       final List<PointOfInterest> pois = osmResult.map<PointOfInterest>((row) {
         return PointOfInterest.fromOSM(row);
       }).toList();
       return pois;
     }
-
 
     if (query.startsWith('nearby buildings')) {
       final cleanedQuery = query.substring('nearby buildings'.length).trim();
@@ -264,7 +263,7 @@ if (query.startsWith('osm')) {
       return pois;
     } else {
       final response = await supabase.rpc(
-        'pois_search_with_distance_and_address',
+        'pois_search_with_dis tance_and_address',
         params: {'q': query, 'lat_input': lat, 'lon_input': lon},
       );
       final List<PointOfInterest> pois = response
@@ -272,6 +271,30 @@ if (query.startsWith('osm')) {
           .toList();
       return pois;
     }
+  }
+
+  Future<List<PointOfInterest>> searchPois(
+    String query,
+    double lat,
+    double lon,
+  ) async {
+    if (query.isEmpty) return [];
+
+    final response = await supabase.rpc(
+      'pois_search_with_distance_and_address',
+      params: {'q': query, 'lat_input': lat, 'lon_input': lon},
+    );
+    final List<PointOfInterest> pois = response
+        .map<PointOfInterest>((row) => PointOfInterest.fromSupabase(row))
+        .toList();
+    return pois;
+
+    /*     final response = await supabase
+        .from('pois')
+        .select('*') // ⭐ alle Felder
+        .ilike('name', '%$query%') // ⭐ Suche
+        .order('name'); // ⭐ Sortierung
+ */
   }
 
   Future<void> updatePoiAddressInSupabase(String id, Address address) async {
