@@ -51,7 +51,17 @@ class OsmPbfPoiImportService {
     ||;
 
  */
-    return building == 'government';
+    return 
+         building == 'public' 
+      || building == 'government' 
+      || amenity == 'restaurant' 
+      || amenity == 'fountain'
+      || amenity == 'drinking-fountain'
+      || amenity == 'cafe' 
+      || historic.isNotEmpty
+      || tourism.isNotEmpty
+      || leisure.isNotEmpty
+;
 
     /* 
 erledigt 21.09.2026:leisure
