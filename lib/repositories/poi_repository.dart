@@ -3,6 +3,7 @@ import 'package:stadtschreiber/models/history_entry.dart';
 import 'package:stadtschreiber/models/image_entry.dart';
 import 'package:stadtschreiber/models/poi_metadata.dart';
 import 'package:stadtschreiber/services/debug_service.dart';
+import 'package:stadtschreiber/utils/debouncer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:maplibre/maplibre.dart';
 
@@ -12,6 +13,8 @@ import '../utils/osm_utils.dart';
 
 class PoiRepository {
   final supabase = Supabase.instance.client;
+  final Debouncer _debouncer = Debouncer(Duration(milliseconds: 500));
+  int _lastRequestId = 0;
 
   Future<List<PointOfInterest>> loadPoisforSelectedCategories(
     List<String> selectedCategories,
@@ -219,6 +222,54 @@ class PoiRepository {
     return PointOfInterest.fromSupabase(result);
   }
 
+  Future<List<PointOfInterest>> searchPois(
+    String query,
+    double lat,
+    double lon,
+  ) async {
+    if (query.trim().isEmpty) return [];
+    final debounceDuration = Duration(milliseconds: 500);
+    final currentRequestId = ++_lastRequestId;
+    await Future.delayed(debounceDuration);
+    if (currentRequestId != _lastRequestId) return [];
+    final safeQuery = query.trim();
+    if (safeQuery.startsWith('osm')) {
+      final overpassPois = await searchPoisOverpass(safeQuery, lat, lon);
+      if (currentRequestId != _lastRequestId) return [];
+      return overpassPois;
+    }
+    final response = await supabase.rpc(
+      'pois_search_with_distance_and_address',
+      params: {'q': safeQuery, 'lat_input': lat, 'lon_input': lon},
+    );
+    if (currentRequestId != _lastRequestId) return [];
+    final pois = (response as List)
+        .map<PointOfInterest>((row) => PointOfInterest.fromSupabase(row))
+        .toList();
+    return pois;
+  }
+
+  /*     final response = await supabase
+        .from('pois')
+        .select('*') // ⭐ alle Felder
+        .ilike('name', '%$query%') // ⭐ Suche
+        .order('name'); // ⭐ Sortierung
+ */
+
+  Future<void> updatePoiAddressInSupabase(String id, Address address) async {
+    await supabase
+        .from('pois')
+        .update({
+          'street': address.street,
+          'house_number': address.houseNumber,
+          'postcode': address.postcode,
+          'city': address.city,
+          'district': address.district,
+          'country': address.country,
+        })
+        .eq('id', id);
+  }
+
   Future<List<PointOfInterest>> searchPoisOverpass(
     String query,
     double lat,
@@ -237,8 +288,8 @@ class PoiRepository {
       return pois;
     }
 
-    if (query.startsWith('osm')) {
-      final cleanedQuery = query.substring('osm'.length).trim();
+    if (query.startsWith('osmn') && query.length >= 8) {
+      final cleanedQuery = query.substring('osmn'.length).trim();
       final osmResult = await searchNearbyOverpassName(
         lat: lat,
         lon: lon,
@@ -250,20 +301,26 @@ class PoiRepository {
       return pois;
     }
 
-    if (query.startsWith('nearby buildings')) {
-      final cleanedQuery = query.substring('nearby buildings'.length).trim();
-      final osmResult = await searchNearbyOverpassBuildings(
-        query: cleanedQuery,
-        lat: lat,
-        lon: lon,
-      );
-      final List<PointOfInterest> pois = osmResult.map<PointOfInterest>((row) {
-        return PointOfInterest.fromOSM(row);
-      }).toList();
-      return pois;
+    if (query.startsWith('osma') && query.length >= 8) {
+      final cleanedQuery = query.substring('osma'.length).trim();
+      if (cleanedQuery.length >= 3) {
+        final osmResult = await searchNearbyStreetBuildings(
+          searchTerm: cleanedQuery,
+          lat: lat,
+          lon: lon,
+        );
+        final List<PointOfInterest> pois = osmResult.map<PointOfInterest>((
+          row,
+        ) {
+          return PointOfInterest.fromOSM(row);
+        }).toList();
+        return pois;
+      } else {
+        return [];
+      }
     } else {
       final response = await supabase.rpc(
-        'pois_search_with_dis tance_and_address',
+        'pois_search_with_distance_and_address',
         params: {'q': query, 'lat_input': lat, 'lon_input': lon},
       );
       final List<PointOfInterest> pois = response
@@ -271,44 +328,6 @@ class PoiRepository {
           .toList();
       return pois;
     }
-  }
-
-  Future<List<PointOfInterest>> searchPois(
-    String query,
-    double lat,
-    double lon,
-  ) async {
-    if (query.isEmpty) return [];
-
-    final response = await supabase.rpc(
-      'pois_search_with_distance_and_address',
-      params: {'q': query, 'lat_input': lat, 'lon_input': lon},
-    );
-    final List<PointOfInterest> pois = response
-        .map<PointOfInterest>((row) => PointOfInterest.fromSupabase(row))
-        .toList();
-    return pois;
-
-    /*     final response = await supabase
-        .from('pois')
-        .select('*') // ⭐ alle Felder
-        .ilike('name', '%$query%') // ⭐ Suche
-        .order('name'); // ⭐ Sortierung
- */
-  }
-
-  Future<void> updatePoiAddressInSupabase(String id, Address address) async {
-    await supabase
-        .from('pois')
-        .update({
-          'street': address.street,
-          'house_number': address.houseNumber,
-          'postcode': address.postcode,
-          'city': address.city,
-          'district': address.district,
-          'country': address.country,
-        })
-        .eq('id', id);
   }
 
   // Combine with newOSMPoi, combine with check duplicate?

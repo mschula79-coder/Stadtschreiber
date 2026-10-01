@@ -3,12 +3,16 @@ class CategoryDto {
   final String slug;
   final String name;
   final int sortOrder;
+  List<CategoryDto>? children;
+  List<CategoryDto>? parents;
 
   CategoryDto({
     required this.id,
     required this.slug,
     required this.name,
     required this.sortOrder,
+    this.children,
+    this.parents
   });
 
   factory CategoryDto.fromJson(Map<String, dynamic> json) {

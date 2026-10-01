@@ -11,7 +11,9 @@ Future<Address?> fetchStructuredAddressFromOSM(double lat, double lon) async {
 
   final response = await http.get(
     url,
-    headers: {'User-Agent': 'Stadtschreiber/1.0 (mschula@gmail.com)'},
+    headers: {
+      "User-Agent": "StadtschreiberApp/1.0 (mschula@gmail.com; flutter)",
+    },
   );
 
   if (response.statusCode != 200) {
@@ -67,7 +69,6 @@ Future<List<dynamic>> searchNearbyOverpassTag({
     "https://overpass-api.de/api/interpreter",
   ];
 
-
   for (final s in servers) {
     final url = Uri.parse(s);
 
@@ -98,7 +99,7 @@ Future<List<dynamic>> searchNearbyOverpassName({
   required double lon,
   required String searchTerm,
 }) async {
-  final bbox = createViewbox(lat, lon, 500);
+  final bbox = createViewbox(lat, lon, 1000);
 
   final south = bbox['bottom'];
   final west = bbox['left'];
@@ -107,7 +108,7 @@ Future<List<dynamic>> searchNearbyOverpassName({
 
   final overpassQuery =
       '''
-[out:json][timeout:5];
+[out:json][timeout:25];
 (
   node["name"~"$searchTerm",i]($south,$west,$north,$east);
   way["name"~"$searchTerm",i]($south,$west,$north,$east);
@@ -118,7 +119,7 @@ out center;
 
   final url = Uri.parse("https://overpass-api.de/api/interpreter");
 
-/*   final url = Uri.parse("https://overpass.kumi.systems/api/interpreter");
+  /*   final url = Uri.parse("https://overpass.kumi.systems/api/interpreter");
  */
   final response = await http.post(
     url,
@@ -128,11 +129,84 @@ out center;
     },
     body: {"data": overpassQuery},
   );
+  (url);
 
   if (response.statusCode == 200 && response.body.isNotEmpty) {
     final json = jsonDecode(response.body);
     return json["elements"] ?? [];
   }
+  return [];
+}
+
+Future<List<dynamic>> searchNearbyStreetBuildings({
+  required double lat,
+  required double lon,
+  required String searchTerm,
+}) async {
+  final bbox = createViewbox(lat, lon, 300);
+  final south = bbox['bottom'];
+  final west = bbox['left'];
+  final north = bbox['top'];
+  final east = bbox['right'];
+
+  final safeTerm = RegExp.escape(searchTerm.trim());
+
+  final overpassQuery =
+      """
+[out:json][timeout:25];
+(
+  node["addr:street"~"$safeTerm",i]["building"]($south,$west,$north,$east);
+  way["addr:street"~"$safeTerm",i]["building"]($south,$west,$north,$east);
+  relation["addr:street"~"$safeTerm",i]["building"]($south,$west,$north,$east);
+);
+out center;
+""";
+
+  final url = Uri.parse("https://overpass-api.de/api/interpreter");
+
+  final headers = {
+    "Content-Type": "application/x-www-form-urlencoded",
+    "User-Agent": "StadtschreiberApp/1.0 (mschula@gmail.com; flutter)",
+  };
+
+  int tries = 0;
+  while (tries < 3) {
+    try {
+      final response = await http.post(
+        url,
+        headers: headers,
+        body: {"data": overpassQuery},
+      );
+
+      if (response.statusCode == 200 && response.body.isNotEmpty) {
+        final json = jsonDecode(response.body);
+
+       /*  print(url);
+        print(overpassQuery);
+        print(response.body); */
+        return json["elements"] ?? [];
+      }
+
+      if (response.statusCode == 429) {
+        tries++;
+        await Future.delayed(Duration(milliseconds: 300 * tries));
+        continue;
+      }
+
+      if (response.statusCode >= 500) {
+        tries++;
+        await Future.delayed(Duration(milliseconds: 200 * tries));
+        continue;
+      }
+
+      return [];
+    } catch (_) {
+      tries++;
+      await Future.delayed(Duration(milliseconds: 200 * tries));
+      continue;
+    }
+  }
+
   return [];
 }
 
@@ -230,7 +304,7 @@ Future<List<dynamic>> searchNearbyOverpassBuildings({
   required double lon,
   required String query,
 }) async {
-  final box = createViewbox(lat, lon, 100);
+  final box = createViewbox(lat, lon, 200);
 
   final south = box['bottom'];
   final west = box['left'];
@@ -238,16 +312,20 @@ Future<List<dynamic>> searchNearbyOverpassBuildings({
   final east = box['right'];
 
   // Overpass Query
+
   final overpassQuery =
       """
-      [out:json][timeout:5];
-      (
-        way["building"]($south,$west,$north,$east);
-        relation["building"]($south,$west,$north,$east);
-      );
-      out center;
-      """;
+[out:json][timeout:25];
+(
+  nwr($south,$west,$north,$east)
+    ["name"~"$query", i]
+    ["building"];
+);
+out center;
+""";
 
+/*   print(overpassQuery);
+ */
   final url = Uri.parse("https://overpass-api.de/api/interpreter");
 
   final response = await http.post(
@@ -259,6 +337,8 @@ Future<List<dynamic>> searchNearbyOverpassBuildings({
     body: {"data": overpassQuery},
   );
 
+/*   print(response);
+ */
   if (response.statusCode != 200) {
     throw Exception("Overpass error: ${response.statusCode}");
   }

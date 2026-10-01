@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:stadtschreiber/l10n/app_localizations.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
@@ -9,6 +8,8 @@ import 'package:stadtschreiber/provider/poi_ratings_stats_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/widgets/poi_rating_editor_dialog.dart';
 import 'package:stadtschreiber/widgets/poi_rating_list.dart';
+
+//TODO ln
 
 class CategoryRatingsSection extends ConsumerWidget {
   final String slug;

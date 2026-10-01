@@ -13,6 +13,7 @@ import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
 import 'package:stadtschreiber/utils/dialog_utils.dart';
 import 'package:stadtschreiber/widgets/_editable_list.dart';
 import 'package:stadtschreiber/widgets/_icon_getter.dart';
+import 'package:stadtschreiber/widgets/modal_categories_list_edit.dart';
 import 'package:stadtschreiber/widgets/modal_rating_criteria_edit.dart';
 import 'package:uuid/uuid.dart';
 
@@ -38,14 +39,13 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
   final ExpansibleController expansionController = ExpansibleController();
   PoiSelectionMode? _lastMode;
 
-
   @override
   Widget build(BuildContext context) {
     final categories = ref.watch(categoriesProvider).categories;
     final isAdmin = ref.read(supabaseUserStateProvider).isAdmin;
 
     final mode = ref.watch(visiblePoisMenuStateProvider).poiSelectionMode;
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_lastMode != mode) {
         if (mode == PoiSelectionMode.categories) {
@@ -164,7 +164,23 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
               _categoryFilter,
             ).map((node) => _buildCategoryNode(context, ref, node)),
 
-            // ---------------- ADMIN SWITCH ----------------
+            isAdmin
+                ? ElevatedButton.icon(
+                    icon: const Icon(Icons.edit),
+                    // TODO ln
+                    label: const Text("Kategorien bearbeiten"),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => Dialog(
+                          child: SizedBox(width: 600, child: CategoryEditor()),
+                        ),
+                      );
+                    },
+                  )
+                : const SizedBox.shrink(),
+
+            // ---------------- ADMIN SWITCH FOR CRITERIA EDITING----------------
             if (isAdmin)
               SwitchListTile(
                 title: const Text(
@@ -305,6 +321,8 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
               label: node.label,
               value: node.value,
               children: filteredChildren,
+              // TODO add filtered parents ?
+              hasParents: false,
             ),
           );
         }
@@ -334,6 +352,11 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
           .where((v) => categoryCheckboxesState.isSelected(v))
           .length;
 
+      double leftPadding = 0;
+      if (node.hasParents) {
+        leftPadding = 10;
+      }
+
       bool? parentChecked;
       if (checkedChildren == 0) {
         parentChecked = false;
@@ -344,7 +367,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
       }
 
       return ExpansionTile(
-        tilePadding: const EdgeInsets.only(left: 0, right: 15),
+        tilePadding: EdgeInsets.only(left: leftPadding, right: 15),
         childrenPadding: EdgeInsets.zero,
         visualDensity: VisualDensity.compact,
         initiallyExpanded: expandAll,

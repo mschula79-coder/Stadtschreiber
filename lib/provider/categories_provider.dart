@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/category.dart';
+import 'package:stadtschreiber/models/category_dto.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:stadtschreiber/state/categories_state.dart';
 import 'package:stadtschreiber/provider/category_repository_provider.dart';
@@ -39,9 +40,9 @@ class CategoriesNotifier extends Notifier<CategoriesStateData> {
   @override
   CategoriesStateData build() => CategoriesStateData.initial;
 
-  Future<void> loadCategories() async {
+  Future<void> loadCategoryTree() async {
     final repo = ref.read(categoriesRepositoryProvider);
-    final list = await repo.loadCategories();
+    final list = await repo.loadCategoryTree();
 
     // Map bauen: slug → id
     final slugToId = <String, String>{};
@@ -69,6 +70,17 @@ final categorySlugsForCriterionProvider =
       return repo.categorySlugsForCriterion(criterionId);
     });
 
+final categoriesListProvider = FutureProvider<List<CategoryDto>>((ref) {
+  final repo = ref.read(categoriesRepositoryProvider);
+  return repo.categoriesList();
+});
+
+final childrenProvider = FutureProvider.family<List<CategoryDto>, String>((ref, parentId) {
+  final repo = ref.read(categoriesRepositoryProvider);
+  return repo.childrenForParentId(parentId);
+});
+
+
 final globalCriteriaProvider = FutureProvider<List<RatingCriterionDTO>>((
   ref,
 ) async {
@@ -76,8 +88,10 @@ final globalCriteriaProvider = FutureProvider<List<RatingCriterionDTO>>((
   return repo.criteriaListGlobal();
 });
 
-final categoryLabelBySlugProvider =
-    Provider.family<String?, String>((ref, slug) {
+final categoryLabelBySlugProvider = Provider.family<String?, String>((
+  ref,
+  slug,
+) {
   final categories = ref.watch(categoriesProvider).categories;
 
   String? search(List<CategoryNode> nodes) {

@@ -6,8 +6,6 @@ import 'package:stadtschreiber/provider/manual_pois_provider.dart';
 import 'package:stadtschreiber/provider/poi_display_mode_provider.dart';
 import 'package:stadtschreiber/provider/poi_selection_mode_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
-import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
-import 'package:stadtschreiber/screens/osm_poi_import_screen.dart';
 import 'package:stadtschreiber/widgets/visible_pois_menu_category_selection.dart';
 import 'package:stadtschreiber/widgets/visible_pois_menu_favorites.dart';
 import 'package:stadtschreiber/widgets/visible_pois_menu_search.dart';
@@ -147,20 +145,7 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
                 widget.onClose();
               },
             ),
-            ref.read(supabaseUserStateProvider).isAdmin
-                ? ElevatedButton.icon(
-                    icon: const Icon(Icons.cloud_download),
-                    label: const Text("OSM Import starten"),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const OsmPoiImportScreen(),
-                        ),
-                      );
-                    },
-                  )
-                : const SizedBox.shrink(),
-
+            
             // TOP10
           ],
         ),

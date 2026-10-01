@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart' show rootBundle;
-
+import 'dart:async';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/models/poi_display_modes.dart';
 import 'package:stadtschreiber/models/poi_selection_modes.dart';
@@ -12,6 +12,7 @@ import 'package:stadtschreiber/provider/search_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
+import 'package:stadtschreiber/screens/osm_poi_import_screen.dart';
 import 'package:stadtschreiber/widgets/modal_message_box.dart';
 import 'package:stadtschreiber/widgets/poi_list_item.dart';
 
@@ -39,9 +40,20 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
   PoiSelectionMode? _lastMode;
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    expansionController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final repo = ref.read(poiRepositoryProvider);
-
     final camera = ref.read(cameraProvider);
 
     final searchResults = ref.watch(
@@ -149,6 +161,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                   isDense: true,
                 ),
                 onChanged: (value) {
+                  if (!mounted) return;
                   setState(() => _searchQuery = value);
                 },
                 onTap: () {
@@ -223,11 +236,19 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
               ),
             SizedBox(height: 20),
 
-            // SEARCH FIELD
-
-            // END OF SEARCH FIELD
-
-            // Search Results(only visible when toggled)
+            ref.read(supabaseUserStateProvider).isAdmin
+                ? ElevatedButton.icon(
+                    icon: const Icon(Icons.cloud_download),
+                    label: const Text("OSM Import starten"),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const OsmPoiImportScreen(),
+                        ),
+                      );
+                    },
+                  )
+                : const SizedBox.shrink(),
           ],
         ),
       ),
@@ -246,7 +267,9 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
   }
 
   Future<void> showTagInfoModal() async {
-    final osmKeysJson = await rootBundle.loadString('assets/data/osm_keys.json');
+    final osmKeysJson = await rootBundle.loadString(
+      'assets/data/osm_keys.json',
+    );
 
     if (!mounted) return;
 

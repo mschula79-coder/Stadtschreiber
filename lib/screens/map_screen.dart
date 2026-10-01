@@ -64,7 +64,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
     _registerVisiblePoisListener();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(categoriesProvider.notifier).loadCategories();
+      ref.read(categoriesProvider.notifier).loadCategoryTree();
     });
 
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -74,7 +74,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
         accuracy: geo.LocationAccuracy.high,
         distanceFilter: 5,
       ),
-    ).listen((pos) {
+    ).listen((  pos) {
       updateUserLocationOnMap(pos);
     });
   }
