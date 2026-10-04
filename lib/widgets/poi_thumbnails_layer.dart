@@ -15,8 +15,8 @@ import '../widgets/poi_pin_marker.dart';
 class PoiThumbnailsLayer extends ConsumerWidget {
   final void Function(PointOfInterest poi) onTapPoi;
 
-   // ignore: prefer_const_constructors_in_immutables
-   PoiThumbnailsLayer({super.key, required this.onTapPoi});
+  // ignore: prefer_const_constructors_in_immutables
+  PoiThumbnailsLayer({super.key, required this.onTapPoi});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -56,12 +56,7 @@ class PoiThumbnailsLayer extends ConsumerWidget {
         ),
       );
     } else {
-      final visiblePois = ref
-          .watch(visiblePoisProvider)
-          .maybeWhen(
-            data: (list) => list,
-            orElse: () => const <PointOfInterest>[],
-          );
+      final visiblePois = ref.watch(visiblePoisProvider);
 
       final zoom = ref.watch(cameraProvider).zoom;
       final isThumbnailZoom = zoom >= 14.0;
@@ -122,8 +117,7 @@ class PoiThumbnailsLayer extends ConsumerWidget {
               allowLabel: false,
               onTap: () => onTapPoi(poi),
             );
-          } 
-          else {
+          } else {
             markerWidget = PinMarker(
               poi: poi,
               allowLabel: !tooClose,
@@ -132,7 +126,7 @@ class PoiThumbnailsLayer extends ConsumerWidget {
             markerPosLeft = pos.dx - 5;
             markerPosTop = pos.dy - 21;
           }
-          
+
           usedPositions.add(pos);
         }
         // Animation + Highlighting

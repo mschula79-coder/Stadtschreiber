@@ -5,6 +5,7 @@ import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/user_profile_repository_provider.dart';
+import 'package:stadtschreiber/screens/osm_poi_import_screen.dart';
 import 'package:stadtschreiber/widgets/_icon_getter.dart';
 import 'package:stadtschreiber/widgets/modal_user_edit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -105,6 +106,18 @@ class UserActionsBar extends ConsumerWidget {
             mini: true,
             child: const Icon(Icons.color_lens_outlined),
           ),
+          if (isAdmin)
+            FloatingActionButton(
+              heroTag: "OSM_import",
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const OsmPoiImportScreen()),
+                );
+              },
+              mini: true,
+              child: const Icon(Icons.cloud_download),
+            ),
+
           const SizedBox(height: 8),
         ],
       ),

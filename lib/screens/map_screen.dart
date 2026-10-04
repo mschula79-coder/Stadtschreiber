@@ -7,16 +7,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/l10n/app_localizations.dart';
 
 import 'package:stadtschreiber/models/poi.dart';
-import 'package:stadtschreiber/models/poi_display_modes.dart';
 import 'package:stadtschreiber/provider/address_lookup_queue_provider.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:stadtschreiber/provider/categories_menu_provider.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
 import 'package:stadtschreiber/provider/map_controller_provider.dart';
-import 'package:stadtschreiber/provider/poi_display_mode_provider.dart';
 import 'package:stadtschreiber/provider/poi_drag_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
+import 'package:stadtschreiber/provider/poi_selection_provider.dart';
 import 'package:stadtschreiber/provider/poi_service_provider.dart';
+import 'package:stadtschreiber/provider/pois_for_categories_provider.dart';
 import 'package:stadtschreiber/provider/search_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/user_favorites_provider.dart';
@@ -48,7 +48,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
   bool _isChangingStyle = false;
   List<PointOfInterest> _lastVisiblePois = const [];
 
-  late ProviderSubscription<AsyncValue<List<PointOfInterest>>> _visiblePoisSub;
+  late ProviderSubscription<List<PointOfInterest>> _visiblePoisSub;
 
   late ProviderSubscription<PointOfInterest?> _selectedPoiSub;
 
@@ -62,6 +62,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
     super.initState();
     _registerSelectedPoiListener();
     _registerVisiblePoisListener();
+    _registerCategorySelectionListener(); 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(categoriesProvider.notifier).loadCategoryTree();
@@ -74,7 +75,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
         accuracy: geo.LocationAccuracy.high,
         distanceFilter: 5,
       ),
-    ).listen((  pos) {
+    ).listen((pos) {
       updateUserLocationOnMap(pos);
     });
   }
@@ -85,6 +86,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
     super.dispose();
     _selectedPoiSub.close();
     _visiblePoisSub.close();
+    _catPoisSub.close();
   }
 
   @override
@@ -124,7 +126,6 @@ class MapScreenState extends ConsumerState<MapScreen> {
 
     // isPoiGeomEditMode => add points layer
     if (selectedPoi != null) {
-
       ref.listen<AppStateData>(appStateProvider, (previous, next) {
         debugPrint('AppStateData changed: $previous → $next');
 
@@ -402,9 +403,8 @@ class MapScreenState extends ConsumerState<MapScreen> {
             onRemoveThumbnails: () {
               ref.read(categoriesSelectionProvider.notifier).clear();
               ref.read(searchSelectionProvider.notifier).clear();
-              ref
-                    .read(poiDisplayModeProvider.notifier)
-                    .setMode(PoiDisplayMode.categories);
+              ref.read(visiblePoisProvider.notifier).clear();
+              
             },
 
             isAdmin: user.isAdmin,
@@ -532,8 +532,8 @@ class MapScreenState extends ConsumerState<MapScreen> {
                   right: 0,
                   child: Center(
                     widthFactor: 0.6,
-                    child: 
-                    Text(AppLocalizations.of(context)!.moveMapMessage,
+                    child: Text(
+                      AppLocalizations.of(context)!.moveMapMessage,
                       style: TextStyle(
                         color: Colors.black,
                         fontSize: 12,
@@ -551,35 +551,35 @@ class MapScreenState extends ConsumerState<MapScreen> {
   }
 
   void _registerVisiblePoisListener() {
-    _visiblePoisSub = ref.listenManual<AsyncValue<List<PointOfInterest>>>(
+    _visiblePoisSub = ref.listenManual<List<PointOfInterest>>(
       visiblePoisProvider,
       (prev, next) {
-        next.whenData((pois) {
-          _lastVisiblePois = pois;
+        // next IST bereits die Liste der sichtbaren POIs
+        final pois = next;
 
-          final controller = mapController;
-          if (controller == null) {
-            // Controller kommt später → wir holen das nach, sobald er gesetzt ist
-            return;
+        _lastVisiblePois = pois;
+
+        final controller = mapController;
+        if (controller == null) {
+          // Controller kommt später → wir holen das nach, sobald er gesetzt ist
+          return;
+        }
+
+        final cats = ref.watch(categoriesSelectionProvider).selectedValues;
+        final hasDistricts = cats.any((c) => c == 'districts');
+
+        if (hasDistricts) {
+          addDistrictsLayer();
+        } else {
+          removeDistrictsLayer();
+        }
+
+        final lookupQueue = ref.read(addressLookupQueueProvider.notifier);
+        for (final poi in pois) {
+          if (poi.address?.displayAddress() == null) {
+            lookupQueue.enqueue(poi);
           }
-
-          final cats = ref.watch(categoriesSelectionProvider).selectedValues;
-
-          final hasDistricts = cats.any((c) => c == 'districts');
-
-          if (hasDistricts) {
-            addDistrictsLayer();
-          } else {
-            removeDistrictsLayer();
-          }
-
-          final lookupQueue = ref.read(addressLookupQueueProvider.notifier);
-          for (final poi in pois) {
-            if (poi.address?.displayAddress() == null) {
-              lookupQueue.enqueue(poi);
-            }
-          }
-        });
+        }
       },
     );
   }
@@ -621,6 +621,24 @@ class MapScreenState extends ConsumerState<MapScreen> {
         }
       });
     });
+  }
+
+  late ProviderSubscription<AsyncValue<List<PointOfInterest>>> _catPoisSub;
+
+  void _registerCategorySelectionListener() {
+    _catPoisSub = ref.listenManual<AsyncValue<List<PointOfInterest>>>(
+      poisForCategoriesProvider,
+      (prev, next) {
+        next.whenData((pois) {
+          // ⭐ Alle POIs der Kategorie automatisch selektieren
+          ref
+              .read(poiSelectionProvider.notifier)
+              .setAll(
+                pois.map((p) => p).toList(), // falls du IDs speicherst
+              );
+        });
+      },
+    );
   }
 
   Future<String> loadStyleJson(String path) async {

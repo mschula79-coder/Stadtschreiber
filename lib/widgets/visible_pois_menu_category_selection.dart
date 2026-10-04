@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/poi_selection_modes.dart';
-
 import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:stadtschreiber/provider/categories_menu_provider.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
@@ -20,9 +19,8 @@ import 'package:uuid/uuid.dart';
 import '../models/category.dart';
 
 class PoiCategorySelection extends ConsumerStatefulWidget {
-  final VoidCallback onClose;
 
-  const PoiCategorySelection({super.key, required this.onClose});
+  const PoiCategorySelection({super.key});
 
   @override
   ConsumerState<PoiCategorySelection> createState() =>
@@ -82,14 +80,12 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
             if (value) {
               ref
                   .read(visiblePoisMenuStateProvider.notifier)
-                  .setPoiEditMode(PoiSelectionMode.categories);
+                  .setPoiSelectionMode(PoiSelectionMode.categories);
             }
           },
 
           title: Row(
             children: [
-              /*                 Icon(Icons.category, color: Colors.grey.shade600),
- */
               Icon(Icons.category, color: Colors.grey.shade600),
               SizedBox(width: 8),
 
@@ -394,7 +390,6 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                 }
               }
             }
-            widget.onClose();
           },
         ), */
         title: Row(
@@ -435,7 +430,6 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
             ref
                 .read(categoriesSelectionProvider.notifier)
                 .setSelected(node.value!, checked ?? false);
-            widget.onClose();
           },
           secondary: getIcon(node.value!, 24, null),
           controlAffinity: ListTileControlAffinity.leading,

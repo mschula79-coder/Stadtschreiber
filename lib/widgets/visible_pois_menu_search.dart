@@ -1,32 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:iconify_flutter/iconify_flutter.dart';
+import 'package:iconify_flutter/icons/mdi.dart';
 import 'dart:async';
 import 'package:stadtschreiber/models/poi.dart';
-import 'package:stadtschreiber/models/poi_display_modes.dart';
 import 'package:stadtschreiber/models/poi_selection_modes.dart';
 import 'package:stadtschreiber/provider/camera_provider.dart';
-import 'package:stadtschreiber/provider/poi_display_mode_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
+import 'package:stadtschreiber/provider/poi_selection_provider.dart';
 import 'package:stadtschreiber/provider/search_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
-import 'package:stadtschreiber/screens/osm_poi_import_screen.dart';
 import 'package:stadtschreiber/widgets/modal_message_box.dart';
 import 'package:stadtschreiber/widgets/poi_list_item.dart';
 
 class PoiSearch extends ConsumerStatefulWidget {
   final VoidCallback onClose;
-  final void Function(List<PointOfInterest>) onShowAll;
   final void Function(PointOfInterest) onSelect;
 
-  const PoiSearch({
-    super.key,
-    required this.onClose,
-    required this.onShowAll,
-    required this.onSelect,
-  });
+  const PoiSearch({super.key, required this.onClose, required this.onSelect});
 
   @override
   ConsumerState<PoiSearch> createState() => _PoiSearchState();
@@ -105,11 +99,8 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
             if (value) {
               ref
                   .read(visiblePoisMenuStateProvider.notifier)
-                  .setPoiEditMode(PoiSelectionMode.search);
+                  .setPoiSelectionMode(PoiSelectionMode.search);
             } else {
-              ref
-                  .read(poiDisplayModeProvider.notifier)
-                  .setMode(PoiDisplayMode.manual);
               expansionController.collapse();
             }
           },
@@ -174,6 +165,13 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
             if (_searchQuery.isNotEmpty)
               searchResults.when(
                 data: (foundPois) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      ref
+                          .read(searchSelectionProvider.notifier)
+                          .setAll(foundPois);
+                    }
+                  });
                   if (foundPois.isEmpty) {
                     return Padding(
                       padding: EdgeInsetsGeometry.fromLTRB(5, 15, 0, 0),
@@ -192,12 +190,49 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                       children: [
                         Padding(
                           padding: EdgeInsetsGeometry.fromLTRB(5, 15, 0, 0),
-                          child: const Text(
-                            "Resultate",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          // TODO ln
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: const Text(
+                                  "Resultate",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                visualDensity: VisualDensity.compact,
+                                icon: Iconify(
+                                  Mdi.checkbox_multiple_marked_outline,
+                                  color: Colors.black87,
+                                  size: 24,
+                                ),
+                                onPressed: () {
+                                  ref
+                                      .read(poiSelectionProvider.notifier)
+                                      .setAll(foundPois);
+                                },
+                              ),
+                              // Alle de-markieren
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                visualDensity: VisualDensity.compact,
+                                icon: const Iconify(
+                                  Mdi.checkbox_multiple_blank_outline,
+                                  color: Colors.black87,
+                                  size: 24,
+                                ),
+                                onPressed: () {
+                                  ref
+                                      .read(poiSelectionProvider.notifier)
+                                      .clear();
+                                },
+                              ),
+                            ],
                           ),
                         ),
                         SizedBox(height: 5),
@@ -207,6 +242,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                           itemCount: foundPois.length,
                           itemBuilder: (context, index) {
                             return PoiListItem(
+                              selectEnabled: true,
                               poi: foundPois[index],
                               onTap: () async {
                                 final poi = foundPois[index];
@@ -221,12 +257,6 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                             );
                           },
                         ),
-                        ElevatedButton(
-                          child: const Text("Alle anzeigen"),
-                          onPressed: () {
-                            widget.onShowAll(foundPois);
-                          },
-                        ),
                       ],
                     );
                   }
@@ -235,20 +265,6 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                 error: (err, stack) => Text("Fehler: $err"),
               ),
             SizedBox(height: 20),
-
-            ref.read(supabaseUserStateProvider).isAdmin
-                ? ElevatedButton.icon(
-                    icon: const Icon(Icons.cloud_download),
-                    label: const Text("OSM Import starten"),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const OsmPoiImportScreen(),
-                        ),
-                      );
-                    },
-                  )
-                : const SizedBox.shrink(),
           ],
         ),
       ),

@@ -92,7 +92,7 @@ class _MapActionsState extends ConsumerState<MapActions> {
                 },
                 mini: true,
 
-                child: const Iconify(Mdi.pin_off_outline, size: 24),
+                child: const Iconify(Mdi.visibility_off_outline, size: 24),
               ),
               const SizedBox(height: 8),
 

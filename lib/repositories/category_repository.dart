@@ -150,7 +150,7 @@ class CategoryRepository {
       }).toList();
 
       return children;
-    } catch (e, st) {
+    } catch (e) {
 /*       print('Fehler in childrenForParentId: $e');
       print('$st'); */
       rethrow;

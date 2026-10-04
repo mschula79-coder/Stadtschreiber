@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:iconify_flutter/iconify_flutter.dart';
+import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/models/poi_selection_modes.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
+import 'package:stadtschreiber/provider/poi_selection_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/user_favorite_lists_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
@@ -12,14 +15,12 @@ import 'package:stadtschreiber/widgets/poi_list_item.dart';
 class PoiFavoritesList extends ConsumerStatefulWidget {
   final ScrollController scrollController;
   final VoidCallback onClose;
-  final void Function(List<PointOfInterest>) onShowAll;
   final void Function(PointOfInterest) onSelect;
 
   const PoiFavoritesList({
     super.key,
     required this.scrollController,
     required this.onClose,
-    required this.onShowAll,
     required this.onSelect,
   });
 
@@ -28,8 +29,8 @@ class PoiFavoritesList extends ConsumerStatefulWidget {
 }
 
 class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
-  final ExpansibleController expansionController = ExpansibleController();
-  PoiSelectionMode? _lastMode;
+  /// Persistente POI-Speicherung pro Favoritenliste
+  final Map<String, List<PointOfInterest>> favPoisByList = {};
 
   void _scrollToTile(GlobalKey key) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -40,7 +41,6 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
       if (box == null) return;
 
       final viewport = RenderAbstractViewport.of(box);
-
       final target = viewport.getOffsetToReveal(box, 0.0).offset;
 
       final adjusted = (target - 80).clamp(
@@ -61,18 +61,6 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
     final userID = ref.watch(supabaseUserStateProvider).userid;
     final favoriteListsAsync = ref.watch(userFavoriteListsProvider(userID));
 
-    final mode = ref.watch(visiblePoisMenuStateProvider).poiSelectionMode;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_lastMode != mode) {
-        if (mode == PoiSelectionMode.favorites) {
-          expansionController.expand();
-        } else {
-          expansionController.collapse();
-        }
-      }
-    });
-
     return Theme(
       data: Theme.of(context).copyWith(
         listTileTheme: const ListTileThemeData(contentPadding: EdgeInsets.zero),
@@ -87,26 +75,21 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
           childrenPadding: EdgeInsets.zero,
           visualDensity: VisualDensity.compact,
           initiallyExpanded: false,
-          controller: expansionController,
-
           onExpansionChanged: (value) {
             ref
                 .read(visiblePoisMenuStateProvider.notifier)
                 .setTileExpanded("favorites", value);
+
             if (value) {
               ref
                   .read(visiblePoisMenuStateProvider.notifier)
-                  .setPoiEditMode(PoiSelectionMode.favorites);
-            } 
+                  .setPoiSelectionMode(PoiSelectionMode.favorites);
+            }
           },
-
-          // ⭐ Fix 1: verhindert zusätzliches Padding + Animation
           collapsedShape: const Border(),
           shape: const Border(),
-
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           expandedAlignment: Alignment.topLeft,
-
           title: Row(
             children: [
               Icon(Icons.star, color: Colors.grey.shade600),
@@ -119,10 +102,7 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
               ),
             ],
           ),
-
           children: [
-            const SizedBox(height: 0),
-
             favoriteListsAsync.when(
               data: (listOfFavoriteLists) {
                 if (listOfFavoriteLists.isEmpty) {
@@ -138,8 +118,6 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
                   );
                 }
 
-                List<PointOfInterest> favPois = [];
-
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: List.generate(listOfFavoriteLists.length, (index) {
@@ -147,76 +125,139 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
                     final (listDTO, favoritesInThisList) =
                         listOfFavoriteLists[index];
 
-                    return ExpansionTile(
-                      key: tileKey,
-                      title: Text(listDTO.name),
-                      tilePadding: const EdgeInsets.only(left: 0, right: 15),
+                    final favPois = favPoisByList[listDTO.id] ?? [];
 
-                      // ⭐ Fix 1 auch für die inneren Tiles
-                      collapsedShape: const Border(),
-                      shape: const Border(),
-
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    return StatefulBuilder(
+                      builder: (context, setTileState) {
+                        return ExpansionTile(
+                          key: ValueKey("favorites_${listDTO.id}"),
+                          tilePadding: const EdgeInsets.only(
+                            left: 0,
+                            right: 15,
+                          ),
+                          collapsedShape: const Border(),
+                          shape: const Border(),
+                          title: Text(
+                            listDTO.name,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           children: [
-                            ...favoritesInThisList.map(
-                              (fav) => Consumer(
-                                builder: (context, ref, _) {
-                                  final poiAsync = ref.watch(
-                                    poiByIdProvider(fav.poiID),
-                                  );
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ...favoritesInThisList.map(
+                                  (fav) => Consumer(
+                                    builder: (context, ref, _) {
+                                      final poiAsync = ref.watch(
+                                        poiByIdProvider(fav.poiID),
+                                      );
 
-                                  return poiAsync.when(
-                                    data: (poi) {
-                                      if (poi == null) {
-                                        return const Padding(
-                                          padding: EdgeInsets.zero,
-                                          child: Text("POI not found"),
-                                        );
-                                      }
+                                      return poiAsync.when(
+                                        data: (poi) {
+                                          if (poi == null) {
+                                            return const Padding(
+                                              padding: EdgeInsets.zero,
+                                              child: Text("POI not found"),
+                                            );
+                                          }
 
-                                      favPois.add(poi);
+                                          final current =
+                                              favPoisByList[listDTO.id] ?? [];
+                                          if (!current.any(
+                                            (p) => p.id == poi.id,
+                                          )) {
+                                            favPoisByList[listDTO.id] = [
+                                              ...current,
+                                              poi,
+                                            ];
+                                          }
 
-                                      return PoiListItem(
-                                        poi: poi,
-                                        onTap: () {
-                                          widget.onSelect(poi);
-                                          widget.onClose();
+                                          return PoiListItem(
+                                            selectEnabled: true,
+                                            poi: poi,
+                                            onTap: () {
+                                              widget.onSelect(poi);
+                                              widget.onClose();
+                                            },
+                                            paddingLeft: 0,
+                                          );
                                         },
-                                        paddingLeft: 0,
+                                        loading: () => const Padding(
+                                          padding: EdgeInsets.all(8),
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                        error: (e, st) => Padding(
+                                          padding: const EdgeInsets.all(8),
+                                          child: Text("Error: $e"),
+                                        ),
                                       );
                                     },
-                                    loading: () => const Padding(
-                                      padding: EdgeInsets.all(8),
-                                      child: CircularProgressIndicator(),
-                                    ),
-                                    error: (e, st) => Padding(
-                                      padding: const EdgeInsets.all(8),
-                                      child: Text("Error: $e"),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
+                                  ),
+                                ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 6),
-                              child: ElevatedButton(
-                                child: const Text("Alle anzeigen"),
-                                onPressed: () {
-                                  widget.onShowAll(favPois);
-                                },
+                              padding: const EdgeInsets.only(
+                                left: 0,
+                                right: 15,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  IconButton(
+                                    padding: EdgeInsets.zero,
+                                    visualDensity: VisualDensity.compact,
+                                    icon: Iconify(
+                                      Mdi.checkbox_multiple_marked_outline,
+                                      color: Colors.black87,
+                                      size: 24,
+                                    ),
+                                    onPressed: () {
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                            ref
+                                                .read(
+                                                  poiSelectionProvider.notifier,
+                                                )
+                                                .setAll(favPois);
+                                          });
+                                    },
+                                  ),
+                                  IconButton(
+                                    padding: EdgeInsets.zero,
+                                    visualDensity: VisualDensity.compact,
+                                    icon: const Iconify(
+                                      Mdi.checkbox_multiple_blank_outline,
+                                      color: Colors.black87,
+                                      size: 24,
+                                    ),
+                                    onPressed: () {
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                            ref
+                                                .read(
+                                                  poiSelectionProvider.notifier,
+                                                )
+                                                .clear();
+                                          });
+                                    },
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 15),
-                          ],
-                        ),
-                      ],
 
-                      onExpansionChanged: (expanded) {
-                        if (expanded) {
-                          _scrollToTile(tileKey);
-                        }
+                                const SizedBox(height: 15),
+
+                              ],
+                            ),
+                          ],
+                          onExpansionChanged: (expanded) {
+                            if (expanded) {
+                              _scrollToTile(tileKey);
+                            }
+                          },
+                        );
                       },
                     );
                   }),

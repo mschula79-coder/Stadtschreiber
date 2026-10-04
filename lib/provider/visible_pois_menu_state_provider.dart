@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/poi_selection_modes.dart';
+import 'package:stadtschreiber/provider/poi_selection_provider.dart';
 import 'package:stadtschreiber/state/visible_pois_menu_state.dart';
 
 class VisiblePoisMenuStateNotifier extends Notifier<VisiblePoisMenuStateData> {
@@ -8,7 +9,8 @@ class VisiblePoisMenuStateNotifier extends Notifier<VisiblePoisMenuStateData> {
     return VisiblePoisMenuStateData.initial;
   }
 
-  void setPoiEditMode(PoiSelectionMode value) {
+  void setPoiSelectionMode(PoiSelectionMode value) {
+    ref.read(poiSelectionProvider).clear();
     state = state.copyWith(poiSelectionMode: value);
   }
 

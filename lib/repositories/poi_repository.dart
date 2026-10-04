@@ -13,6 +13,7 @@ import '../utils/osm_utils.dart';
 
 class PoiRepository {
   final supabase = Supabase.instance.client;
+  // ignore: unused_field
   final Debouncer _debouncer = Debouncer(Duration(milliseconds: 500));
   int _lastRequestId = 0;
 

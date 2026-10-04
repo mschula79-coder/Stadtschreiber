@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:stadtschreiber/models/poi_display_modes.dart';
-import 'package:stadtschreiber/models/poi_selection_modes.dart';
-import 'package:stadtschreiber/provider/manual_pois_provider.dart';
-import 'package:stadtschreiber/provider/poi_display_mode_provider.dart';
-import 'package:stadtschreiber/provider/poi_selection_mode_provider.dart';
+import 'package:iconify_flutter/iconify_flutter.dart';
+import 'package:iconify_flutter/icons/mdi.dart';
+import 'package:stadtschreiber/provider/categories_menu_provider.dart';
+import 'package:stadtschreiber/provider/poi_selection_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
+import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
+import 'package:stadtschreiber/provider/visible_pois_provider.dart';
 import 'package:stadtschreiber/widgets/visible_pois_menu_category_selection.dart';
 import 'package:stadtschreiber/widgets/visible_pois_menu_favorites.dart';
 import 'package:stadtschreiber/widgets/visible_pois_menu_search.dart';
@@ -25,6 +26,16 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
 
   @override
   Widget build(BuildContext context) {
+    final pois = ref.watch(visiblePoisProvider);
+
+    final int selectedPoiCount = ref.watch(poiSelectionProvider).length;
+
+    final menuExpanded = ref
+        .watch(visiblePoisMenuStateProvider)
+        .expandedTiles
+        .values
+        .any((v) => v);
+
     return Container(
       // Menucontainer
       padding: const EdgeInsets.all(16),
@@ -39,116 +50,166 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
       ),
 
       // Menuinhalt
-      child: SingleChildScrollView(
-        controller: menuScrollController,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              controller: menuScrollController,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
 
-          children: [
-            PoiSearch(
-              onClose: () => widget.onClose(),
-              onSelect: (poi) {
-                ref.read(selectedPoiProvider.notifier).setPoi(poi);
-                ref.read(manualPoisProvider.notifier).clear();
-                ref.read(manualPoisProvider.notifier).setPois([poi]);
+                children: [
+                  PoiSearch(
+                    onClose: () => widget.onClose(),
+                    onSelect: (poi) {
+                      ref.read(selectedPoiProvider.notifier).setPoi(poi);
+                      ref.read(visiblePoisProvider.notifier).addPois([poi]);
+                      widget.onClose();
+                    },
+                  ),
 
-                ref
-                    .read(poiDisplayModeProvider.notifier)
-                    .setMode(PoiDisplayMode.manual);
-                ref
-                    .read(poiSelectionModeProvider.notifier)
-                    .setMode(PoiSelectionMode.single);
-                widget.onClose();
-              },
-              onShowAll: (searchResultPois) {
-                ref.read(manualPoisProvider.notifier).setPois(searchResultPois);
-                ref
-                    .read(poiDisplayModeProvider.notifier)
-                    .setMode(PoiDisplayMode.manual);
+                  SizedBox(height: 0),
 
-                ref
-                    .read(poiSelectionModeProvider.notifier)
-                    .setMode(PoiSelectionMode.search);
-                widget.onClose();
-              },
+                  PoiCategorySelection(),
+
+                  SizedBox(height: 8),
+
+                  PoiTop10List(
+                    onClose: () {
+                      widget.onClose();
+                    },
+
+                    onSelect: (poi) {
+                      ref.read(selectedPoiProvider.notifier).setPoi(poi);
+                      ref.read(visiblePoisProvider.notifier).addPois([poi]);
+                      widget.onClose();
+                    },
+                  ),
+
+                  SizedBox(height: 8),
+                  PoiFavoritesList(
+                    scrollController: menuScrollController,
+                    onClose: () => widget.onClose(),
+                    onSelect: (poi) {
+                      ref.read(selectedPoiProvider.notifier).setPoi(poi);
+                      ref.read(visiblePoisProvider.notifier).addPois([poi]);
+                      widget.onClose();
+                    },
+                  ),
+
+                  // TOP10
+                ],
+              ),
             ),
+          ),
 
-            SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.visibility, color: Colors.black54, size: 24),
+                    const SizedBox(width: 8),
+                    Text(
+                      "${pois.length}",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.normal,
+                        fontSize: 8,
+                      ),
+                    ),
+                  ],
+                ),
 
-            PoiCategorySelection(
-              onClose: () {
-                widget.onClose();
-              },
+                if (menuExpanded)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+
+                        icon: const Iconify(
+                          Mdi.visibility_off_outline,
+                          color: Colors.black87,
+                          size: 24,
+                        ),
+                        onPressed: () {
+                          ref
+                              .read(categoriesSelectionProvider.notifier)
+                              .clear();
+                          ref.read(visiblePoisProvider.notifier).clear();
+                        },
+                      ),
+                      const SizedBox(width: 12),
+
+
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
+                        icon: const Iconify(
+                          Mdi.eye_add_outline,
+                          color: Colors.black87,
+                          size: 24,
+                        ),
+                        onPressed: () {
+                          final selectedPois = ref.read(poiSelectionProvider);
+                          ref
+                              .read(visiblePoisProvider.notifier)
+                              .addPois(selectedPois);
+                        },
+                      ),
+                      SizedBox(width: 0),
+                      Text(
+                        "$selectedPoiCount",
+
+                        style: const TextStyle(
+                          fontWeight: FontWeight.normal,
+                          fontSize: 8,
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+
+                        icon: const Iconify(
+                          Mdi.check,
+                          color: Colors.black87,
+                          size: 24,
+                        ),
+                        onPressed: () {
+                          final selectedPois = ref.read(poiSelectionProvider);
+                          ref
+                              .read(visiblePoisProvider.notifier)
+                              .addPois(selectedPois);
+
+                          widget.onClose();
+                        },
+                      ),
+                      const SizedBox(width: 12),
+
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+
+                        icon: const Iconify(
+                          Mdi.close,
+                          color: Colors.black87,
+                          size: 24,
+                        ),
+                        onPressed: () {
+                          widget.onClose();
+                        },
+                      ),
+                    ],
+                  ),
+              ],
             ),
-
-            SizedBox(height: 8),
-
-            PoiTop10List(
-              onClose: () {
-                widget.onClose();
-              },
-
-              onSelect: (poi) {
-                ref.read(selectedPoiProvider.notifier).setPoi(poi);
-                ref.read(manualPoisProvider.notifier).clear();
-                ref.read(manualPoisProvider.notifier).setPois([poi]);
-
-                ref
-                    .read(poiDisplayModeProvider.notifier)
-                    .setMode(PoiDisplayMode.manual);
-
-                ref
-                    .read(poiSelectionModeProvider.notifier)
-                    .setMode(PoiSelectionMode.single);
-
-                widget.onClose();
-              },
-              onShowAll: (top10Pois) {
-                ref.read(manualPoisProvider.notifier).setPois(top10Pois);
-                ref
-                    .read(poiDisplayModeProvider.notifier)
-                    .setMode(PoiDisplayMode.manual);
-
-                ref
-                    .read(poiSelectionModeProvider.notifier)
-                    .setMode(PoiSelectionMode.top10);
-
-                widget.onClose();
-              },
-            ),
-
-            SizedBox(height: 8),
-            // TODO wenn visiblePois.isEmpty => ausgrauen des listen buttons
-            PoiFavoritesList(
-              scrollController: menuScrollController,
-              onClose: () => widget.onClose(),
-              onSelect: (poi) {
-                ref.read(selectedPoiProvider.notifier).setPoi(poi);
-                ref.read(manualPoisProvider.notifier).clear();
-                ref.read(manualPoisProvider.notifier).setPois([poi]);
-                ref
-                    .read(poiDisplayModeProvider.notifier)
-                    .setMode(PoiDisplayMode.manual);
-                ref
-                    .read(poiSelectionModeProvider.notifier)
-                    .setMode(PoiSelectionMode.single);
-                widget.onClose();
-              },
-              onShowAll: (favPois) {
-                ref.read(manualPoisProvider.notifier).setPois(favPois);
-                ref
-                    .read(poiDisplayModeProvider.notifier)
-                    .setMode(PoiDisplayMode.manual);
-                ref
-                    .read(poiSelectionModeProvider.notifier)
-                    .setMode(PoiSelectionMode.favorites);
-                widget.onClose();
-              },
-            ),
-            
-            // TOP10
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

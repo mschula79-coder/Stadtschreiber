@@ -1,5 +1,0 @@
-enum PoiDisplayMode {
-  categories,
-  
-  manual,
-  }

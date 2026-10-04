@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../repositories/poi_repository.dart';
 import '../state/camera_state.dart';
 
-final   searchResultsProvider = FutureProvider.autoDispose
+final searchResultsProvider = FutureProvider.autoDispose
     .family<
       List<PointOfInterest>,
       ({
@@ -71,5 +71,9 @@ class SearchSelectionNotifier extends Notifier<List<PointOfInterest>> {
 
   void clear() {
     state = [];
+  }
+
+  void setAll(List<PointOfInterest> pois) {
+    state = pois;
   }
 }
