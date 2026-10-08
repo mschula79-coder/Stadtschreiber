@@ -291,7 +291,10 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
 
     final message =
         'Suche nach benannten Objekten:\n'
-        '"osm name" Suchbegriff\n\n'
+        '"osmn" Suchbegriff\n\n'
+        '\n\n'
+        'Suche nach Gebäuden (buildings):\n'
+        '"osmb" Suchbegriff\n\n'
         '\n\n'
         'Suche nach tags:\n'
         'OSM tag key=value (value optional) Suchbegriff\n\n'

@@ -33,3 +33,24 @@ Future<void> openLink(BuildContext context, String url) async {
     return;
   }
 }
+
+String? convertGoogleDriveToDirectImageUrl(String url) {
+  if (url.isEmpty) return null;
+
+  final RegExp idPattern = RegExp(
+    r'(?:file/d/|open\?id=|uc\?id=|id=)([a-zA-Z0-9_-]+)',
+  );
+
+  final match = idPattern.firstMatch(url);
+  if (match == null) return null;
+
+  final fileId = match.group(1);
+  if (fileId == null || fileId.isEmpty) return null;
+
+  return "https://drive.google.com/uc?export=view&id=$fileId";
+}
+
+bool isGoogleDriveLink(String url) {
+  return url.contains("drive.google.com");
+}
+

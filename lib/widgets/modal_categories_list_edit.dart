@@ -22,8 +22,11 @@ class CategoryEditor extends ConsumerWidget {
           return EditableList<CategoryDto>(
             items: categories,
             isEditModeEnabled: true,
-            itemBuilder: (c) =>
-                ListTile(title: Text(c.name), subtitle: Text(c.slug)),
+            itemBuilder: (c) => ListTile(
+              tileColor: Colors.white,
+              title: Text(c.name),
+              subtitle: Text(c.slug),
+            ),
             onAdd: () => _showAddDialog(context, ref, repo),
             onEdit: (item) => _showEditDialog(context, ref, repo, item),
             onDelete: (item) => _confirmAndDelete(context, ref, repo, item),
@@ -147,6 +150,7 @@ class CategoryEditor extends ConsumerWidget {
                                 items: children,
                                 isEditModeEnabled: true,
                                 itemBuilder: (c) => ListTile(
+                                  tileColor: Colors.white,
                                   title: Text(c.name),
                                   subtitle: Text(c.slug),
                                 ),

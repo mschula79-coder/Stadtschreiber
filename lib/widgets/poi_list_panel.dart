@@ -42,7 +42,7 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
               ref.read(appStateProvider.notifier).setPoiListVisible(false);
             },
           ),
-          SizedBox(height: 16),
+          SizedBox(height: 0),
 
           /*           Expanded(
             child: visiblePoisAsync.when(
@@ -109,17 +109,11 @@ class PoiListHeader extends ConsumerWidget {
         children: [
           // HEADER
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 10, 0, 4),
+            padding: const EdgeInsets.fromLTRB(18, 0, 0, 0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Liste der sichtbaren Orte',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Icon(Icons.visibility, color: Colors.black54, size: 32),
                 IconButton(icon: const Icon(Icons.close), onPressed: onClose),
               ],
             ),

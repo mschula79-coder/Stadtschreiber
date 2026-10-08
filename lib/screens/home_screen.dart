@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide Consumer;
 import 'package:stadtschreiber/provider/app_state_provider.dart';
-import 'package:stadtschreiber/provider/categories_menu_provider.dart';
+import 'package:stadtschreiber/provider/poi_selection_provider.dart';
 import 'package:stadtschreiber/provider/search_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:geolocator/geolocator.dart';
@@ -82,6 +82,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
     final anyExpanded = expandedTiles.values.any((v) => v == true);
 
     final paddingWidth = anyExpanded ? 40 : 150;
+    final visiblePoisMenuHeightFactor = anyExpanded ? 0.75 : 0.35;
 
     return Scaffold(
       appBar: MainAppBar(
@@ -113,14 +114,14 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
               duration: Duration(milliseconds: 500),
               curve: Curves.easeOut,
               width: MediaQuery.of(context).size.width - paddingWidth,
+              height: MediaQuery.of(context).size.height * visiblePoisMenuHeightFactor - MediaQuery.of(context).viewInsets.bottom,
               child: Material(
                 elevation: 8,
                 borderRadius: BorderRadius.circular(12),
                 child: VisiblePoisMenu(
                   onClose: () {
-                    ref.read(categoriesSelectionProvider.notifier).clear();
+                    ref.read(poiSelectionProvider).clear();
                     ref.read(searchSelectionProvider.notifier).clear();
-
                     setState(() => _menuOpen = false);
                   },
                 ),

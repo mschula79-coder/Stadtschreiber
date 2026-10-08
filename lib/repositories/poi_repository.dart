@@ -302,8 +302,8 @@ class PoiRepository {
       return pois;
     }
 
-    if (query.startsWith('osma') && query.length >= 8) {
-      final cleanedQuery = query.substring('osma'.length).trim();
+    if (query.startsWith('osmb') && query.length >= 8) {
+      final cleanedQuery = query.substring('osmb'.length).trim();
       if (cleanedQuery.length >= 3) {
         final osmResult = await searchNearbyStreetBuildings(
           searchTerm: cleanedQuery,

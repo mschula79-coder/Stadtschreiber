@@ -61,7 +61,6 @@ class _PoiFavoriteEditModalState extends ConsumerState<PoiFavoriteEditModal> {
                     );
                     ref.invalidate(userFavoriteListsProvider(userID));
                     ref.invalidate(userFavoritesProvider);
-                    
                   },
                 ),
               ],
@@ -115,6 +114,7 @@ class FavoriteListSelectionList extends ConsumerWidget {
                 value: isSelected,
                 title: Text(listDTO.name),
                 visualDensity: VisualDensity.compact,
+                tileColor: Colors.white,
                 onChanged: (checked) {
                   ref.read(toggleFavoriteProvider)(
                     poiId: selectedPoiId,

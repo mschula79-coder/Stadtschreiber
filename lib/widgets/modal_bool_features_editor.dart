@@ -6,8 +6,8 @@ class BoolFeaturesEditorDialog extends StatefulWidget {
 
   const BoolFeaturesEditorDialog({
     required this.dialogTitle,
-    required this.initialFeatures, 
-    super.key
+    required this.initialFeatures,
+    super.key,
   });
 
   @override
@@ -39,6 +39,7 @@ class _BoolFeaturesEditorDialogState extends State<BoolFeaturesEditorDialog> {
             return SwitchListTile(
               title: Text(key),
               value: value,
+              tileColor: Colors.white,
               onChanged: (newValue) {
                 setState(() {
                   features[key] = newValue;
@@ -54,25 +55,10 @@ class _BoolFeaturesEditorDialogState extends State<BoolFeaturesEditorDialog> {
           child: const Text("Close"),
         ),
         ElevatedButton(
-          onPressed: () => Navigator.pop(context, features), 
+          onPressed: () => Navigator.pop(context, features),
           child: const Text("Speichern"),
         ),
       ],
     );
-
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -469,6 +469,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
             // Geometriepunkte bearbeiten
             const SizedBox(height: 5),
             SwitchListTile(
+              tileColor: Colors.white,
               title: Text(
                 AppLocalizations.of(context)?.editGeometryPoints ??
                     'editGeometryPoints',
@@ -540,20 +541,28 @@ class PoiPanelInfoTab extends ConsumerWidget {
           child: Column(
             children: <Widget>[
               ListTile(
+                tileColor: Colors.white,
+
                 title: Text(AppLocalizations.of(context)?.point ?? 'point'),
                 leading: Radio<String>(toggleable: true, value: 'point'),
               ),
               ListTile(
+                tileColor: Colors.white,
+
                 title: Text(AppLocalizations.of(context)?.line ?? 'line'),
                 leading: Radio<String>(toggleable: true, value: 'linestring'),
               ),
               ListTile(
+                tileColor: Colors.white,
+
                 title: Text(
                   AppLocalizations.of(context)?.polygone ?? 'polygone',
                 ),
                 leading: Radio<String>(toggleable: true, value: 'polygon'),
               ),
               ListTile(
+                tileColor: Colors.white,
+
                 title: Text(
                   AppLocalizations.of(context)?.multipolygone ??
                       'multipolygone',

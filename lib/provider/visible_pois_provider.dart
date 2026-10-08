@@ -25,6 +25,12 @@ class VisiblePoisNotifier extends Notifier<List<PointOfInterest>> {
     state = [...state, ...newPois];
   }
 
+  void replacePoi(PointOfInterest poi) {
+    removePois([poi.id]);
+    
+    state = [...state, poi];
+  }
+
   void removePois(List<String> ids) {
     state = state.where((p) => !ids.contains(p.id)).toList();
   }

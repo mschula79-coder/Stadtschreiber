@@ -7,6 +7,7 @@ import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_provider.dart';
 import 'package:stadtschreiber/services/debug_service.dart';
 import 'package:stadtschreiber/services/url_service.dart';
+import 'package:stadtschreiber/utils/url_utils.dart';
 
 class ImageEditModal extends ConsumerStatefulWidget {
   final ImageEntry image;
@@ -108,23 +109,38 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
               const SizedBox(height: 12),
 
               // URL + Upload
+              TextField(
+                controller: _urlController,
+                decoration: const InputDecoration(
+                  labelText: "URL",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
               Row(
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _urlController,
-                      decoration: const InputDecoration(
-                        labelText: "URL",
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.link),
+                    label: const Text("Link prüfen"),
+                    onPressed: () async {
+                      if (_urlController.text.isNotEmpty) {
+                        final linkEntry = await processLink(
+                          _urlController.text,
+                        );
+                        setState(() {
+                          _urlController.text = linkEntry;
+                        });
+                      }
+                    },
                   ),
-                  const SizedBox(width: 8),
 
+                  const SizedBox(width: 8),
                   // Bild auswählen
                   ElevatedButton.icon(
                     icon: const Icon(Icons.upload),
-                    label: const Text("Bild auswählen"),
+                    label: const Text("Upload"),
                     onPressed: () async {
                       final imageEntry = await imageRepo
                           .pickProcessAndUploadImage();
@@ -133,7 +149,9 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
                       setState(() {
                         image = imageEntry; // <— wichtig!
                         _urlController.text = imageEntry.url;
-                        _titleController.text = getFilenameNoExtensionFromUrl(imageEntry.url);
+                        _titleController.text = getFilenameNoExtensionFromUrl(
+                          imageEntry.url,
+                        );
                         previewUrl = imageEntry.url;
                       });
                     },
@@ -196,6 +214,8 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
               SwitchListTile(
                 title: const Text('Featured Image'),
                 value: isFeatured,
+                tileColor: Colors.white,
+
                 onChanged: (newValue) {
                   final newPoi = selectedPoi!.copyWith(
                     featuredImageUrl: newValue ? image.url : null,
@@ -210,8 +230,7 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
                       );
 
                   ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
-
-                  ref.invalidate(visiblePoisProvider);
+                  ref.read(visiblePoisProvider.notifier).replacePoi(newPoi);
                 },
               ),
             ],
@@ -228,5 +247,15 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
         ElevatedButton(onPressed: _save, child: const Text("Speichern")),
       ],
     );
+  }
+
+  Future<String> processLink(String uri) async {
+    if (isGoogleDriveLink(uri)) {
+      final googleUri = convertGoogleDriveToDirectImageUrl(uri);
+      if (googleUri == null) return '';
+      return googleUri;
+    }
+
+    return uri;
   }
 }

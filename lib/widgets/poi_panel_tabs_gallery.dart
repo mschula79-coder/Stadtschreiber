@@ -41,9 +41,9 @@ class PoiPanelGalleryTab extends ConsumerWidget {
         padding: EdgeInsets.fromLTRB(10, 15, 10, 5),
         child: Column(
           children: [
-            isEditModeEnabled ? SizedBox(height: 15) : SizedBox.shrink(),
+            isEditModeEnabled ? SizedBox(height: 0) : SizedBox.shrink(),
             // Featured Image-URL
-            isEditModeEnabled
+/*             isEditModeEnabled
                 ? Stack(
                     children: [
                       InputDecorator(
@@ -97,7 +97,7 @@ class PoiPanelGalleryTab extends ConsumerWidget {
                   )
                 : SizedBox.shrink(),
             isEditModeEnabled ? SizedBox(height: 15) : SizedBox.shrink(),
-
+ */
             // Featured image
             if (selectedPoi.featuredImageUrl == null ||
                 selectedPoi.featuredImageUrl!.isEmpty) ...[

@@ -21,7 +21,7 @@ final poisForCategoriesProvider = FutureProvider<List<PointOfInterest>>((
     return searchSelection;
   } */
 
-
+// TODO nach Auswahl Image verschwindet die Kategorienliste
   // ⭐ 3) Deine bestehende Kategorien‑Logik
   final catPois = await repo.loadPoisforSelectedCategories(selectedCategories);
 

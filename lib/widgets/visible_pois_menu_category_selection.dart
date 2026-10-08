@@ -19,7 +19,6 @@ import 'package:uuid/uuid.dart';
 import '../models/category.dart';
 
 class PoiCategorySelection extends ConsumerStatefulWidget {
-
   const PoiCategorySelection({super.key});
 
   @override
@@ -183,6 +182,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                   'Bewertungskriterien bearbeiten',
                   style: TextStyle(fontSize: 16),
                 ),
+                tileColor: Colors.white,
                 contentPadding: const EdgeInsets.only(top: 10),
                 value: isAdminViewEnabled,
                 onChanged: (newValue) {
@@ -423,6 +423,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
         CheckboxListTile(
           contentPadding: const EdgeInsets.only(top: 0, left: 4, right: 15),
           value: isChecked,
+          tileColor: Colors.white,
           visualDensity: VisualDensity.compact,
 
           onChanged: (checked) {

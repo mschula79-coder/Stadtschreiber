@@ -68,6 +68,7 @@ class PoiCategoryNodeTile extends ConsumerWidget {
     return CheckboxListTile(
       title: Text(node.label),
       visualDensity: VisualDensity.compact,
+      tileColor: Colors.white,
       value: isSelected,
       onChanged: (checked) async {
         if (checked == null) return;
