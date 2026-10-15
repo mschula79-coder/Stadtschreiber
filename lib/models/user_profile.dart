@@ -3,14 +3,14 @@ class UserProfile {
   final String username;
   final String email;
   final bool isAdmin;
-  final bool isAuthor;
+  final bool isEditor;
 
   UserProfile({
     required this.id,
     required this.username,
     required this.email,
     required this.isAdmin,
-    required this.isAuthor,
+    required this.isEditor,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -19,7 +19,7 @@ class UserProfile {
       username: json['username']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       isAdmin: json['is_admin'] ?? false,
-      isAuthor: json['is_author'] ?? false,
+      isEditor: json['is_editor'] ?? false,
     );
   }
 }

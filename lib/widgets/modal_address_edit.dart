@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:stadtschreiber/models/address.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
 
 class AddressEditModal extends StatefulWidget {
   final Address address;
@@ -68,7 +69,7 @@ class _AddressEditModalState extends State<AddressEditModal> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("Artikel bearbeiten"),
+      title: Text(getText('editArticle')),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -126,9 +127,9 @@ class _AddressEditModalState extends State<AddressEditModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text("Abbrechen"),
+          child: Text(getText('cancel')),
         ),
-        ElevatedButton(onPressed: _save, child: const Text("Speichern")),
+        ElevatedButton(onPressed: _save, child: Text(getText('save'))),
       ],
     );
   }

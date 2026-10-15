@@ -40,6 +40,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
   Widget build(BuildContext context) {
     final categories = ref.watch(categoriesProvider).categories;
     final isAdmin = ref.read(supabaseUserStateProvider).isAdmin;
+    
 
     final mode = ref.watch(visiblePoisMenuStateProvider).poiSelectionMode;
 
@@ -162,7 +163,6 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
             isAdmin
                 ? ElevatedButton.icon(
                     icon: const Icon(Icons.edit),
-                    // TODO ln
                     label: const Text("Kategorien bearbeiten"),
                     onPressed: () {
                       showDialog(
@@ -236,7 +236,6 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                               id: const Uuid().v4(),
                               name: '',
                               description: '',
-                              scoreDescriptions: {},
                             );
 
                             final emptyCriterionWithId = await ref
@@ -317,7 +316,6 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
               label: node.label,
               value: node.value,
               children: filteredChildren,
-              // TODO add filtered parents ?
               hasParents: false,
             ),
           );

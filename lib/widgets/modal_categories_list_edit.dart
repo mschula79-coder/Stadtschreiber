@@ -7,6 +7,8 @@ import 'package:stadtschreiber/provider/category_repository_provider.dart';
 import 'package:stadtschreiber/repositories/category_repository.dart';
 import 'package:stadtschreiber/widgets/_editable_list.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
+
 
 class CategoryEditor extends ConsumerWidget {
   const CategoryEditor({super.key});
@@ -33,7 +35,7 @@ class CategoryEditor extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, st) => Center(child: Text('Fehler: $err')),
+        error: (err, st) => Center(child: Text('$err')),
       ),
     );
   }
@@ -83,7 +85,7 @@ class CategoryEditor extends ConsumerWidget {
               if (!context.mounted) return;
               Navigator.of(ctx).pop(newDto);
             },
-            child: Text(t.save),
+            child: Text(getText("save")),
           ),
         ],
       ),
@@ -116,7 +118,7 @@ class CategoryEditor extends ConsumerWidget {
         // damit der scrollbare Bereich (EditableList / ListView) eine
         // definierte Höhe hat und kein ShrinkWrappingViewport-Fehler entsteht.
         return AlertDialog(
-          title: Text("Kategorie bearbeiten"),
+          title: Text(getText("editCategory")),
           content: SizedBox(
             width: dialogWidth,
             height: maxHeight,
@@ -173,7 +175,7 @@ class CategoryEditor extends ConsumerWidget {
                         },
                         loading: () =>
                             const Center(child: CircularProgressIndicator()),
-                        error: (err, st) => Center(child: Text('Fehler: $err')),
+                        error: (err, st) => Center(child: Text('$err')),
                       );
                     },
                   ),

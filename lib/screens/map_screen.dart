@@ -408,6 +408,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
             },
 
             isAdmin: user.isAdmin,
+            isEditor: ref.read(supabaseUserStateProvider.notifier).isEditor(),
             isAdminViewEnabled: isAdminViewEnabled,
           ),
 

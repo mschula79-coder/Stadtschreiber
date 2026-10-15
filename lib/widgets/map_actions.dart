@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/widgets/user_actions_bar.dart';
-import '../services/debug_service.dart';
 
 class MapActions extends ConsumerStatefulWidget {
   final VoidCallback onChangeStyle;
@@ -13,6 +12,7 @@ class MapActions extends ConsumerStatefulWidget {
   final VoidCallback onRemoveThumbnails;
   final VoidCallback onAddPoi;
   final bool isAdmin;
+  final bool isEditor;
   final bool isAdminViewEnabled;
 
   const MapActions({
@@ -22,6 +22,7 @@ class MapActions extends ConsumerStatefulWidget {
     required this.onAddPoi,
     required this.onRemoveThumbnails,
     required this.isAdmin,
+    required this.isEditor,
     required this.isAdminViewEnabled,
   });
 
@@ -34,7 +35,6 @@ class _MapActionsState extends ConsumerState<MapActions> {
 
   @override
   Widget build(BuildContext context) {
-    DebugService.log('Build MapActions');
 
     return Stack(
       children: [
@@ -70,7 +70,7 @@ class _MapActionsState extends ConsumerState<MapActions> {
                 child: const Icon(Icons.my_location),
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
 
               // Poi List
               FloatingActionButton(
@@ -82,7 +82,7 @@ class _MapActionsState extends ConsumerState<MapActions> {
                 child: Icon(Icons.list_rounded),
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
 
               //Clear thumbnails
               FloatingActionButton(
@@ -94,10 +94,10 @@ class _MapActionsState extends ConsumerState<MapActions> {
 
                 child: const Iconify(Mdi.visibility_off_outline, size: 24),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
 
               // Goto current location
-              if (ref.read(supabaseUserStateProvider).isAdmin)
+              if (ref.read(supabaseUserStateProvider.notifier).isEditor())
                 FloatingActionButton(
                   heroTag: "addPoi",
                   onPressed: widget.onAddPoi,
@@ -105,7 +105,7 @@ class _MapActionsState extends ConsumerState<MapActions> {
                   child: const Icon(Icons.add_location),
                 ),
 
-              const SizedBox(height: 0),
+              const SizedBox(height: 4),
 
               Row(
                 children: [

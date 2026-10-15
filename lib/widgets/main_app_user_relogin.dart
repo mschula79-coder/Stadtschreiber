@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
 
 Future<void> showReLoginDialog(BuildContext context) async {
   return showDialog(
     context: context,
     barrierDismissible: false,
     builder: (_) => AlertDialog(
-      title: const Text("Neu einloggen erforderlich"),
-      content: const Text(
-        "Deine Rollen wurden aktualisiert. "
-        "Bitte melde dich einmal neu an, damit die Änderungen aktiv werden.",
-      ),
+      title: Text(getText('loginRequired')),
+      content: Text(getText('msgRoleUpdate')),
       actions: [
         TextButton(
           onPressed: () async {
@@ -20,7 +18,7 @@ Future<void> showReLoginDialog(BuildContext context) async {
 
             navigator.pushNamedAndRemoveUntil('/login', (_) => false);
           },
-          child: const Text("Jetzt neu einloggen"),
+          child: Text(getText('msgNewLogin')),
         ),
       ],
     ),

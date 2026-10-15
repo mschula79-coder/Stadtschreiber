@@ -5,7 +5,6 @@ import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
-import 'package:stadtschreiber/utils/dialog_utils.dart';
 import 'package:stadtschreiber/utils/image_utils.dart';
 import 'package:stadtschreiber/widgets/_editable_list.dart';
 import 'package:stadtschreiber/widgets/modal_image_edit.dart';
@@ -21,19 +20,19 @@ class PoiPanelGalleryTab extends ConsumerWidget {
     final user = ref.watch(supabaseUserStateProvider);
     final username = user.username;
     final panelHeight = ref.read(appStateProvider).panelHeight;
-    final isEditModeEnabled = ref.watch(appStateProvider).isPoiEditMode;
-    final galleryImages = selectedPoi!.images
-        .toList();
+    final isEditor = ref.watch(supabaseUserStateProvider.notifier).isEditor();
+    final isEditModeEnabled =
+        ref.watch(appStateProvider).isPoiEditMode && isEditor;
+
+    final galleryImages = selectedPoi!.images.toList();
     final imageUrlsNotFeatured = selectedPoi.images
         .map((img) => img.url)
         .where((url) => url != selectedPoi.featuredImageUrl)
         .toList();
-    final imageUrls = selectedPoi.images
-        .map((img) => img.url)
-        .toList();
+    final imageUrls = selectedPoi.images.map((img) => img.url).toList();
     final featuredUrl = selectedPoi.featuredImageUrl;
 
-/*     final featuredImageIndex = selectedPoi.images.indexWhere(
+    /*     final featuredImageIndex = selectedPoi.images.indexWhere(
       (img) => img.url == featuredUrl,
     ); */
     return SingleChildScrollView(
@@ -43,7 +42,7 @@ class PoiPanelGalleryTab extends ConsumerWidget {
           children: [
             isEditModeEnabled ? SizedBox(height: 0) : SizedBox.shrink(),
             // Featured Image-URL
-/*             isEditModeEnabled
+            /*             isEditModeEnabled
                 ? Stack(
                     children: [
                       InputDecorator(
@@ -269,7 +268,7 @@ class PoiPanelGalleryTab extends ConsumerWidget {
               ),
             ],
             // Image previews without featured image
-          
+
             if (imageUrls.isNotEmpty) ...[
               Padding(
                 padding: EdgeInsets.only(bottom: 15),

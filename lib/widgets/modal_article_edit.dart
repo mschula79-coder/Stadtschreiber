@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/article_entry.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
+
 
 class ArticleEditModal extends StatefulWidget {
   final String initialTitle;
@@ -64,8 +66,8 @@ class _ArticleEditModalState extends State<ArticleEditModal> {
 
     if (title.isEmpty || url.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Titel, URL und Quelle dürfen nicht leer sein"),
+        SnackBar(
+          content: Text(getText("msgArticleEditError")),
         ),
       );
       return;
@@ -80,7 +82,7 @@ class _ArticleEditModalState extends State<ArticleEditModal> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("Artikel bearbeiten"),
+      title: Text(getText("editArticle")),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -162,8 +164,7 @@ class _ArticleEditModalState extends State<ArticleEditModal> {
                     _dateController.clear();
                   });
                 },
-                child: const Text(
-                  "  Datum löschen",
+                child: Text(getText("deleteDate"),
                   style: TextStyle(fontSize: 13),
                 ),
               ),
@@ -174,9 +175,9 @@ class _ArticleEditModalState extends State<ArticleEditModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text("Abbrechen"),
+          child: Text(getText("cancel")),
         ),
-        ElevatedButton(onPressed: _save, child: const Text("Speichern")),
+        ElevatedButton(onPressed: _save, child: Text(getText("save"))),
       ],
     );
   }

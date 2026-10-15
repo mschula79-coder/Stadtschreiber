@@ -9,8 +9,6 @@ import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/widgets/poi_rating_editor_dialog.dart';
 import 'package:stadtschreiber/widgets/poi_rating_list.dart';
 
-//TODO ln
-
 class CategoryRatingsSection extends ConsumerWidget {
   final String slug;
   const CategoryRatingsSection({super.key, required this.slug});
@@ -28,33 +26,25 @@ class CategoryRatingsSection extends ConsumerWidget {
     final criteriaAsync = ref.watch(criteriaForCategoryProvider(categoryId));
 
     return criteriaAsync.when(
-      data: (criteria) => Column(
-        
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ⭐ HEADER (Titel + Rating‑Text + Icon)
-          Row(
-            children: [
-              Text(
-                '$categoryName',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-
-              const SizedBox(width: 4),
-              GestureDetector(
-                onTap: () => _openRatingEditor(poi, criteria, ref, context),
-                child: const Icon(
-                  Icons.rate_review,
-                  color: Color.fromARGB(255, 42, 23, 86),
+      data: (criteria) => GestureDetector(
+        onTap: () => _openRatingEditor(poi, criteria, ref, context),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ⭐ HEADER (Titel + Rating‑Text + Icon)
+            Row(
+              children: [
+                Text(
+                  '$categoryName',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
 
-          PoiRatingList(criteria: criteria, poi: poi),
-        ],
+            PoiRatingList(criteria: criteria, poi: poi),
+          ],
+        ),
       ),
-
       loading: () => const Center(child: CircularProgressIndicator()),
 
       error: (e, _) => Text("Fehler: $e"),

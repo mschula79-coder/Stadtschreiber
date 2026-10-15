@@ -190,7 +190,6 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                       children: [
                         Padding(
                           padding: EdgeInsetsGeometry.fromLTRB(5, 15, 0, 0),
-                          // TODO ln
                           child: Row(
                             children: [
                               Expanded(

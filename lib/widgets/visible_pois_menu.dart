@@ -110,6 +110,22 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
               children: [
                 Row(
                   children: [
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+
+                      icon: const Iconify(
+                        Mdi.visibility_off_outline,
+                        color: Colors.black87,
+                        size: 24,
+                      ),
+                      onPressed: () {
+                        ref.read(categoriesSelectionProvider.notifier).clear();
+                        ref.read(visiblePoisProvider.notifier).clear();
+                      },
+                    ),
+                    
+                    const SizedBox(width: 4),
+
                     Icon(Icons.visibility, color: Colors.black54, size: 24),
                     const SizedBox(width: 8),
                     Text(
@@ -127,24 +143,6 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(
-                        visualDensity: VisualDensity.compact,
-
-                        icon: const Iconify(
-                          Mdi.visibility_off_outline,
-                          color: Colors.black87,
-                          size: 24,
-                        ),
-                        onPressed: () {
-                          ref
-                              .read(categoriesSelectionProvider.notifier)
-                              .clear();
-                          ref.read(visiblePoisProvider.notifier).clear();
-                        },
-                      ),
-                      const SizedBox(width: 12),
-
-
                       IconButton(
                         padding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
@@ -170,8 +168,7 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
                         ),
                       ),
 
-                      const SizedBox(width: 12),
-
+                      const SizedBox(width: 0),
 
                       IconButton(
                         visualDensity: VisualDensity.compact,
@@ -190,7 +187,7 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
                           widget.onClose();
                         },
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 0),
 
                       IconButton(
                         visualDensity: VisualDensity.compact,

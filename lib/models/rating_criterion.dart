@@ -3,14 +3,14 @@ class RatingCriterionDTO {
   final String id;
   final String name;
   final String description;
-  final Map<int, String> scoreDescriptions;
 
   RatingCriterionDTO({
     required this.id,
     required this.name,
     required this.description,
-    required this.scoreDescriptions,
   });
+
+  
 
   factory RatingCriterionDTO.fromJson(Map<String, dynamic> json) {
     // score_descriptions kann fehlen, null sein oder kein Map sein
@@ -32,7 +32,6 @@ class RatingCriterionDTO {
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
       description: json['description'] ?? '',
-      scoreDescriptions: converted,
     );
   }
 
@@ -46,7 +45,6 @@ class RatingCriterionDTO {
       id: id ?? this.id,
       name: name ?? this.name,
       description: description ?? this.description,
-      scoreDescriptions: scoreDescriptions ?? this.scoreDescriptions,
     );
   }
 }

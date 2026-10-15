@@ -115,7 +115,7 @@ class UserActionsBar extends ConsumerWidget {
                 );
               },
               mini: true,
-              child: const Icon(Icons.cloud_download),
+              child: const Icon(Icons.cloud_upload),
             ),
 
           const SizedBox(height: 8),
@@ -138,7 +138,7 @@ class _SettingsSheet extends ConsumerWidget {
 
     if (user.isAdmin) {
       role = "Admin";
-    } else if (user.isAuthor) {
+    } else if (user.isEditor) {
       role = "Admin";
     } else {
       role = "Benutzer";

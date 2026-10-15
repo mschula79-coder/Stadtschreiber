@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
+
 
 class BoolFeaturesEditorDialog extends StatefulWidget {
   final Map<String, bool> initialFeatures;
@@ -52,11 +54,11 @@ class _BoolFeaturesEditorDialogState extends State<BoolFeaturesEditorDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text("Close"),
+          child: Text(getText("close")),
         ),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, features),
-          child: const Text("Speichern"),
+          child: Text(getText("save")),
         ),
       ],
     );

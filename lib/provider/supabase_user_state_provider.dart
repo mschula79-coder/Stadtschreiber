@@ -6,14 +6,14 @@ class SupabaseUserState {
   final String userid;
   final String username;
   final bool isAdmin;
-  final bool isAuthor;
+  final bool isEditor;
   final bool loading;
 
   SupabaseUserState({
     required this.userid,
     required this.username,
     required this.isAdmin,
-    required this.isAuthor,
+    required this.isEditor,
     required this.loading,
   });
 
@@ -21,7 +21,7 @@ class SupabaseUserState {
     userid: '',
     username: '',
     isAdmin: false,
-    isAuthor: false,
+    isEditor: false,
     loading: true,
   );
 
@@ -29,7 +29,7 @@ class SupabaseUserState {
     userid: '',
     username: '',
     isAdmin: false,
-    isAuthor: false,
+    isEditor: false,
     loading: false,
   );
 }
@@ -80,8 +80,14 @@ class SupabaseUserStateNotifier extends Notifier<SupabaseUserState> {
       userid: userId,
       username: profileAsync?.username ?? '',
       isAdmin: profileAsync?.isAdmin ?? false,
-      isAuthor: profileAsync?.isAuthor ?? false,
+      isEditor: profileAsync?.isEditor ?? false,
       loading: false,
     );
   }
+
+  bool isEditor() {
+    if (state.isAdmin) return true;
+    return state.isEditor; 
+  }
+
 }

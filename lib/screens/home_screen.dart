@@ -63,17 +63,6 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
       // Erst reagieren, wenn Profil fertig geladen ist
       if (!adminInitialized && !next.loading) {
         adminInitialized = true;
-
-        debugPrint(
-          'SupabaseUserState changed:\n'
-          '  userid: ${next.userid}\n'
-          '  email: ${next.username}\n'
-          '  username: ${next.username}\n'
-          '  isAdmin: ${next.isAdmin}\n'
-          '  isAuthor: ${next.isAuthor}\n'
-          '  loading: ${next.loading}',
-        );
-        /*         ref.read(appStateProvider.notifier).setAdminViewEnabled(next.isAdmin);*/
       }
     });
 
@@ -83,6 +72,18 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
 
     final paddingWidth = anyExpanded ? 40 : 150;
     final visiblePoisMenuHeightFactor = anyExpanded ? 0.75 : 0.35;
+
+    final mediaQuery = MediaQuery.of(context);
+
+    final availableHeight =
+        mediaQuery.size.height - mediaQuery.viewInsets.bottom;
+
+    final menuHeight = (availableHeight * visiblePoisMenuHeightFactor).clamp(
+      0.0,
+      availableHeight,
+    );
+
+    
 
     return Scaffold(
       appBar: MainAppBar(
@@ -114,7 +115,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
               duration: Duration(milliseconds: 500),
               curve: Curves.easeOut,
               width: MediaQuery.of(context).size.width - paddingWidth,
-              height: MediaQuery.of(context).size.height * visiblePoisMenuHeightFactor - MediaQuery.of(context).viewInsets.bottom,
+              height: menuHeight,
               child: Material(
                 elevation: 8,
                 borderRadius: BorderRadius.circular(12),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:stadtschreiber/l10n/app_localizations.dart';               
+import 'package:stadtschreiber/utils/language_utils.dart';               
 
 class EditableList<T> extends StatelessWidget {
   final List<T> items;
@@ -33,7 +33,7 @@ class EditableList<T> extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 12),
             child: ElevatedButton.icon(
               icon: const Icon(Icons.add),
-              label: Text(AppLocalizations.of(context)!.add),
+              label: Text(getText("add")),
               onPressed: () async {
                 await onAdd!();
               },
@@ -43,7 +43,7 @@ class EditableList<T> extends StatelessWidget {
         if (items.isEmpty)
           Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
-            child: Text(AppLocalizations.of(context)!.noEntries),
+            child: Text(getText('noEntries')),
           )
         else
           ...items.map((item) {

@@ -4,6 +4,7 @@ import 'package:stadtschreiber/models/article_entry.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
+import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/services/debug_service.dart';
 import 'package:stadtschreiber/widgets/_editable_list.dart';
 import 'package:stadtschreiber/widgets/modal_article_edit.dart';
@@ -17,7 +18,8 @@ class PoiPanelArticlesTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     DebugService.log('build PoiPanelInfoTab $this.key $this.hashcode');
     final selectedPoi = ref.watch(selectedPoiProvider);
-    final isEditModeEnabled = ref.watch(appStateProvider).isPoiEditMode;
+    final isEditor = ref.watch(supabaseUserStateProvider.notifier).isEditor();
+    final isEditModeEnabled = ref.watch(appStateProvider).isPoiEditMode && isEditor;
     if (selectedPoi == null) return SizedBox.shrink();
 
     final articles = selectedPoi.articles;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/image_entry.dart';
+import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/provider/image_repository_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
@@ -8,6 +9,7 @@ import 'package:stadtschreiber/provider/visible_pois_provider.dart';
 import 'package:stadtschreiber/services/debug_service.dart';
 import 'package:stadtschreiber/services/url_service.dart';
 import 'package:stadtschreiber/utils/url_utils.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
 
 class ImageEditModal extends ConsumerStatefulWidget {
   final ImageEntry image;
@@ -53,7 +55,7 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
     super.dispose();
   }
 
-  void _save() {
+  void _save(PointOfInterest selectedPoi) {
     final title = _titleController.text.trim();
     final url = _urlController.text.trim();
     final enteredBy = _enteredByController.text.trim();
@@ -62,9 +64,9 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
 
     if (title.isEmpty || url.isEmpty || enteredBy.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            "Titel, URL und Eingetragen von dürfen nicht leer sein",
+            getText("msgImageEditError"),
           ),
         ),
       );
@@ -78,6 +80,20 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
       creditsUrl: creditsUrl,
     );
 
+    final newPoi = selectedPoi.copyWith(
+      featuredImageUrl: isFeatured ? image.url : null,
+      clearFeaturedImage: !isFeatured,
+    );
+    ref
+        .read(poiRepositoryProvider)
+        .updatePoiDataInSupabase(
+          id: newPoi.id,
+          featuredImageUrl: isFeatured ? image.url : null,
+        );
+
+    ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
+    ref.read(visiblePoisProvider.notifier).replacePoi(newPoi);
+
     Navigator.pop(context, image);
   }
 
@@ -90,7 +106,7 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
 
     DebugService.log(isFeatured.toString());
     return AlertDialog(
-      title: const Text("Bildinformationen bearbeiten"),
+      title: Text(getText("editImageInformation")),
       content: SingleChildScrollView(
         child: ConstrainedBox(
           constraints: const BoxConstraints(
@@ -123,7 +139,7 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
                 children: [
                   ElevatedButton.icon(
                     icon: const Icon(Icons.link),
-                    label: const Text("Link prüfen"),
+                    label: Text(getText("processLink")),
                     onPressed: () async {
                       if (_urlController.text.isNotEmpty) {
                         final linkEntry = await processLink(
@@ -140,7 +156,7 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
                   // Bild auswählen
                   ElevatedButton.icon(
                     icon: const Icon(Icons.upload),
-                    label: const Text("Upload"),
+                    label: Text(getText("upload")),
                     onPressed: () async {
                       final imageEntry = await imageRepo
                           .pickProcessAndUploadImage();
@@ -242,9 +258,12 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text("Abbrechen"),
+          child: Text(getText("cancel")),
         ),
-        ElevatedButton(onPressed: _save, child: const Text("Speichern")),
+        ElevatedButton(
+          onPressed: () => _save(selectedPoi!),
+          child: Text(getText("save")),
+        ),
       ],
     );
   }

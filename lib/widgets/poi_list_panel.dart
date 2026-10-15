@@ -15,6 +15,8 @@ class PoiListPanel extends ConsumerStatefulWidget {
 }
 
 class _PoiListState extends ConsumerState<PoiListPanel> {
+  double panelHeight = 460;
+
   @override
   void initState() {
     super.initState();
@@ -34,41 +36,64 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         boxShadow: [BoxShadow(blurRadius: 10, color: Colors.black26)],
       ),
-      height: ref.read(appStateProvider).panelHeight - 45,
+      height: panelHeight,
       child: Column(
         children: [
-          PoiListHeader(
-            onClose: () {
-              ref.read(appStateProvider.notifier).setPoiListVisible(false);
-            },
-          ),
-          SizedBox(height: 0),
-
-          /*           Expanded(
-            child: visiblePoisAsync.when(
-              data: (visiblePois) {
-                return ListView.builder(
-                  itemCount: visiblePois.length,
-                  itemBuilder: (context, index) {
-                    return PoiListItem(
-                      imageWidth: 140,
-                      imageHeight: 105,
-                      paddingLeft: 16,
-                      poi: visiblePois[index],
-                      onTap: () {
-                        ref
-                            .read(selectedPoiProvider.notifier)
-                            .setPoi(visiblePois[index]);
-                      },
-                    );
-                  },
-                );
+          Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onVerticalDragUpdate: (details) {
+                setState(() {
+                  panelHeight -= details.delta.dy;
+                  panelHeight = panelHeight.clamp(200.0, 800.0);
+                });
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Text("Fehler: $err"),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(left: 16, top:10),
+                    child: const Icon(
+                      Icons.visibility,
+                      color: Colors.black54,
+                      size: 32,
+                    ),
+                  ),
+                  Container(
+                    height: 5,
+                    alignment: Alignment.center,
+                    margin: const EdgeInsets.only(top: 10, bottom: 30),
+                    child: Container(
+                      width: 50,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.only(top: 15),
+                    constraints: const BoxConstraints(),
+
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      ref
+                          .read(appStateProvider.notifier)
+                          .setPoiListVisible(false);
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
- */
+
           Expanded(
             child: ListView.builder(
               itemCount: visiblePois.length,
@@ -85,37 +110,6 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
                   },
                 );
               },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class PoiListHeader extends ConsumerWidget {
-  final VoidCallback onClose;
-
-  const PoiListHeader({super.key, required this.onClose});
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        boxShadow: [BoxShadow(blurRadius: 10, color: Colors.black26)],
-      ),
-      child: Column(
-        children: [
-          // HEADER
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 0, 0, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(Icons.visibility, color: Colors.black54, size: 32),
-                IconButton(icon: const Icon(Icons.close), onPressed: onClose),
-              ],
             ),
           ),
         ],

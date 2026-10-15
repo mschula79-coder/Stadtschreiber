@@ -5,7 +5,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/category.dart';
 import '../models/category_dto.dart';
 
-// TODO ln
 
 class CategoryRepository {
   Future<List<CategoryNode>> loadCategoryTree() async {
@@ -328,7 +327,6 @@ class CategoryRepository {
         .insert({
           'name': criterion.name,
           'description': criterion.description,
-          'score_descriptions': criterion.scoreDescriptions,
         })
         .select()
         .single();
@@ -364,7 +362,6 @@ class CategoryRepository {
         .update({
           'name': criterion.name,
           'description': criterion.description,
-          'score_descriptions': criterion.scoreDescriptions,
         })
         .eq('id', criterion.id);
   }
