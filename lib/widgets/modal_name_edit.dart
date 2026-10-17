@@ -44,7 +44,7 @@ class _NameEditModalState extends State<NameEditModal> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("Name eingeben"),
+      title: Text(getText("enterName")),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -68,9 +68,9 @@ class _NameEditModalState extends State<NameEditModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text("Abbrechen"),
+          child: Text(getText("cancel")),
         ),
-        ElevatedButton(onPressed: _save, child: const Text("Speichern")),
+        ElevatedButton(onPressed: _save, child: Text(getText("save"))),
       ],
     );
   }

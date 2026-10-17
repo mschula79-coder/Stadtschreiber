@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
+
 
 class RatingCriteriaEditModal extends StatefulWidget {
   final RatingCriterionDTO criterionDTO;
@@ -46,7 +48,7 @@ class _RatingCriteriaEditModalState extends State<RatingCriteriaEditModal> {
       builder: (context, ref, _) {
 
         return AlertDialog(
-          title: const Text("Bewertungskriterium bearbeiten"),
+          title: Text(getText("editRatingCriterion")),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -54,8 +56,8 @@ class _RatingCriteriaEditModalState extends State<RatingCriteriaEditModal> {
                 // Bezeichnung
                 TextField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: "Bezeichnung",
+                  decoration: InputDecoration(
+                    labelText: getText("description"),
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -78,9 +80,9 @@ class _RatingCriteriaEditModalState extends State<RatingCriteriaEditModal> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Abbrechen"),
+              child: Text(getText("cancel")),
             ),
-            ElevatedButton(onPressed: _save, child: const Text("Speichern")),
+            ElevatedButton(onPressed: _save, child: Text(getText("save"))),
           ],
         );
       },

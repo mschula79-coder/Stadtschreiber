@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
+
 
 class StringFeaturesEditorDialog extends StatefulWidget {
   final Map<String, String> initialValues;
@@ -70,11 +72,11 @@ class _StringFeaturesEditorDialogState
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text("Close"),
+          child: Text(getText("close")),
         ),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, values),
-          child: const Text("Speichern"),
+          child: Text(getText("save")),
         ),
       ],
     );

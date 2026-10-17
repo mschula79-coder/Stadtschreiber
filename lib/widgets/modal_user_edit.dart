@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
 
 class UserEditModal extends StatefulWidget {
   final String username;
@@ -37,7 +38,7 @@ class _UserEditModalState extends State<UserEditModal> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("Profil bearbeiten"),
+      title: Text(getText("editProfile")),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -63,9 +64,9 @@ class _UserEditModalState extends State<UserEditModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text("Abbrechen"),
+          child: Text(getText("cancel")),
         ),
-        ElevatedButton(onPressed: _save, child: const Text("Speichern")),
+        ElevatedButton(onPressed: _save, child: Text(getText("save"))),
       ],
     );
   }

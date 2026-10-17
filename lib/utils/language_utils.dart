@@ -18,6 +18,9 @@ String getText(String textCode) {
     case "add":
       return AppLocalizationsDe().add;
 
+    case "apply":
+      return "Übernehmen";
+
     case "cancel":
       return AppLocalizationsDe().cancel;
 
@@ -27,17 +30,38 @@ String getText(String textCode) {
     case "deleteDate":
       return "Datum löschen";
 
+    case "description":
+      return "Beschreibung";
+
     case "editArticle":
       return "Artikel bearbeiten";
 
     case "editCategory":
       return "Kategorie bearbeiten";
 
+    case "editFavorite":
+      return "Favorit bearbeiten";
+
     case "editImageInformation":
       return "Bildinformationen bearbeiten";
 
+    case "editProfile":
+      return "Profil bearbeiten";
+
+    case "enterName":
+      return "Name eingeben";
+
+    case "editRatingCriterion":
+      return "Bewertungskriterium bearbeiten";
+
+    case "filterCategories":
+      return "Kategorien filtern";
+
     case "loginRequired":
       return "Neu einloggen erforderlich";
+
+    case "newList":
+      return "+ neue Liste";
 
     case "noEntries":
       return AppLocalizationsDe().noEntries;
@@ -57,6 +81,9 @@ String getText(String textCode) {
 
     case "save":
       return AppLocalizationsDe().save;
+
+    case "selectAll":
+      return "Alle auswählen";
 
     case "upload":
       return "Upload";

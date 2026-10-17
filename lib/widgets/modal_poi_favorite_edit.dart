@@ -5,6 +5,8 @@ import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/user_favorite_lists_provider.dart';
 import 'package:stadtschreiber/provider/user_favorites_provider.dart';
 import 'package:stadtschreiber/widgets/modal_name_edit.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
+
 
 class PoiFavoriteEditModal extends ConsumerStatefulWidget {
   final PointOfInterest poi;
@@ -28,7 +30,7 @@ class _PoiFavoriteEditModalState extends ConsumerState<PoiFavoriteEditModal> {
     return Consumer(
       builder: (context, ref, _) {
         return AlertDialog(
-          title: const Text("Favorit bearbeiten"),
+          title: Text(getText("editFavorite")),
           contentPadding: EdgeInsets.fromLTRB(12, 12, 0, 0),
           actionsPadding: EdgeInsets.fromLTRB(24, 0, 0, 8),
           content: SingleChildScrollView(
@@ -44,7 +46,7 @@ class _PoiFavoriteEditModalState extends ConsumerState<PoiFavoriteEditModal> {
                     tapTargetSize: MaterialTapTargetSize
                         .shrinkWrap, // ⭐ kompakter Touch‑Bereich
                   ),
-                  child: const Text("+ neue Liste"),
+                  child: Text(getText("newList")),
                   onPressed: () async {
                     final listname = await showDialog<String>(
                       context: context,

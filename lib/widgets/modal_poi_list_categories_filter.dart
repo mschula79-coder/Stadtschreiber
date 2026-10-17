@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
+
 
 class PoiListCategoryFilter extends ConsumerStatefulWidget {
   final Iterable<String> categories;
@@ -80,9 +82,9 @@ class _PoiListCategoryFilterState extends ConsumerState<PoiListCategoryFilter> {
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       title: Row(
         children: [
-          const Expanded(child: Text("Kategorien filtern")),
+          Expanded(child: Text(getText("filterCategories"))),
           IconButton(
-            tooltip: "Schließen",
+            tooltip: getText("close"),
             icon: const Icon(Icons.close),
             onPressed: () {
               Navigator.of(context).pop();
@@ -93,10 +95,10 @@ class _PoiListCategoryFilterState extends ConsumerState<PoiListCategoryFilter> {
       content: SizedBox(
         width: double.maxFinite,
         child: categories.isEmpty
-            ? const Padding(
+            ? Padding(
                 padding: EdgeInsets.all(16),
                 child: Text(
-                  "Keine Kategorien vorhanden",
+                  getText("noEntries"),
                   textAlign: TextAlign.center,
                 ),
               )
@@ -107,8 +109,8 @@ class _PoiListCategoryFilterState extends ConsumerState<PoiListCategoryFilter> {
                     value: allCategoriesSelected,
                     controlAffinity: ListTileControlAffinity.leading,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                    title: const Text(
-                      "Alle auswählen",
+                    title: Text(
+                      getText("selectAll"),
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     onChanged: (isSelected) {
@@ -159,7 +161,7 @@ class _PoiListCategoryFilterState extends ConsumerState<PoiListCategoryFilter> {
             children: [
               FilledButton(
                 onPressed: applyFilter,
-                child: const Text("Übernehmen"),
+                child: Text(getText("apply")),
               ),
               FilledButton(
                 style: FilledButton.styleFrom(
@@ -168,7 +170,7 @@ class _PoiListCategoryFilterState extends ConsumerState<PoiListCategoryFilter> {
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                child: const Text("Abbrechen"),
+                child: Text(getText("cancel")),
               ),
             ],
           ),
