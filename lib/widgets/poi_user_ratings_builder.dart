@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/poi_rating__dto.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/poi_ratings_provider.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
 
 class PoiUserRatingBuilder extends ConsumerWidget {
   final String poiId;
@@ -16,10 +18,10 @@ class PoiUserRatingBuilder extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stats = ref.watch(poiUserRatingsProvider(poiId));
-
+    final languageCode = ref.watch(localeProvider).languageCode;
     return stats.when(
       loading: () => const CircularProgressIndicator(),
-      error: (e, _) => Text("Fehler: $e"),
+      error: (e, _) => Text("${getText('error', languageCode: languageCode)}: $e"),
       data: (map) => builder(map),
     );
   }

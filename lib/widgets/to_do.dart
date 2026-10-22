@@ -1,3 +1,6 @@
+
+// final languageCode = ref.watch(localeProvider).languageCode;
+// getText("comments", languageCode: languageCode)
 // TODO Test UpdateProfile Email
 // TODO red screen when loading and overflow when opening menu
 // TODO Mehrsprachigkeit App Modals und Datenbank

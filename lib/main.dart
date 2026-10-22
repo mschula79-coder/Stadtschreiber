@@ -1,6 +1,7 @@
 import 'package:auto_hyphenating_text/auto_hyphenating_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/riverpod_logger.dart';
@@ -79,7 +80,6 @@ class _MyAppState extends ConsumerState<MyApp> {
     );
 
     if (signupResult.user != null) {
-
       final response = await Supabase.instance.client.auth.getUser();
       final userId = response.user?.id;
 
@@ -105,22 +105,31 @@ class _MyAppState extends ConsumerState<MyApp> {
     );
 
     if (recoveryResult.user != null) {
-
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/reset-password');
       }
 
       return;
     }
-
   }
 
   @override
   Widget build(BuildContext context) {
+    final sourceSans3FontFamily = GoogleFonts.sourceSans3().fontFamily;
+
     return MaterialApp(
       title: 'Stadtschreiber',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(colorSchemeSeed: Colors.blue),
+
+      theme: ThemeData(
+        useMaterial3: true,
+        fontFamily: sourceSans3FontFamily,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF145968),
+          primaryContainer: const Color.fromARGB(255, 225, 225, 225),
+          ),
+/*         colorSchemeSeed: Colors.blue,
+ */      ),
       locale: ref.watch(localeProvider),
       localizationsDelegates: [
         AppLocalizations.delegate,

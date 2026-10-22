@@ -6,6 +6,7 @@ import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/user_profile_repository_provider.dart';
 import 'package:stadtschreiber/screens/osm_poi_import_screen.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
 import 'package:stadtschreiber/widgets/_icon_getter.dart';
 import 'package:stadtschreiber/widgets/modal_user_edit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -130,6 +131,7 @@ class _SettingsSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final languageCode = ref.watch(localeProvider).languageCode;
     final userAuth = Supabase.instance.client.auth.currentUser;
     final user = ref.watch(supabaseUserStateProvider);
     String role = '';
@@ -150,18 +152,25 @@ class _SettingsSheet extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Benutzer", style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            getText('user', languageCode: languageCode),
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 8),
 
-          Text("Benutzername: ${user.username}"),
+          Text(
+            "${getText('username', languageCode: languageCode)}: ${user.username}",
+          ),
 
           const SizedBox(height: 8),
 
-          Text("Email: ${userAuth.email}"),
+          Text(
+            "${getText('email', languageCode: languageCode)}: ${userAuth.email}",
+          ),
 
           const SizedBox(height: 8),
 
-          Text("Rolle: $role"),
+          Text("${getText('role', languageCode: languageCode)}: $role"),
 
           const SizedBox(height: 8),
 
@@ -200,8 +209,10 @@ class _SettingsSheet extends ConsumerWidget {
                 if (!context.mounted) return;
 
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Bitte bestätige deine neue E-Mail-Adresse."),
+                  SnackBar(
+                    content: Text(
+                      getText('confirmEmail', languageCode: languageCode),
+                    ),
                   ),
                 );
               }
@@ -213,7 +224,7 @@ class _SettingsSheet extends ConsumerWidget {
               }
             },
             icon: const Icon(Icons.person),
-            label: const Text("Profil bearbeiten"),
+            label: Text(getText('editProfile', languageCode: languageCode)),
           ),
 
           const SizedBox(height: 12),
@@ -226,7 +237,7 @@ class _SettingsSheet extends ConsumerWidget {
               );
             },
             icon: const Icon(Icons.lock),
-            label: const Text("Passwort ändern"),
+            label: Text(getText('changePassword', languageCode: languageCode)),
           ),
 
           const SizedBox(height: 12),
@@ -247,7 +258,7 @@ class _SettingsSheet extends ConsumerWidget {
               }
             },
             icon: const Icon(Icons.delete_forever),
-            label: const Text("Benutzer löschen"),
+            label: Text(getText('deleteUser', languageCode: languageCode)),
           ),
         ],
       ),
@@ -255,14 +266,15 @@ class _SettingsSheet extends ConsumerWidget {
   }
 }
 
-class _ChangePasswordSheet extends StatefulWidget {
+class _ChangePasswordSheet extends ConsumerStatefulWidget {
   const _ChangePasswordSheet();
 
   @override
-  State<_ChangePasswordSheet> createState() => _ChangePasswordSheetState();
+  ConsumerState<_ChangePasswordSheet> createState() =>
+      _ChangePasswordSheetState();
 }
 
-class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
+class _ChangePasswordSheetState extends ConsumerState<_ChangePasswordSheet> {
   final pass1 = TextEditingController();
   final pass2 = TextEditingController();
   String? error;
@@ -270,13 +282,14 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final languageCode = ref.watch(localeProvider).languageCode;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            "Passwort ändern",
+            getText('changePassword', languageCode: languageCode),
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 16),
@@ -321,7 +334,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                   },
             child: loading
                 ? const CircularProgressIndicator()
-                : const Text("Speichern"),
+                : Text(getText('save', languageCode: languageCode)),
           ),
         ],
       ),
@@ -330,10 +343,14 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
 
   Future<void> _performPasswordChange(String p1, String p2) async {
     final messenger = ScaffoldMessenger.of(context);
-
+    final languageCode = ref.watch(localeProvider).languageCode;
     if (p1 != p2) {
       messenger.showSnackBar(
-        const SnackBar(content: Text("Passwörter stimmen nicht überein")),
+        SnackBar(
+          content: Text(
+            getText('passwordsDoNotMatch', languageCode: languageCode),
+          ),
+        ),
       );
       return;
     }
@@ -344,10 +361,12 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
       );
 
       messenger.showSnackBar(
-        const SnackBar(content: Text("Passwort erfolgreich geändert")),
+        SnackBar(content: Text(
+          getText('passwordChanged', languageCode: languageCode),
+          )),
       );
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text("Fehler: $e")));
+      messenger.showSnackBar(SnackBar(content: Text("${getText('error', languageCode: languageCode)}: $e")));
     }
   }
 }

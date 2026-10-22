@@ -70,7 +70,7 @@ class _MapActionsState extends ConsumerState<MapActions> {
                 child: const Icon(Icons.my_location),
               ),
 
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
 
               // Poi List
               FloatingActionButton(
@@ -82,7 +82,7 @@ class _MapActionsState extends ConsumerState<MapActions> {
                 child: Icon(Icons.list_rounded),
               ),
 
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
 
               //Clear thumbnails
               FloatingActionButton(
@@ -94,7 +94,7 @@ class _MapActionsState extends ConsumerState<MapActions> {
 
                 child: const Iconify(Mdi.visibility_off_outline, size: 24),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
 
               // Goto current location
               if (ref.read(supabaseUserStateProvider.notifier).isEditor())
@@ -105,7 +105,7 @@ class _MapActionsState extends ConsumerState<MapActions> {
                   child: const Icon(Icons.add_location),
                 ),
 
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
 
               Row(
                 children: [

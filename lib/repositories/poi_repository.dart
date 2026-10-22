@@ -234,28 +234,33 @@ class PoiRepository {
     await Future.delayed(debounceDuration);
     if (currentRequestId != _lastRequestId) return [];
     final safeQuery = query.trim();
+
     if (safeQuery.startsWith('osm')) {
       final overpassPois = await searchPoisOverpass(safeQuery, lat, lon);
       if (currentRequestId != _lastRequestId) return [];
       return overpassPois;
     }
-    final response = await supabase.rpc(
-      'pois_search_with_distance_and_address',
-      params: {'q': safeQuery, 'lat_input': lat, 'lon_input': lon},
-    );
-    if (currentRequestId != _lastRequestId) return [];
-    final pois = (response as List)
-        .map<PointOfInterest>((row) => PointOfInterest.fromSupabase(row))
-        .toList();
-    return pois;
-  }
 
-  /*     final response = await supabase
+    final response = await supabase
         .from('pois')
         .select('*') // ⭐ alle Felder
         .ilike('name', '%$query%') // ⭐ Suche
         .order('name'); // ⭐ Sortierung
+
+
+
+    /*     final response = await supabase.rpc(
+      'pois_search_with_distance_and_address',
+      params: {'q': safeQuery, 'lat_input': lat, 'lon_input': lon},
+    );
  */
+    if (currentRequestId != _lastRequestId) return [];
+    final pois = (response as List)
+        .map<PointOfInterest>((row) => PointOfInterest.fromSupabase(row))
+        .toList();
+        
+    return pois;
+  }
 
   Future<void> updatePoiAddressInSupabase(String id, Address address) async {
     await supabase

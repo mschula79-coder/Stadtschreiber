@@ -4,12 +4,12 @@ import 'package:stadtschreiber/utils/image_utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 
-class PhotoGalleryModal extends StatefulWidget {
+class PoiPhotoGalleryModal extends StatefulWidget {
   final List<String> imageUrls;
   final String initialUrl;
   final List<ImageEntry> images;
 
-  const PhotoGalleryModal({
+  const PoiPhotoGalleryModal({
     super.key,
     required this.imageUrls,
     required this.initialUrl,
@@ -17,7 +17,7 @@ class PhotoGalleryModal extends StatefulWidget {
   });
 
   @override
-  State<PhotoGalleryModal> createState() => _PhotoGalleryModalState();
+  State<PoiPhotoGalleryModal> createState() => _PoiPhotoGalleryModalState();
 
   static void open(
     BuildContext context, {
@@ -31,7 +31,7 @@ class PhotoGalleryModal extends StatefulWidget {
       barrierLabel: "Gallery",
       transitionDuration: const Duration(milliseconds: 200),
       pageBuilder: (_, _, _) {
-        return PhotoGalleryModal(
+        return PoiPhotoGalleryModal(
           imageUrls: imageUrls,
           initialUrl: initialUrl,
           images: images,
@@ -41,7 +41,7 @@ class PhotoGalleryModal extends StatefulWidget {
   }
 }
 
-class _PhotoGalleryModalState extends State<PhotoGalleryModal> {
+class _PoiPhotoGalleryModalState extends State<PoiPhotoGalleryModal> {
   late final PageController _pageController;
   int initialIndex = 0;
 

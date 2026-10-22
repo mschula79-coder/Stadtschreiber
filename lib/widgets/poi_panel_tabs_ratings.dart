@@ -9,7 +9,6 @@ class PoiPanelRatingsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedPoi = ref.watch(selectedPoiProvider);
-
     if (selectedPoi == null ||
         selectedPoi.categories!.isEmpty ||
         selectedPoi.categories![0].isEmpty) {

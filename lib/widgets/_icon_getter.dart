@@ -22,8 +22,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 /* import 'package:iconify_flutter/icons/cib.dart';
 
  */
-Widget getIcon(String category, double? iconsize, Color? color) {
-  switch (category) {
+Widget getIcon(String keyword, double? iconsize, Color? color) {
+  switch (keyword) {
     case "airplane":
       return Iconify(
         Mdi.airplane,
@@ -101,6 +101,11 @@ Widget getIcon(String category, double? iconsize, Color? color) {
         size: iconsize ?? 24,
         color: color ?? Colors.black,
       );
+
+    case "email":
+      return Iconify(Mdi.email);
+
+
     case "fasnacht":
       return FaIcon(
         FontAwesomeIcons.masksTheater,
@@ -214,6 +219,11 @@ Widget getIcon(String category, double? iconsize, Color? color) {
       );
     case "information":
       return Iconify(IcomoonFree.info);
+    
+    case "instagram":
+      return Iconify(Mdi.instagram);
+    
+
     case "libraries":
       return Iconify(Clarity.library_line);
     case "markets":

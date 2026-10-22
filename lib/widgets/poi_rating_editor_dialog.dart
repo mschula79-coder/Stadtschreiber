@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
 import 'package:stadtschreiber/widgets/poi_rating_editor_item.dart';
 
-class PoiRatingEditorDialog extends StatefulWidget {
+class PoiRatingEditorDialog extends ConsumerStatefulWidget {
   final List<RatingCriterionDTO> criteria;
   final PointOfInterest poi;
   
@@ -20,17 +23,18 @@ class PoiRatingEditorDialog extends StatefulWidget {
   });
 
   @override
-  State<PoiRatingEditorDialog> createState() => _PoiRatingEditorDialogState();
+  ConsumerState<PoiRatingEditorDialog> createState() => _PoiRatingEditorDialogState();
 }
 
-class _PoiRatingEditorDialogState extends State<PoiRatingEditorDialog> {
+class _PoiRatingEditorDialogState extends ConsumerState<PoiRatingEditorDialog> {
   final Map<String, int> updatedScores = {};
   final Map<String, String> updatedComments = {};
 
   @override
   Widget build(BuildContext context) {
+    final languageCode = ref.watch(localeProvider).languageCode;
     return AlertDialog(
-      title: const Text('Meine Bewertung'),
+      title: Text(getText('myRating', languageCode: languageCode)),
       content: SizedBox(
         width: double.maxFinite,
         height: 500,
@@ -60,14 +64,14 @@ class _PoiRatingEditorDialogState extends State<PoiRatingEditorDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text("Abbrechen"),
+          child: Text(getText("Abbrechen", languageCode: languageCode)),
         ),
         ElevatedButton(
           onPressed: () {
             widget.onRatingChanged(updatedScores, updatedComments);
             Navigator.pop(context);
           },
-          child: const Text("Speichern"),
+          child: Text(getText("save", languageCode: languageCode)),
         ),
       ],
     );

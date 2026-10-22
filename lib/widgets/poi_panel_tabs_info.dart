@@ -8,19 +8,20 @@ import 'package:stadtschreiber/models/address.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/poi_drag_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/services/debug_service.dart';
 import 'package:stadtschreiber/utils/dialog_utils.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
 import 'package:stadtschreiber/utils/url_utils.dart';
 import 'package:stadtschreiber/widgets/_editable_list.dart';
 import 'package:stadtschreiber/widgets/category_node_tile.dart';
 import 'package:stadtschreiber/widgets/modal_address_edit.dart';
 import 'package:stadtschreiber/widgets/modal_bool_features_editor.dart';
 import 'package:stadtschreiber/widgets/modal_string_features_editor.dart';
-import 'package:stadtschreiber/l10n/app_localizations.dart';
 
 class PoiPanelInfoTab extends ConsumerWidget {
   const PoiPanelInfoTab({super.key});
@@ -28,9 +29,11 @@ class PoiPanelInfoTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     DebugService.log('build PoiPanelInfoTab $this.key $this.hashcode');
+    final languageCode = ref.watch(localeProvider).languageCode;
     final selectedPoi = ref.watch(selectedPoiProvider);
     final isEditor = ref.watch(supabaseUserStateProvider.notifier).isEditor();
-    final isEditModeEnabled = ref.watch(appStateProvider).isPoiEditMode && isEditor;
+    final isEditModeEnabled =
+        ref.watch(appStateProvider).isPoiEditMode && isEditor;
 
     if (selectedPoi == null) return SizedBox.shrink();
     final location = selectedPoi.location;
@@ -55,7 +58,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
             children: [
               InputDecorator(
                 decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)?.name,
+                  labelText: getText("name", languageCode: languageCode),
                   alignLabelWithHint: true,
                   isDense: true,
                   floatingLabelBehavior: FloatingLabelBehavior.always,
@@ -76,7 +79,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
                         onPressed: () async {
                           final newValue = await openEditModal(
                             context,
-                            fieldName: AppLocalizations.of(context)?.name ?? '',
+                            fieldName: getText('name', languageCode: languageCode),
                             initialValue: selectedPoi.name,
                             maxLines: 1,
                           );
@@ -105,7 +108,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
             children: [
               InputDecorator(
                 decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)?.description,
+                  labelText: getText("description", languageCode: languageCode),
                   alignLabelWithHint: true,
                   floatingLabelBehavior: FloatingLabelBehavior.always,
                   isDense: true,
@@ -129,7 +132,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
                       final newValue = await openEditModal(
                         context,
                         fieldName:
-                            AppLocalizations.of(context)?.description ?? '',
+                            getText('description', languageCode: languageCode),
                         initialValue: selectedPoi.description ?? '',
                         maxLines: 10,
                       );
@@ -157,7 +160,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
             children: [
               InputDecorator(
                 decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)?.address,
+                  labelText: getText('address', languageCode: languageCode),
                   alignLabelWithHint: true,
                   contentPadding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
                 ),
@@ -208,7 +211,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
             children: [
               InputDecorator(
                 decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)?.links,
+                  labelText: getText('links', languageCode: languageCode),
                   alignLabelWithHint: true,
                   contentPadding: isEditModeEnabled
                       ? const EdgeInsets.fromLTRB(0, 8, 35, 5)
@@ -303,8 +306,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
                         context: context,
                         builder: (_) => StringFeaturesEditorDialog(
                           dialogTitle:
-                              AppLocalizations.of(context)?.editLinks ??
-                              'editLinks',
+                              getText('editLinks', languageCode: languageCode),
                           initialValues: selectedPoi.metadata.getLinks(),
                         ),
                       );
@@ -333,7 +335,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
               InputDecorator(
                 decoration: InputDecoration(
                   labelText:
-                      AppLocalizations.of(context)?.features ?? 'features',
+                      getText('features', languageCode: languageCode),
                   alignLabelWithHint: true,
                   contentPadding: isEditModeEnabled
                       ? const EdgeInsets.fromLTRB(0, 8, 35, 5)
@@ -389,8 +391,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
                         context: context,
                         builder: (_) => BoolFeaturesEditorDialog(
                           dialogTitle:
-                              AppLocalizations.of(context)?.editFeatures ??
-                              'editFeatures',
+                              getText('editFeatures', languageCode: languageCode),
                           initialFeatures: selectedPoi.metadata.getFeatures(),
                         ),
                       );
@@ -414,7 +415,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
           if (isEditModeEnabled) ...[
             const SizedBox(height: 20),
             Text(
-              AppLocalizations.of(context)?.editCategories ?? 'editCategories',
+              getText('editCategories', languageCode: languageCode),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             // Kategorien Liste
@@ -423,10 +424,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
                 final categories = ref.watch(categoriesProvider).categories;
 
                 if (categories.isEmpty) {
-                  return Text(
-                    AppLocalizations.of(context)?.editCategories ??
-                        'editCategories',
-                  );
+                  return Text(getText('editCategories', languageCode: languageCode));
                 }
 
                 return ListView(
@@ -443,8 +441,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
           if (isEditModeEnabled) ...[
             // Standort und Geometrie
             Text(
-              AppLocalizations.of(context)?.locationAndGeometrie ??
-                  'locationAndGeometrie',
+              getText('locationAndGeometrie', languageCode: languageCode),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 15),
@@ -473,10 +470,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
             const SizedBox(height: 5),
             SwitchListTile(
               tileColor: Colors.white,
-              title: Text(
-                AppLocalizations.of(context)?.editGeometryPoints ??
-                    'editGeometryPoints',
-              ),
+              title: Text(getText('editGeometryPoints', languageCode: languageCode)),
               contentPadding: const EdgeInsets.only(left: 0, right: 0),
               value: appState.isPoiGeomEditMode,
               onChanged: (newValue) {
@@ -492,10 +486,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
             buildGeometryTypeSelector(context, selectedPoi, ref),
             const SizedBox(height: 5),
 
-            Text(
-              AppLocalizations.of(context)?.editGeometryPointsInstruction ??
-                  'editGeometryPointsInstruction',
-            ),
+            Text(getText('editGeometryPointsInstruction', languageCode: languageCode)),
 
             // Pointslist
             EditableList<String>(
@@ -519,13 +510,11 @@ class PoiPanelInfoTab extends ConsumerWidget {
     PointOfInterest selectedPoi,
     WidgetRef ref,
   ) {
+    final languageCode = ref.watch(localeProvider).languageCode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          AppLocalizations.of(context)?.geometryType ?? 'geometryType',
-          style: TextStyle(fontSize: 16),
-        ),
+        Text(getText('geometryType', languageCode: languageCode), style: TextStyle(fontSize: 16)),
         const SizedBox(height: 8),
 
         RadioGroup<String>(
@@ -546,30 +535,25 @@ class PoiPanelInfoTab extends ConsumerWidget {
               ListTile(
                 tileColor: Colors.white,
 
-                title: Text(AppLocalizations.of(context)?.point ?? 'point'),
+                title: Text(getText('point', languageCode: languageCode)),
                 leading: Radio<String>(toggleable: true, value: 'point'),
               ),
               ListTile(
                 tileColor: Colors.white,
 
-                title: Text(AppLocalizations.of(context)?.line ?? 'line'),
+                title: Text(getText('line', languageCode: languageCode)),
                 leading: Radio<String>(toggleable: true, value: 'linestring'),
               ),
               ListTile(
                 tileColor: Colors.white,
 
-                title: Text(
-                  AppLocalizations.of(context)?.polygone ?? 'polygone',
-                ),
+                title: Text(getText('polygone', languageCode: languageCode)),
                 leading: Radio<String>(toggleable: true, value: 'polygon'),
               ),
               ListTile(
                 tileColor: Colors.white,
 
-                title: Text(
-                  AppLocalizations.of(context)?.multipolygone ??
-                      'multipolygone',
-                ),
+                title: Text(getText('multipolygone', languageCode: languageCode)),
                 leading: Radio<String>(toggleable: true, value: 'multipolygon'),
               ),
             ],

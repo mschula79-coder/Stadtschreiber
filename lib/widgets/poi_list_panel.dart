@@ -5,6 +5,7 @@ import 'package:stadtschreiber/l10n/app_localizations.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_provider.dart';
+import 'package:stadtschreiber/theme/app_layout.dart';
 import 'package:stadtschreiber/widgets/poi_list_item.dart';
 
 class PoiListPanel extends ConsumerStatefulWidget {
@@ -29,7 +30,6 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
     /*     final visiblePoisAsync = ref.watch(visiblePoisProvider);
  */
     final visiblePois = ref.watch(sortedVisiblePoisProvider);
-
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -37,6 +37,7 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
         boxShadow: [BoxShadow(blurRadius: 10, color: Colors.black26)],
       ),
       height: panelHeight,
+      width: AppLayout.poiListPanelWidth(context),
       child: Column(
         children: [
           Container(
@@ -52,50 +53,58 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
                   panelHeight = panelHeight.clamp(200.0, 800.0);
                 });
               },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(left: 16, top:10),
-                    child: const Icon(
-                      Icons.visibility,
-                      color: Colors.black54,
-                      size: 32,
-                    ),
-                  ),
-                  Container(
-                    height: 5,
-                    alignment: Alignment.center,
-                    margin: const EdgeInsets.only(top: 10, bottom: 30),
-                    child: Container(
-                      width: 50,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: Colors.grey,
-                        borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                height: 52,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 16),
+                      child: Icon(
+                        Icons.visibility,
+                        color: Colors.black54,
+                        size: 32,
                       ),
                     ),
-                  ),
+                    Padding(
+                      padding: EdgeInsetsGeometry.only(bottom: 20),
 
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.only(top: 15),
-                    constraints: const BoxConstraints(),
+                      child: Container(
+                        width: 50,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
 
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      ref
-                          .read(appStateProvider.notifier)
-                          .setPoiListVisible(false);
-                    },
-                  ),
-                ],
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: IconButton(
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 40,
+                          minHeight: 40,
+                        ),
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          ref
+                              .read(appStateProvider.notifier)
+                              .setPoiListVisible(false);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-
           Expanded(
             child: ListView.builder(
+              padding: EdgeInsets.zero,
+              primary: false,
               itemCount: visiblePois.length,
               itemBuilder: (context, index) {
                 return PoiListItem(

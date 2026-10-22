@@ -113,17 +113,17 @@ abstract class AppLocalizations {
   /// **'Address'**
   String get address;
 
-  /// No description provided for @attention.
-  ///
-  /// In en, this message translates to:
-  /// **'Attention'**
-  String get attention;
-
   /// No description provided for @allRated.
   ///
   /// In en, this message translates to:
-  /// **'All rated Pois'**
+  /// **'All rated places'**
   String get allRated;
+
+  /// No description provided for @apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get apply;
 
   /// No description provided for @authenticationFailed.
   ///
@@ -143,17 +143,17 @@ abstract class AppLocalizations {
   /// **'Categories'**
   String get categories;
 
+  /// No description provided for @changePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get changePassword;
+
   /// No description provided for @checkEmail.
   ///
   /// In en, this message translates to:
   /// **'Please check your email and click the confirmation link. Also check your spam folder.'**
   String get checkEmail;
-
-  /// No description provided for @city.
-  ///
-  /// In en, this message translates to:
-  /// **'City'**
-  String get city;
 
   /// No description provided for @chooseUserName.
   ///
@@ -161,29 +161,59 @@ abstract class AppLocalizations {
   /// **'Choose username'**
   String get chooseUserName;
 
+  /// No description provided for @city.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get city;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @comments.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get comments;
+
   /// No description provided for @confirm.
   ///
   /// In en, this message translates to:
   /// **'Confirm'**
   String get confirm;
 
-  /// No description provided for @confirmDeletionOfPoint.
+  /// No description provided for @confirmEmail.
   ///
   /// In en, this message translates to:
-  /// **'Do you really intend to delete the point?'**
-  String get confirmDeletionOfPoint;
+  /// **'Please confirm your new email address.'**
+  String get confirmEmail;
 
-  /// No description provided for @goOn.
+  /// No description provided for @criterion.
   ///
   /// In en, this message translates to:
-  /// **'Continue'**
-  String get goOn;
+  /// **'Criterion'**
+  String get criterion;
 
   /// No description provided for @delete.
   ///
   /// In en, this message translates to:
   /// **'Delete'**
   String get delete;
+
+  /// No description provided for @deleteDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete date'**
+  String get deleteDate;
+
+  /// No description provided for @deleteUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete user'**
+  String get deleteUser;
 
   /// No description provided for @description.
   ///
@@ -200,14 +230,32 @@ abstract class AppLocalizations {
   /// No description provided for @distanceFromCenter.
   ///
   /// In en, this message translates to:
-  /// **'Distance from map center: '**
+  /// **'Distance from the center of the map'**
   String get distanceFromCenter;
+
+  /// No description provided for @editArticle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit article'**
+  String get editArticle;
 
   /// No description provided for @editCategories.
   ///
   /// In en, this message translates to:
   /// **'Edit categories'**
   String get editCategories;
+
+  /// No description provided for @editCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit category'**
+  String get editCategory;
+
+  /// No description provided for @editFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit favorite'**
+  String get editFavorite;
 
   /// No description provided for @editFeatures.
   ///
@@ -224,8 +272,14 @@ abstract class AppLocalizations {
   /// No description provided for @editGeometryPointsInstruction.
   ///
   /// In en, this message translates to:
-  /// **'Tap and hold on the map location, where you want add or edit a point'**
+  /// **'Tap and hold the map position where you want to add or edit a point'**
   String get editGeometryPointsInstruction;
+
+  /// No description provided for @editImageInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit image information'**
+  String get editImageInformation;
 
   /// No description provided for @editLinks.
   ///
@@ -233,11 +287,29 @@ abstract class AppLocalizations {
   /// **'Edit links'**
   String get editLinks;
 
+  /// No description provided for @editProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile'**
+  String get editProfile;
+
+  /// No description provided for @editRatingCriterion.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit rating criterion'**
+  String get editRatingCriterion;
+
   /// No description provided for @email.
   ///
   /// In en, this message translates to:
   /// **'Email'**
   String get email;
+
+  /// No description provided for @enterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter name'**
+  String get enterName;
 
   /// No description provided for @error.
   ///
@@ -245,17 +317,35 @@ abstract class AppLocalizations {
   /// **'Error'**
   String get error;
 
+  /// No description provided for @favorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get favorites;
+
   /// No description provided for @features.
   ///
   /// In en, this message translates to:
   /// **'Features'**
   String get features;
 
+  /// No description provided for @filterCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter categories'**
+  String get filterCategories;
+
   /// No description provided for @geometryType.
   ///
   /// In en, this message translates to:
-  /// **'Type of geometry'**
+  /// **'Geometry type'**
   String get geometryType;
+
+  /// No description provided for @goOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get goOn;
 
   /// No description provided for @hello.
   ///
@@ -268,6 +358,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'House number'**
   String get houseNumber;
+
+  /// No description provided for @joinus1.
+  ///
+  /// In en, this message translates to:
+  /// **'Join us!'**
+  String get joinus1;
+
+  /// No description provided for @joinus2.
+  ///
+  /// In en, this message translates to:
+  /// **'Become part of the Stadtschreiber community and share your favorite places!'**
+  String get joinus2;
+
+  /// No description provided for @lengthOfPoiList.
+  ///
+  /// In en, this message translates to:
+  /// **'Select length of the ranking list'**
+  String get lengthOfPoiList;
 
   /// No description provided for @line.
   ///
@@ -284,7 +392,7 @@ abstract class AppLocalizations {
   /// No description provided for @loading.
   ///
   /// In en, this message translates to:
-  /// **'Loading...'**
+  /// **'Loading…'**
   String get loading;
 
   /// No description provided for @locationAndGeometrie.
@@ -296,26 +404,56 @@ abstract class AppLocalizations {
   /// No description provided for @login.
   ///
   /// In en, this message translates to:
-  /// **'Login'**
+  /// **'Sign in'**
   String get login;
+
+  /// No description provided for @loginRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again'**
+  String get loginRequired;
 
   /// No description provided for @logout.
   ///
   /// In en, this message translates to:
-  /// **'Logout'**
+  /// **'Sign out'**
   String get logout;
 
-  /// No description provided for @moveMapMessage.
+  /// No description provided for @msgArticleEditError.
   ///
   /// In en, this message translates to:
-  /// **'Move the map to reposition the point. When you release it, the change will be saved.'**
-  String get moveMapMessage;
+  /// **'Title, URL and source must not be empty'**
+  String get msgArticleEditError;
+
+  /// No description provided for @msgImageEditError.
+  ///
+  /// In en, this message translates to:
+  /// **'Title, URL and submitted by must not be empty'**
+  String get msgImageEditError;
+
+  /// No description provided for @msgNewLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again now'**
+  String get msgNewLogin;
+
+  /// No description provided for @msgRoleUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Your roles have been updated. Please sign in again for the changes to take effect.'**
+  String get msgRoleUpdate;
 
   /// No description provided for @multipolygone.
   ///
   /// In en, this message translates to:
-  /// **'MultiPolygone'**
+  /// **'Multipolygon'**
   String get multipolygone;
+
+  /// No description provided for @myRating.
+  ///
+  /// In en, this message translates to:
+  /// **'My rating'**
+  String get myRating;
 
   /// No description provided for @name.
   ///
@@ -323,11 +461,17 @@ abstract class AppLocalizations {
   /// **'Name'**
   String get name;
 
-  /// No description provided for @newPassword.
+  /// No description provided for @newHere.
   ///
   /// In en, this message translates to:
-  /// **'new password'**
-  String get newPassword;
+  /// **'New here?'**
+  String get newHere;
+
+  /// No description provided for @newList.
+  ///
+  /// In en, this message translates to:
+  /// **'+ new list'**
+  String get newList;
 
   /// No description provided for @no.
   ///
@@ -344,8 +488,26 @@ abstract class AppLocalizations {
   /// No description provided for @noEntries.
   ///
   /// In en, this message translates to:
-  /// **'no entries'**
+  /// **'No entries'**
   String get noEntries;
+
+  /// No description provided for @noFavoritesListsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorite lists available'**
+  String get noFavoritesListsAvailable;
+
+  /// No description provided for @noPoiFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No place found'**
+  String get noPoiFound;
+
+  /// No description provided for @noPoiFoundWithTheseCriteria.
+  ///
+  /// In en, this message translates to:
+  /// **'No places matching these criteria are available'**
+  String get noPoiFoundWithTheseCriteria;
 
   /// No description provided for @noResults.
   ///
@@ -356,7 +518,7 @@ abstract class AppLocalizations {
   /// No description provided for @openDetails.
   ///
   /// In en, this message translates to:
-  /// **'Show details'**
+  /// **'View details'**
   String get openDetails;
 
   /// No description provided for @openMap.
@@ -371,23 +533,35 @@ abstract class AppLocalizations {
   /// **'Password'**
   String get password;
 
-  /// No description provided for @pleaseEnterPassword.
+  /// No description provided for @passwordChanged.
   ///
   /// In en, this message translates to:
-  /// **'Please enter password'**
-  String get pleaseEnterPassword;
+  /// **'Password changed successfully'**
+  String get passwordChanged;
 
   /// No description provided for @passwordForgotten.
   ///
   /// In en, this message translates to:
-  /// **'Forgot password?'**
+  /// **'Forgot your password?'**
   String get passwordForgotten;
+
+  /// No description provided for @passwordsDoNotMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordsDoNotMatch;
 
   /// No description provided for @poiList.
   ///
   /// In en, this message translates to:
-  /// **'Location list'**
+  /// **'List of displayed places'**
   String get poiList;
+
+  /// No description provided for @poiNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Place not found'**
+  String get poiNotFound;
 
   /// No description provided for @point.
   ///
@@ -398,8 +572,14 @@ abstract class AppLocalizations {
   /// No description provided for @polygone.
   ///
   /// In en, this message translates to:
-  /// **'Polygone'**
+  /// **'Polygon'**
   String get polygone;
+
+  /// No description provided for @processLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Check link'**
+  String get processLink;
 
   /// No description provided for @rating.
   ///
@@ -425,6 +605,18 @@ abstract class AppLocalizations {
   /// **'Reset password'**
   String get resetPassword;
 
+  /// No description provided for @results.
+  ///
+  /// In en, this message translates to:
+  /// **'Results'**
+  String get results;
+
+  /// No description provided for @role.
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get role;
+
   /// No description provided for @save.
   ///
   /// In en, this message translates to:
@@ -437,6 +629,12 @@ abstract class AppLocalizations {
   /// **'Search'**
   String get search;
 
+  /// No description provided for @selectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get selectAll;
+
   /// No description provided for @selectCategory.
   ///
   /// In en, this message translates to:
@@ -446,7 +644,7 @@ abstract class AppLocalizations {
   /// No description provided for @selectLengthOfPoiList.
   ///
   /// In en, this message translates to:
-  /// **'Select length of Poi List'**
+  /// **'Select the length of the ranking list'**
   String get selectLengthOfPoiList;
 
   /// No description provided for @selectRatingCriterion.
@@ -461,12 +659,6 @@ abstract class AppLocalizations {
   /// **'Selection incomplete'**
   String get selectionIncomplete;
 
-  /// No description provided for @setNewPassword.
-  ///
-  /// In en, this message translates to:
-  /// **'Set new password'**
-  String get setNewPassword;
-
   /// No description provided for @send.
   ///
   /// In en, this message translates to:
@@ -476,20 +668,14 @@ abstract class AppLocalizations {
   /// No description provided for @showTop10.
   ///
   /// In en, this message translates to:
-  /// **'Show Top10 List'**
+  /// **'Show top 10 list'**
   String get showTop10;
 
-  /// No description provided for @finishEditMode.
+  /// No description provided for @slogan.
   ///
   /// In en, this message translates to:
-  /// **'Finish Edit Mode'**
-  String get finishEditMode;
-
-  /// No description provided for @finishDragMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Finish Drag Mode'**
-  String get finishDragMode;
+  /// **'Discover your home'**
+  String get slogan;
 
   /// No description provided for @street.
   ///
@@ -497,11 +683,35 @@ abstract class AppLocalizations {
   /// **'Street'**
   String get street;
 
+  /// No description provided for @underConstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'The app is still under development.'**
+  String get underConstruction;
+
+  /// No description provided for @upload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload'**
+  String get upload;
+
+  /// No description provided for @user.
+  ///
+  /// In en, this message translates to:
+  /// **'User'**
+  String get user;
+
   /// No description provided for @userName.
   ///
   /// In en, this message translates to:
-  /// **'Username '**
+  /// **'Username'**
   String get userName;
+
+  /// No description provided for @username.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get username;
 
   /// No description provided for @yes.
   ///

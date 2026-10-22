@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:stadtschreiber/widgets/poi_user_ratings_builder.dart';
 
-class MyRatingListItem extends StatefulWidget {
+class MyRatingListItem extends ConsumerStatefulWidget {
   final RatingCriterionDTO criterion;
   final void Function(String criterionId, String myComment)? onCommentChanged;
   final PointOfInterest poi;
@@ -18,10 +19,10 @@ class MyRatingListItem extends StatefulWidget {
   });
 
   @override
-  State<MyRatingListItem> createState() => _MyRatingListItemState();
+  ConsumerState<MyRatingListItem> createState() => _MyRatingListItemState();
 }
 
-class _MyRatingListItemState extends State<MyRatingListItem> {
+class _MyRatingListItemState extends ConsumerState<MyRatingListItem> {
   int? selectedScore;
   late final TextEditingController commentController = TextEditingController();
   String? myComment;
@@ -94,8 +95,7 @@ class _MyRatingListItemState extends State<MyRatingListItem> {
             ),
 
             const SizedBox(height: 8),
-/*             Text(scoreDescriptions[myScore] ?? ""),
- */
+
             TextField(
               controller: commentController,
               decoration: InputDecoration(

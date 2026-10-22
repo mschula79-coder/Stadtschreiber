@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/utils/language_utils.dart';               
 
-class EditableList<T> extends StatelessWidget {
+class EditableList<T> extends ConsumerWidget {
   final List<T> items;
   final bool isEditModeEnabled;
 
@@ -22,7 +24,8 @@ class EditableList<T> extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final languageCode = ref.watch(localeProvider).languageCode;
     return ListView(
       padding: const EdgeInsets.all(0),
       shrinkWrap: true,
@@ -33,7 +36,7 @@ class EditableList<T> extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 12),
             child: ElevatedButton.icon(
               icon: const Icon(Icons.add),
-              label: Text(getText("add")),
+              label: Text(getText("add", languageCode: languageCode)),
               onPressed: () async {
                 await onAdd!();
               },
@@ -43,7 +46,7 @@ class EditableList<T> extends StatelessWidget {
         if (items.isEmpty)
           Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
-            child: Text(getText('noEntries')),
+            child: Text(getText('noEntries', languageCode: languageCode)),
           )
         else
           ...items.map((item) {

@@ -4,6 +4,7 @@ import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/user_favorites_provider.dart';
+import 'package:stadtschreiber/theme/app_layout.dart';
 import 'package:stadtschreiber/widgets/modal_poi_favorite_edit.dart';
 import 'poi_panel_tabs.dart';
 import '../provider/selected_poi_provider.dart';
@@ -33,7 +34,6 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
   @override
   Widget build(BuildContext context) {
     final isEditor = ref.watch(supabaseUserStateProvider.notifier).isEditor();
-
     final favorites = ref.watch(userFavoritesProvider).value ?? [];
 
     final isFavorite = favorites.any((f) => f.poiID == widget.selectedPoi.id);
@@ -45,6 +45,7 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
         boxShadow: [BoxShadow(blurRadius: 10, color: Colors.black26)],
       ),
       height: panelHeight,
+      width: AppLayout.poiListPanelWidth(context),
       child: Column(
         children: [
           Container(
@@ -157,6 +158,7 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
                         .setPoiGeomEditMode(false);
                   },
                 ),
+                SizedBox(width: 8),
               ],
             ),
           ),

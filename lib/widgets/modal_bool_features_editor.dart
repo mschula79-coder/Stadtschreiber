@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/utils/language_utils.dart';
 
 
-class BoolFeaturesEditorDialog extends StatefulWidget {
+class BoolFeaturesEditorDialog extends ConsumerStatefulWidget {
   final Map<String, bool> initialFeatures;
   final String dialogTitle;
 
@@ -13,11 +15,11 @@ class BoolFeaturesEditorDialog extends StatefulWidget {
   });
 
   @override
-  State<BoolFeaturesEditorDialog> createState() =>
+  ConsumerState<BoolFeaturesEditorDialog> createState() =>
       _BoolFeaturesEditorDialogState();
 }
 
-class _BoolFeaturesEditorDialogState extends State<BoolFeaturesEditorDialog> {
+class _BoolFeaturesEditorDialogState extends ConsumerState<BoolFeaturesEditorDialog> {
   late Map<String, bool> features;
 
   @override
@@ -28,6 +30,7 @@ class _BoolFeaturesEditorDialogState extends State<BoolFeaturesEditorDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final languageCode = ref.watch(localeProvider).languageCode;
     return AlertDialog(
       title: Text(widget.dialogTitle),
       content: SizedBox(
@@ -54,11 +57,11 @@ class _BoolFeaturesEditorDialogState extends State<BoolFeaturesEditorDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(getText("close")),
+          child: Text(getText("close", languageCode: languageCode)),
         ),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, features),
-          child: Text(getText("save")),
+          child: Text(getText("save", languageCode: languageCode)),
         ),
       ],
     );

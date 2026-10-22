@@ -7,6 +7,7 @@ import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:stadtschreiber/provider/categories_menu_provider.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
 import 'package:stadtschreiber/provider/category_repository_provider.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
 import 'package:stadtschreiber/utils/dialog_utils.dart';
@@ -40,7 +41,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
   Widget build(BuildContext context) {
     final categories = ref.watch(categoriesProvider).categories;
     final isAdmin = ref.read(supabaseUserStateProvider).isAdmin;
-    
+    final languageCode = ref.watch(localeProvider).languageCode;
 
     final mode = ref.watch(visiblePoisMenuStateProvider).poiSelectionMode;
 

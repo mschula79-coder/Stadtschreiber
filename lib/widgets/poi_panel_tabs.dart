@@ -40,7 +40,6 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
 
   @override
   Widget build(BuildContext context) {
-    DebugService.log('Build PoiPanelTabs');
     final selectedPoi = ref.watch(selectedPoiProvider);
     if (selectedPoi == null) return const SizedBox.shrink();
 

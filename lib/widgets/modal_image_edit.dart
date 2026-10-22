@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/image_entry.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/provider/image_repository_provider.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_provider.dart';
-import 'package:stadtschreiber/services/debug_service.dart';
 import 'package:stadtschreiber/services/url_service.dart';
 import 'package:stadtschreiber/utils/url_utils.dart';
 import 'package:stadtschreiber/utils/language_utils.dart';
@@ -61,12 +61,12 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
     final enteredBy = _enteredByController.text.trim();
     final creditsName = _creditsNameController.text.trim();
     final creditsUrl = _creditsUrlController.text.trim();
-
+    final languageCode = ref.watch(localeProvider).languageCode;
     if (title.isEmpty || url.isEmpty || enteredBy.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            getText("msgImageEditError"),
+            getText("msgImageEditError", languageCode: languageCode),
           ),
         ),
       );
@@ -104,9 +104,10 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
 
     isFeatured = (selectedPoi?.featuredImageUrl == image.url);
 
-    DebugService.log(isFeatured.toString());
+    final languageCode = ref.watch(localeProvider).languageCode;
+
     return AlertDialog(
-      title: Text(getText("editImageInformation")),
+      title: Text(getText("editImageInformation", languageCode: languageCode)),
       content: SingleChildScrollView(
         child: ConstrainedBox(
           constraints: const BoxConstraints(
@@ -137,9 +138,11 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
 
               Row(
                 children: [
-                  ElevatedButton.icon(
+                  /* ElevatedButton.icon(
                     icon: const Icon(Icons.link),
-                    label: Text(getText("processLink")),
+                    label: Text(
+                      getText("processLink", languageCode: languageCode),
+                    ),
                     onPressed: () async {
                       if (_urlController.text.isNotEmpty) {
                         final linkEntry = await processLink(
@@ -152,11 +155,11 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
                     },
                   ),
 
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 8), */
                   // Bild auswählen
                   ElevatedButton.icon(
                     icon: const Icon(Icons.upload),
-                    label: Text(getText("upload")),
+                    label: Text(getText("upload", languageCode: languageCode)),
                     onPressed: () async {
                       final imageEntry = await imageRepo
                           .pickProcessAndUploadImage();
@@ -258,11 +261,11 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(getText("cancel")),
+          child: Text(getText("cancel", languageCode: languageCode)),
         ),
         ElevatedButton(
           onPressed: () => _save(selectedPoi!),
-          child: Text(getText("save")),
+          child: Text(getText("save", languageCode: languageCode)),
         ),
       ],
     );

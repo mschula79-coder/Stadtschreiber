@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
 import '../models/article_entry.dart';
 import 'package:stadtschreiber/utils/language_utils.dart';
 
-
-class ArticleEditModal extends StatefulWidget {
+class ArticleEditModal extends ConsumerStatefulWidget {
   final String initialTitle;
   final String initialUrl;
   final String initialSource;
@@ -19,10 +20,10 @@ class ArticleEditModal extends StatefulWidget {
   });
 
   @override
-  State<ArticleEditModal> createState() => _ArticleEditModalState();
+  ConsumerState<ArticleEditModal> createState() => _ArticleEditModalState();
 }
 
-class _ArticleEditModalState extends State<ArticleEditModal> {
+class _ArticleEditModalState extends ConsumerState<ArticleEditModal> {
   late final TextEditingController _titleController;
   late final TextEditingController _urlController;
   late final TextEditingController _sourceController;
@@ -56,7 +57,7 @@ class _ArticleEditModalState extends State<ArticleEditModal> {
     final title = _titleController.text.trim();
     final url = _urlController.text.trim();
     final source = _sourceController.text.trim();
-
+    final languageCode = ref.watch(localeProvider).languageCode;
     DateTime? date;
     final dateText = _dateController.text.trim();
 
@@ -67,7 +68,9 @@ class _ArticleEditModalState extends State<ArticleEditModal> {
     if (title.isEmpty || url.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(getText("msgArticleEditError")),
+          content: Text(
+            getText("msgArticleEditError", languageCode: languageCode),
+          ),
         ),
       );
       return;
@@ -81,8 +84,9 @@ class _ArticleEditModalState extends State<ArticleEditModal> {
 
   @override
   Widget build(BuildContext context) {
+    final languageCode = ref.watch(localeProvider).languageCode;
     return AlertDialog(
-      title: Text(getText("editArticle")),
+      title: Text(getText("editArticle", languageCode: languageCode)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -164,7 +168,8 @@ class _ArticleEditModalState extends State<ArticleEditModal> {
                     _dateController.clear();
                   });
                 },
-                child: Text(getText("deleteDate"),
+                child: Text(
+                  getText("deleteDate", languageCode: languageCode),
                   style: TextStyle(fontSize: 13),
                 ),
               ),
@@ -175,9 +180,12 @@ class _ArticleEditModalState extends State<ArticleEditModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(getText("cancel")),
+          child: Text(getText("cancel", languageCode: languageCode)),
         ),
-        ElevatedButton(onPressed: _save, child: Text(getText("save"))),
+        ElevatedButton(
+          onPressed: _save,
+          child: Text(getText("save", languageCode: languageCode)),
+        ),
       ],
     );
   }

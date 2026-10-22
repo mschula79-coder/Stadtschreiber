@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/utils/language_utils.dart';
 
-class UserEditModal extends StatefulWidget {
+class UserEditModal extends ConsumerStatefulWidget {
   final String username;
   final String email;
   const UserEditModal({
     super.key, required this.username, required this.email});
 
   @override
-  State<UserEditModal> createState() => _UserEditModalState();
+  ConsumerState<UserEditModal> createState() => _UserEditModalState();
 }
 
-class _UserEditModalState extends State<UserEditModal> {
+class _UserEditModalState extends ConsumerState<UserEditModal> {
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
 
@@ -37,6 +39,7 @@ class _UserEditModalState extends State<UserEditModal> {
 
   @override
   Widget build(BuildContext context) {
+    final languageCode = ref.watch(localeProvider).languageCode;
     return AlertDialog(
       title: Text(getText("editProfile")),
       content: SingleChildScrollView(
@@ -64,7 +67,7 @@ class _UserEditModalState extends State<UserEditModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(getText("cancel")),
+          child: Text(getText("cancel", languageCode: languageCode)),
         ),
         ElevatedButton(onPressed: _save, child: Text(getText("save"))),
       ],

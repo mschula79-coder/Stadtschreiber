@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/address.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/utils/language_utils.dart';
 
-class AddressEditModal extends StatefulWidget {
+class AddressEditModal extends ConsumerStatefulWidget {
   final Address address;
 
   const AddressEditModal({super.key, required this.address});
 
   @override
-  State<AddressEditModal> createState() => _AddressEditModalState();
+  ConsumerState<AddressEditModal> createState() => _AddressEditModalState();
 }
 
-class _AddressEditModalState extends State<AddressEditModal> {
+class _AddressEditModalState extends ConsumerState<AddressEditModal> {
   late final TextEditingController _streetController;
   late final TextEditingController _houseNumberController;
   late final TextEditingController _zipCodeController;
@@ -68,8 +70,9 @@ class _AddressEditModalState extends State<AddressEditModal> {
 
   @override
   Widget build(BuildContext context) {
+    final languageCode = ref.watch(localeProvider).languageCode;
     return AlertDialog(
-      title: Text(getText('editArticle')),
+      title: Text(getText('editArticle', languageCode: languageCode)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -127,9 +130,9 @@ class _AddressEditModalState extends State<AddressEditModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(getText('cancel')),
+          child: Text(getText('cancel', languageCode: languageCode)),
         ),
-        ElevatedButton(onPressed: _save, child: Text(getText('save'))),
+        ElevatedButton(onPressed: _save, child: Text(getText('save', languageCode: languageCode))),
       ],
     );
   }

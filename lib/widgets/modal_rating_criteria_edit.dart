@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/utils/language_utils.dart';
 
 
-class RatingCriteriaEditModal extends StatefulWidget {
+class RatingCriteriaEditModal extends ConsumerStatefulWidget {
   final RatingCriterionDTO criterionDTO;
   const RatingCriteriaEditModal({super.key, required this.criterionDTO});
 
   @override
-  State<RatingCriteriaEditModal> createState() =>
+  ConsumerState<RatingCriteriaEditModal> createState() =>
       _RatingCriteriaEditModalState();
 }
 
-class _RatingCriteriaEditModalState extends State<RatingCriteriaEditModal> {
+class _RatingCriteriaEditModalState extends ConsumerState<RatingCriteriaEditModal> {
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
 
@@ -44,11 +45,12 @@ class _RatingCriteriaEditModalState extends State<RatingCriteriaEditModal> {
 
   @override
   Widget build(BuildContext context) {
+    final languageCode = ref.watch(localeProvider).languageCode;
     return Consumer(
       builder: (context, ref, _) {
 
         return AlertDialog(
-          title: Text(getText("editRatingCriterion")),
+          title: Text(getText("editRatingCriterion", languageCode: languageCode)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -57,7 +59,7 @@ class _RatingCriteriaEditModalState extends State<RatingCriteriaEditModal> {
                 TextField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    labelText: getText("description"),
+                    labelText: getText("enterName", languageCode: languageCode),
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -80,9 +82,9 @@ class _RatingCriteriaEditModalState extends State<RatingCriteriaEditModal> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(getText("cancel")),
+              child: Text(getText("cancel", languageCode: languageCode)),
             ),
-            ElevatedButton(onPressed: _save, child: Text(getText("save"))),
+            ElevatedButton(onPressed: _save, child: Text(getText("save", languageCode: languageCode))),
           ],
         );
       },

@@ -9,48 +9,63 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
-  String get add => 'Add';
+  String get add => 'Ajouter';
 
   @override
-  String get address => 'Address';
+  String get address => 'Adresse';
 
   @override
-  String get attention => 'Attention';
+  String get allRated => 'Tous les lieux évalués';
 
   @override
-  String get allRated => 'All rated Pois';
+  String get apply => 'Appliquer';
 
   @override
-  String get authenticationFailed => 'Authentication failed';
+  String get authenticationFailed => 'Échec de l’authentification';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'Annuler';
 
   @override
-  String get categories => 'Categories';
+  String get categories => 'Catégories';
+
+  @override
+  String get changePassword => 'Modifier le mot de passe';
 
   @override
   String get checkEmail =>
-      'Please check your email and click the confirmation link. Also check your spam folder.';
+      'Veuillez consulter votre e-mail et cliquer sur le lien de confirmation. Vérifiez également votre dossier de courrier indésirable.';
 
   @override
-  String get city => 'City';
+  String get chooseUserName => 'Choisir un nom d’utilisateur';
 
   @override
-  String get chooseUserName => 'Choose username';
+  String get city => 'Ville';
 
   @override
-  String get confirm => 'Confirm';
+  String get close => 'Fermer';
 
   @override
-  String get confirmDeletionOfPoint =>
-      'Do you really intend to delete the point?';
+  String get comments => 'Commentaires';
 
   @override
-  String get goOn => 'Continue';
+  String get confirm => 'Confirmer';
 
   @override
-  String get delete => 'Delete';
+  String get confirmEmail =>
+      'Veuillez confirmer votre nouvelle adresse e-mail.';
+
+  @override
+  String get criterion => 'Critère';
+
+  @override
+  String get delete => 'Supprimer';
+
+  @override
+  String get deleteDate => 'Supprimer la date';
+
+  @override
+  String get deleteUser => 'Supprimer l’utilisateur';
 
   @override
   String get description => 'Description';
@@ -59,102 +74,178 @@ class AppLocalizationsFr extends AppLocalizations {
   String get distance => 'Distance';
 
   @override
-  String get distanceFromCenter => 'Distance from map center: ';
+  String get distanceFromCenter => 'Distance par rapport au centre de la carte';
 
   @override
-  String get editCategories => 'Edit categories';
+  String get editArticle => 'Modifier l’article';
 
   @override
-  String get editFeatures => 'Edit features';
+  String get editCategories => 'Modifier les catégories';
 
   @override
-  String get editGeometryPoints => 'Edit geometry points';
+  String get editCategory => 'Modifier la catégorie';
+
+  @override
+  String get editFavorite => 'Modifier le favori';
+
+  @override
+  String get editFeatures => 'Modifier les caractéristiques';
+
+  @override
+  String get editGeometryPoints => 'Modifier les points géométriques';
 
   @override
   String get editGeometryPointsInstruction =>
-      'Tap and hold on the map location, where you want add or edit a point';
+      'Appuyez longuement sur la position de la carte à laquelle vous souhaitez ajouter ou modifier un point';
 
   @override
-  String get editLinks => 'Edit links';
+  String get editImageInformation => 'Modifier les informations de l’image';
 
   @override
-  String get email => 'Email';
+  String get editLinks => 'Modifier les liens';
 
   @override
-  String get error => 'Error';
+  String get editProfile => 'Modifier le profil';
 
   @override
-  String get features => 'Features';
+  String get editRatingCriterion => 'Modifier le critère d’évaluation';
 
   @override
-  String get geometryType => 'Type of geometry';
+  String get email => 'E-mail';
 
   @override
-  String get hello => 'Salut';
+  String get enterName => 'Saisir un nom';
 
   @override
-  String get houseNumber => 'House number';
+  String get error => 'Erreur';
 
   @override
-  String get line => 'Line';
+  String get favorites => 'Favoris';
 
   @override
-  String get links => 'Links';
+  String get features => 'Caractéristiques';
 
   @override
-  String get loading => 'Loading...';
+  String get filterCategories => 'Filtrer les catégories';
 
   @override
-  String get locationAndGeometrie => 'Location and geometry';
+  String get geometryType => 'Type de géométrie';
 
   @override
-  String get login => 'Login';
+  String get goOn => 'Continuer';
 
   @override
-  String get logout => 'Logout';
+  String get hello => 'Bonjour';
 
   @override
-  String get moveMapMessage =>
-      'Move the map to reposition the point. When you release it, the change will be saved.';
+  String get houseNumber => 'Numéro';
 
   @override
-  String get multipolygone => 'MultiPolygone';
+  String get joinus1 => 'Participez !';
 
   @override
-  String get name => 'Name';
+  String get joinus2 =>
+      'Rejoignez la communauté Stadtschreiber et partagez vos lieux préférés avec les autres !';
 
   @override
-  String get newPassword => 'new password';
+  String get lengthOfPoiList => 'Longueur du classement';
 
   @override
-  String get no => 'No';
+  String get line => 'Ligne';
 
   @override
-  String get noCategoriesLoaded => 'No categories loaded';
+  String get links => 'Liens';
 
   @override
-  String get noEntries => 'no entries';
+  String get loading => 'Chargement…';
 
   @override
-  String get noResults => 'No results found';
+  String get locationAndGeometrie => 'Emplacement et géométrie';
 
   @override
-  String get openDetails => 'Show details';
+  String get login => 'Se connecter';
 
   @override
-  String get openMap => 'Open map';
+  String get loginRequired => 'Veuillez vous reconnecter';
 
   @override
-  String get password => 'Password';
+  String get logout => 'Se déconnecter';
 
   @override
-  String get pleaseEnterPassword => 'Please enter password';
+  String get msgArticleEditError =>
+      'Le titre, l’URL et la source ne doivent pas être vides';
 
   @override
-  String get passwordForgotten => 'Forgot password?';
+  String get msgImageEditError =>
+      'Le titre, l’URL et le nom de la personne ayant ajouté l’image ne doivent pas être vides';
 
   @override
-  String get poiList => 'Location list';
+  String get msgNewLogin => 'Se reconnecter maintenant';
+
+  @override
+  String get msgRoleUpdate =>
+      'Vos rôles ont été mis à jour. Veuillez vous reconnecter afin d’activer les modifications.';
+
+  @override
+  String get multipolygone => 'Multipolygone';
+
+  @override
+  String get myRating => 'Mon évaluation';
+
+  @override
+  String get name => 'Nom';
+
+  @override
+  String get newHere => 'Première visite ?';
+
+  @override
+  String get newList => '+ nouvelle liste';
+
+  @override
+  String get no => 'Non';
+
+  @override
+  String get noCategoriesLoaded => 'Aucune catégorie chargée';
+
+  @override
+  String get noEntries => 'Aucune entrée';
+
+  @override
+  String get noFavoritesListsAvailable => 'Aucune liste de favoris disponible';
+
+  @override
+  String get noPoiFound => 'Aucun lieu trouvé';
+
+  @override
+  String get noPoiFoundWithTheseCriteria =>
+      'Aucun lieu ne correspond à ces critères';
+
+  @override
+  String get noResults => 'Aucun résultat trouvé';
+
+  @override
+  String get openDetails => 'Afficher les détails';
+
+  @override
+  String get openMap => 'Ouvrir la carte';
+
+  @override
+  String get password => 'Mot de passe';
+
+  @override
+  String get passwordChanged => 'Mot de passe modifié avec succès';
+
+  @override
+  String get passwordForgotten => 'Mot de passe oublié ?';
+
+  @override
+  String get passwordsDoNotMatch => 'Les mots de passe ne correspondent pas';
+
+  @override
+  String get poiList => 'Liste des lieux affichés';
+
+  @override
+  String get poiNotFound => 'Lieu introuvable';
 
   @override
   String get point => 'Point';
@@ -163,56 +254,75 @@ class AppLocalizationsFr extends AppLocalizations {
   String get polygone => 'Polygone';
 
   @override
-  String get rating => 'Rating';
+  String get processLink => 'Vérifier le lien';
 
   @override
-  String get register => 'Register';
+  String get rating => 'Évaluation';
 
   @override
-  String get resetLinkSent => 'We have sent you a link';
+  String get register => 'S’inscrire';
 
   @override
-  String get resetPassword => 'Reset password';
+  String get resetLinkSent => 'Nous vous avons envoyé un lien';
 
   @override
-  String get save => 'Save';
+  String get resetPassword => 'Réinitialiser le mot de passe';
 
   @override
-  String get search => 'Search';
+  String get results => 'Résultats';
 
   @override
-  String get selectCategory => 'Select category';
+  String get role => 'Rôle';
 
   @override
-  String get selectLengthOfPoiList => 'Select length of Poi List';
+  String get save => 'Enregistrer';
 
   @override
-  String get selectRatingCriterion => 'Select rating criterion';
+  String get search => 'Rechercher';
 
   @override
-  String get selectionIncomplete => 'Selection incomplete';
+  String get selectAll => 'Tout sélectionner';
 
   @override
-  String get setNewPassword => 'Set new password';
+  String get selectCategory => 'Sélectionner une catégorie';
 
   @override
-  String get send => 'Send';
+  String get selectLengthOfPoiList => 'Sélectionner la longueur du classement';
 
   @override
-  String get showTop10 => 'Show Top10 List';
+  String get selectRatingCriterion => 'Sélectionner un critère d’évaluation';
 
   @override
-  String get finishEditMode => 'Finish Edit Mode';
+  String get selectionIncomplete => 'Sélection incomplète';
 
   @override
-  String get finishDragMode => 'Finish Drag Mode';
+  String get send => 'Envoyer';
 
   @override
-  String get street => 'Street';
+  String get showTop10 => 'Afficher le classement des 10 meilleurs';
 
   @override
-  String get userName => 'Username ';
+  String get slogan => 'Découvrez votre chez-vous';
 
   @override
-  String get yes => 'Yes';
+  String get street => 'Rue';
+
+  @override
+  String get underConstruction =>
+      'L’application est encore en cours de développement.';
+
+  @override
+  String get upload => 'Téléverser';
+
+  @override
+  String get user => 'Utilisateur';
+
+  @override
+  String get userName => 'Nom d’utilisateur';
+
+  @override
+  String get username => 'Nom d’utilisateur';
+
+  @override
+  String get yes => 'Oui';
 }

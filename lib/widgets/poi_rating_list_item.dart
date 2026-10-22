@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/poi_ratings_provider.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
 import 'package:stadtschreiber/widgets/poi_ratings_stats_builder.dart';
 import '../utils/date_time_utils.dart';
 
@@ -30,6 +32,7 @@ class _RatingListItemState extends ConsumerState<RatingListItem> {
   @override
   Widget build(BuildContext context) {
     // General properties of a criterion, no ratings inside
+    final languageCode = ref.watch(localeProvider).languageCode;
     final criterion = widget.criterion;
     final String criterionName = criterion.name;
     final String criterionDescription = criterion.description;
@@ -160,7 +163,7 @@ class _RatingListItemState extends ConsumerState<RatingListItem> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Kommentare: ${comments.length}",
+                              "${getText("comments", languageCode: languageCode)}: ${comments.length}",
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,

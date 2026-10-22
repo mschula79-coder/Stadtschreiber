@@ -6,13 +6,13 @@ import 'package:iconify_flutter/icons/mdi.dart';
 import 'dart:async';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/models/poi_selection_modes.dart';
-import 'package:stadtschreiber/provider/camera_provider.dart';
-import 'package:stadtschreiber/provider/poi_repository_provider.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/poi_selection_provider.dart';
 import 'package:stadtschreiber/provider/search_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
 import 'package:stadtschreiber/widgets/modal_message_box.dart';
 import 'package:stadtschreiber/widgets/poi_list_item.dart';
 
@@ -33,6 +33,8 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
 
   PoiSelectionMode? _lastMode;
 
+  Timer? _searchDebounce;
+
   @override
   void initState() {
     super.initState();
@@ -42,22 +44,17 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
   void dispose() {
     _searchController.dispose();
     expansionController.dispose();
+    _searchDebounce?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final repo = ref.read(poiRepositoryProvider);
-    final camera = ref.read(cameraProvider);
+    final languageCode = ref.watch(localeProvider).languageCode;
 
-    final searchResults = ref.watch(
-      searchResultsProvider((
-        query: _searchQuery,
-        searchActive: true,
-        repo: repo,
-        camera: camera,
-      )),
-    );
+    final searchParams = (query: _searchQuery, searchActive: true);
+
+    final searchResults = ref.watch(searchResultsProvider(searchParams));
 
     final mode = ref.watch(visiblePoisMenuStateProvider).poiSelectionMode;
 
@@ -111,8 +108,8 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
               SizedBox(width: 8),
 
               Expanded(
-                child: const Text(
-                  "Suche",
+                child: Text(
+                  getText('search', languageCode: languageCode),
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -152,12 +149,26 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                   isDense: true,
                 ),
                 onChanged: (value) {
-                  if (!mounted) return;
-                  setState(() => _searchQuery = value);
+                  _searchDebounce?.cancel();
+
+                  _searchDebounce = Timer(
+                    const Duration(milliseconds: 350),
+                    () {
+                      if (!mounted) {
+                        return;
+                      }
+
+                      setState(() {
+                        _searchQuery = value.trim();
+                      });
+                    },
+                  );
                 },
                 onTap: () {
                   ref.read(searchSelectionProvider.notifier).clear();
-                  FocusScope.of(context).unfocus();
+                },
+                onTapOutside: (_) {
+                  FocusManager.instance.primaryFocus?.unfocus();
                 },
               ),
             ),
@@ -165,18 +176,19 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
             if (_searchQuery.isNotEmpty)
               searchResults.when(
                 data: (foundPois) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                  // TODO Check ob benötigt
+                  /* WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (mounted) {
                       ref
                           .read(searchSelectionProvider.notifier)
                           .setAll(foundPois);
                     }
-                  });
+                  }); */
                   if (foundPois.isEmpty) {
                     return Padding(
                       padding: EdgeInsetsGeometry.fromLTRB(5, 15, 0, 0),
-                      child: const Text(
-                        "Keine Orte gefunden",
+                      child: Text(
+                        getText('noPoiFound', languageCode: languageCode),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -193,8 +205,11 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                           child: Row(
                             children: [
                               Expanded(
-                                child: const Text(
-                                  "Resultate",
+                                child: Text(
+                                  getText(
+                                    'results',
+                                    languageCode: languageCode,
+                                  ),
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -261,7 +276,9 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                   }
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) => Text("Fehler: $err"),
+                error: (err, stack) => Text(
+                  "${getText('error', languageCode: languageCode)}: $err",
+                ),
               ),
             SizedBox(height: 20),
           ],

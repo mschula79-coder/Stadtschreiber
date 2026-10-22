@@ -23,7 +23,6 @@ class PoiThumbnailsLayer extends ConsumerWidget {
     /*     final cameraPosition = ref.watch(cameraProvider).getLocation();
  */
     final mapController = ref.watch(mapControllerProvider);
-
     if (mapController == null) {
       return const SizedBox.shrink();
     }

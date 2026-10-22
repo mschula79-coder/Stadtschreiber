@@ -8,7 +8,6 @@ import 'package:stadtschreiber/provider/poi_selection_provider.dart';
 import 'package:stadtschreiber/provider/user_location_state_provider.dart';
 import 'package:stadtschreiber/services/geo_service.dart';
 import 'package:stadtschreiber/widgets/_icon_getter.dart';
-import 'package:stadtschreiber/utils/language_utils.dart';
 
 
 class PoiListItem extends ConsumerWidget {
@@ -48,6 +47,7 @@ class PoiListItem extends ConsumerWidget {
     final selection = ref.watch(poiSelectionProvider);
     final isSelected = selection.contains(poi);
     final selectionMode = selection.isNotEmpty;
+
 
     return Column(
       children: [

@@ -107,7 +107,7 @@ class PoiPanelGalleryTab extends ConsumerWidget {
               ),
             ] else ...[
               GestureDetector(
-                onTap: () => PhotoGalleryModal.open(
+                onTap: () => PoiPhotoGalleryModal.open(
                   context,
                   imageUrls: imageUrls,
                   initialUrl: featuredUrl ?? selectedPoi.images[0].url,
@@ -284,7 +284,7 @@ class PoiPanelGalleryTab extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final url = imageUrlsNotFeatured[index];
                     return GestureDetector(
-                      onTap: () => PhotoGalleryModal.open(
+                      onTap: () => PoiPhotoGalleryModal.open(
                         context,
                         imageUrls: imageUrls,
                         initialUrl: url,

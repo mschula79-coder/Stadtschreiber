@@ -1,28 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/utils/language_utils.dart';
 
-class NameEditModal extends StatefulWidget {
+class NameEditModal extends ConsumerStatefulWidget {
   final String initialName;
 
-  const NameEditModal({
-    super.key,
-    required this.initialName,
-  });
+  const NameEditModal({super.key, required this.initialName});
 
   @override
-  State<NameEditModal> createState() => _NameEditModalState();
+  ConsumerState<NameEditModal> createState() => _NameEditModalState();
 }
 
-class _NameEditModalState extends State<NameEditModal> {
+class _NameEditModalState extends ConsumerState<NameEditModal> {
   late final TextEditingController _nameController;
 
   @override
   void initState() {
     super.initState();
-    
-    _nameController = TextEditingController(
-      text: widget.initialName,
-    );
+
+    _nameController = TextEditingController(text: widget.initialName);
   }
 
   @override
@@ -32,19 +29,17 @@ class _NameEditModalState extends State<NameEditModal> {
   }
 
   void _save() {
-    
     final name = _nameController.text.trim();
-  
-    Navigator.pop(
-      context,
-      name
-    );
+
+    Navigator.pop(context, name);
   }
 
   @override
   Widget build(BuildContext context) {
+    final languageCode = ref.watch(localeProvider).languageCode;
+
     return AlertDialog(
-      title: Text(getText("enterName")),
+      title: Text(getText("enterName", languageCode: languageCode)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -68,9 +63,12 @@ class _NameEditModalState extends State<NameEditModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(getText("cancel")),
+          child: Text(getText("cancel", languageCode: languageCode)),
         ),
-        ElevatedButton(onPressed: _save, child: Text(getText("save"))),
+        ElevatedButton(
+          onPressed: _save,
+          child: Text(getText("save", languageCode: languageCode)),
+        ),
       ],
     );
   }

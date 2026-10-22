@@ -4,11 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/l10n/app_localizations.dart';
 import 'package:stadtschreiber/models/category_dto.dart';
 import 'package:stadtschreiber/provider/category_repository_provider.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/repositories/category_repository.dart';
 import 'package:stadtschreiber/widgets/_editable_list.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
 import 'package:stadtschreiber/utils/language_utils.dart';
-
 
 class CategoryEditor extends ConsumerWidget {
   const CategoryEditor({super.key});
@@ -48,6 +48,7 @@ class CategoryEditor extends ConsumerWidget {
     final t = AppLocalizations.of(context)!;
     final nameCtrl = TextEditingController();
     final slugCtrl = TextEditingController();
+    final languageCode = ref.watch(localeProvider).languageCode;
 
     final result = await showDialog<CategoryDto?>(
       context: context,
@@ -85,7 +86,7 @@ class CategoryEditor extends ConsumerWidget {
               if (!context.mounted) return;
               Navigator.of(ctx).pop(newDto);
             },
-            child: Text(getText("save")),
+            child: Text(getText("save", languageCode: languageCode)),
           ),
         ],
       ),
@@ -106,7 +107,7 @@ class CategoryEditor extends ConsumerWidget {
     final t = AppLocalizations.of(context)!;
     final nameCtrl = TextEditingController(text: item.name);
     final slugCtrl = TextEditingController(text: item.slug);
-
+    final languageCode = ref.watch(localeProvider).languageCode;
     final result = await showDialog<CategoryDto?>(
       context: context,
       builder: (ctx) {
@@ -118,7 +119,7 @@ class CategoryEditor extends ConsumerWidget {
         // damit der scrollbare Bereich (EditableList / ListView) eine
         // definierte Höhe hat und kein ShrinkWrappingViewport-Fehler entsteht.
         return AlertDialog(
-          title: Text(getText("editCategory")),
+          title: Text(getText("editCategory", languageCode: languageCode)),
           content: SizedBox(
             width: dialogWidth,
             height: maxHeight,

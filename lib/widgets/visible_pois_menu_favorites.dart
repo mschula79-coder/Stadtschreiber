@@ -5,11 +5,13 @@ import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/models/poi_selection_modes.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/poi_selection_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/user_favorite_lists_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
 import 'package:stadtschreiber/widgets/modal_poi_list_categories_filter.dart';
 import 'package:stadtschreiber/widgets/poi_list_item.dart';
 
@@ -38,7 +40,7 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
   @override
   Widget build(BuildContext context) {
     final userID = ref.watch(supabaseUserStateProvider).userid;
-
+    final languageCode = ref.watch(localeProvider).languageCode;
     final favoriteListsAsync = ref.watch(userFavoriteListsProvider(userID));
 
     return Theme(
@@ -74,9 +76,9 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
             children: [
               Icon(Icons.star, color: Colors.grey.shade600),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  "Favoriten",
+                  getText('favorites', languageCode: languageCode),
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -89,7 +91,10 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
                   return Padding(
                     padding: EdgeInsets.zero,
                     child: Text(
-                      "Keine Favoritenlisten vorhanden",
+                      getText(
+                        'noFavoritesListsAvailable',
+                        languageCode: languageCode,
+                      ),
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade600,
@@ -152,10 +157,10 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
                                         return poiAsync.when(
                                           data: (poi) {
                                             if (poi == null) {
-                                              return const Padding(
+                                              return Padding(
                                                 padding: EdgeInsets.zero,
-                                                child: Text(
-                                                  "POI nicht gefunden",
+                                                child: Text(getText('poiNotFound', languageCode: languageCode)
+                                                  ,
                                                 ),
                                               );
                                             }
