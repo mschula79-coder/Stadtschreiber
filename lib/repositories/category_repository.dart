@@ -5,7 +5,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/category.dart';
 import '../models/category_dto.dart';
 
-
 class CategoryRepository {
   Future<List<CategoryNode>> loadCategoryTree() async {
     final supabase = Supabase.instance.client;
@@ -134,7 +133,7 @@ class CategoryRepository {
           .select('child_id, categories!category_relations_child_id_fkey(*)')
           .eq('parent_id', parentId);
 
-   /*    print('childrenForParentId response type=${response.runtimeType}');
+      /*    print('childrenForParentId response type=${response.runtimeType}');
       print('childrenForParentId raw=$response'); */
 
       final List<CategoryDto> children = (response as List).map((row) {
@@ -150,7 +149,7 @@ class CategoryRepository {
 
       return children;
     } catch (e) {
-/*       print('Fehler in childrenForParentId: $e');
+      /*       print('Fehler in childrenForParentId: $e');
       print('$st'); */
       rethrow;
     }
@@ -264,11 +263,27 @@ class CategoryRepository {
     return CategoryNode(
       id: dto.id,
       label: dto.name,
-      value: dto.slug,
+      slug: dto.slug,
       children: children,
       // **ADDED**: set hasParents based on whether this id appears as a child anywhere
       hasParents: allChildren.contains(id),
     );
+  }
+
+  Future<int> poiCountForCategory(String categorySlug) async {
+    final supabase = Supabase.instance.client;
+    final normalizedSlug = categorySlug.trim();
+
+    if (normalizedSlug.isEmpty) {
+      return 0;
+    }
+
+    final count = await supabase.from('pois').count(CountOption.exact).contains(
+      'categories',
+      [normalizedSlug],
+    );
+
+    return count;
   }
 
   Future<List<RatingCriterionDTO>> criteriaForCategory(
@@ -324,10 +339,7 @@ class CategoryRepository {
 
     final newCriterionRaw = await supabase
         .from('global_rating_criteria')
-        .insert({
-          'name': criterion.name,
-          'description': criterion.description,
-        })
+        .insert({'name': criterion.name, 'description': criterion.description})
         .select()
         .single();
     return RatingCriterionDTO.fromJson(newCriterionRaw);
@@ -359,10 +371,7 @@ class CategoryRepository {
 
     await supabase
         .from('global_rating_criteria')
-        .update({
-          'name': criterion.name,
-          'description': criterion.description,
-        })
+        .update({'name': criterion.name, 'description': criterion.description})
         .eq('id', criterion.id);
   }
 

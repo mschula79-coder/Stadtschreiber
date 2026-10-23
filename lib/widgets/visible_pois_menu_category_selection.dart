@@ -315,7 +315,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
             CategoryNode(
               id: node.id,
               label: node.label,
-              value: node.value,
+              slug: node.slug,
               children: filteredChildren,
               hasParents: false,
             ),
@@ -335,75 +335,37 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
   ) {
     final categoryCheckboxesState = ref.watch(categoriesSelectionProvider);
 
-    // Parents
     if (!node.isLeaf) {
       final allDescendantLeaves = _collectLeafValues(node);
-      final directLeafChildren = node.children
-          .where((c) => c.isLeaf && c.value != null)
-          .map((c) => c.value!)
-          .toList();
 
       final checkedChildren = allDescendantLeaves
-          .where((v) => categoryCheckboxesState.isSelected(v))
+          .where(categoryCheckboxesState.isSelected)
           .length;
 
-      double leftPadding = 0;
-      if (node.hasParents) {
-        leftPadding = 10;
-      }
-
-      bool? parentChecked;
-      if (checkedChildren == 0) {
-        parentChecked = false;
-      } else if (checkedChildren == allDescendantLeaves.length) {
-        parentChecked = true;
-      } else {
-        parentChecked = null;
-      }
+      final leftPadding = node.hasParents ? 10.0 : 0.0;
 
       return ExpansionTile(
         tilePadding: EdgeInsets.only(left: leftPadding, right: 15),
         childrenPadding: EdgeInsets.zero,
         visualDensity: VisualDensity.compact,
         initiallyExpanded: expandAll,
-
-        leading: getIcon(node.value ?? '', 28, null),
-        /* Checkbox(
-          value: parentChecked,
-          tristate: true,
-          onChanged: (checked) {
-            if (checked == true) {
-              for (final value in directLeafChildren) {
-                if (!categoryCheckboxesState.isSelected(value)) {
-                  ref
-                      .read(categoriesSelectionProvider.notifier)
-                      .setSelected(value, true);
-                }
-              }
-            } else {
-              for (final value in directLeafChildren) {
-                if (categoryCheckboxesState.isSelected(value)) {
-                  ref
-                      .read(categoriesSelectionProvider.notifier)
-                      .setSelected(value, false);
-                }
-              }
-            }
-          },
-        ), */
+        leading: getIcon(node.slug ?? '', 28, null),
         title: Row(
           children: [
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 node.label,
                 softWrap: true,
                 maxLines: null,
-                style: TextStyle(fontSize: 16),
+                style: const TextStyle(fontSize: 16),
               ),
             ),
-            /*             getIcon(node.value ?? '', 24, null),
- */
+            if (allDescendantLeaves.isNotEmpty)
+              Text(
+                '$checkedChildren/${allDescendantLeaves.length}',
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
           ],
         ),
         children: node.children
@@ -412,33 +374,82 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
       );
     }
 
-    // Leaf node
-    final isChecked =
-        node.value != null && categoryCheckboxesState.isSelected(node.value!);
+    final categorySlug = node.slug;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        CheckboxListTile(
-          contentPadding: const EdgeInsets.only(top: 0, left: 4, right: 15),
-          value: isChecked,
-          tileColor: Colors.white,
-          visualDensity: VisualDensity.compact,
+    if (categorySlug == null || categorySlug.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
-          onChanged: (checked) {
-            if (node.value == null) return;
-            ref
-                .read(categoriesSelectionProvider.notifier)
-                .setSelected(node.value!, checked ?? false);
-          },
-          secondary: getIcon(node.value!, 24, null),
-          controlAffinity: ListTileControlAffinity.leading,
-          title: Padding(
-            padding: const EdgeInsets.only(left: 4),
-            child: Text(node.label),
-          ),
+    final isChecked = categoryCheckboxesState.isSelected(categorySlug);
+
+    final isAdmin = ref.watch(
+      supabaseUserStateProvider.select((state) => state.isAdmin),
+    );
+
+    final poiCountAsync = ref.watch(poiCountForCategoryProvider(categorySlug));
+
+    final poiCount = poiCountAsync.asData?.value;
+    final isCheckboxEnabled = poiCount != null && poiCount > 0;
+    final disabledColor = Theme.of(context).disabledColor;
+
+    return CheckboxListTile(
+      contentPadding: const EdgeInsets.only(top: 0, left: 4, right: 15),
+      value: isChecked,
+      tileColor: Colors.white,
+      visualDensity: VisualDensity.compact,
+      controlAffinity: ListTileControlAffinity.leading,
+      onChanged: isCheckboxEnabled
+          ? (checked) {
+              ref
+                  .read(categoriesSelectionProvider.notifier)
+                  .setSelected(categorySlug, checked ?? false);
+            }
+          : null,
+      secondary: Opacity(
+        opacity: isCheckboxEnabled ? 1 : 0.38,
+        child: getIcon(categorySlug, 24, null),
+      ),
+      title: Padding(
+        padding: const EdgeInsets.only(left: 4),
+        child: Row(
+          children: [
+            Text(
+              node.label,
+              style: TextStyle(color: isCheckboxEnabled ? null : disabledColor),
+            ),
+            poiCountAsync.when(
+              data: (count) {
+                return Text(
+                  ' ($count)',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: count > 0 ? null : disabledColor,
+                  ),
+                );
+              },
+              loading: () {
+                return const Padding(
+                  padding: EdgeInsets.only(left: 6),
+                  child: SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(strokeWidth: 1.5),
+                  ),
+                );
+              },
+              error: (error, stackTrace) {
+                return Tooltip(
+                  message: error.toString(),
+                  child: Icon(
+                    Icons.error_outline,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                );
+              },
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -446,8 +457,8 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
     final result = <String>[];
 
     void walk(CategoryNode n) {
-      if (n.isLeaf && n.value != null) {
-        result.add(n.value!);
+      if (n.isLeaf && n.slug != null) {
+        result.add(n.slug!);
       } else {
         for (final child in n.children) {
           walk(child);

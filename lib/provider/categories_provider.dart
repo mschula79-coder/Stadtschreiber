@@ -25,7 +25,7 @@ final categoryIdBySlugProvider = Provider.family<String?, String>((ref, slug) {
 
   String? search(List<CategoryNode> nodes) {
     for (final node in nodes) {
-      if (node.value == slug) return node.id;
+      if (node.slug == slug) return node.id;
 
       final result = search(node.children);
       if (result != null) return result;
@@ -48,8 +48,8 @@ class CategoriesNotifier extends Notifier<CategoriesStateData> {
     final slugToId = <String, String>{};
 
     void collect(CategoryNode node) {
-      if (node.value != null) {
-        slugToId[node.value!] = node.id;
+      if (node.slug != null) {
+        slugToId[node.slug!] = node.id;
       }
       for (final child in node.children) {
         collect(child);
@@ -75,11 +75,13 @@ final categoriesListProvider = FutureProvider<List<CategoryDto>>((ref) {
   return repo.categoriesList();
 });
 
-final childrenProvider = FutureProvider.family<List<CategoryDto>, String>((ref, parentId) {
+final childrenProvider = FutureProvider.family<List<CategoryDto>, String>((
+  ref,
+  parentId,
+) {
   final repo = ref.read(categoriesRepositoryProvider);
   return repo.childrenForParentId(parentId);
 });
-
 
 final globalCriteriaProvider = FutureProvider<List<RatingCriterionDTO>>((
   ref,
@@ -96,7 +98,7 @@ final categoryLabelBySlugProvider = Provider.family<String?, String>((
 
   String? search(List<CategoryNode> nodes) {
     for (final node in nodes) {
-      if (node.value == slug) return node.label; // ⭐ label statt id
+      if (node.slug == slug) return node.label; // ⭐ label statt id
       final result = search(node.children);
       if (result != null) return result;
     }
@@ -105,3 +107,16 @@ final categoryLabelBySlugProvider = Provider.family<String?, String>((
 
   return search(categories);
 });
+
+final poiCountForCategoryProvider = FutureProvider.autoDispose
+    .family<int, String>((ref, categorySlug) async {
+      final normalizedSlug = categorySlug.trim();
+
+      if (normalizedSlug.isEmpty) {
+        return 0;
+      }
+
+      final repository = ref.read(categoriesRepositoryProvider);
+
+      return repository.poiCountForCategory(normalizedSlug);
+    });

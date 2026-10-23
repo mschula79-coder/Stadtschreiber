@@ -2,14 +2,14 @@
 class CategoryNode {
   final String id;
   final String label;
-  final String? value;
+  final String? slug;
   final List<CategoryNode> children;
   final bool hasParents;
 
   CategoryNode({
     required this.id,
     required this.label,
-    this.value,
+    this.slug,
     this.children = const [],
     required this.hasParents
   });

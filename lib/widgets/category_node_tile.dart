@@ -46,7 +46,7 @@ class PoiCategoryNodeTile extends ConsumerWidget {
 
     // Kriterien bearbeiten
 
-    final slug = node.value!;
+    final slug = node.slug!;
 
     List<String> criterionCategories = [];
 
@@ -90,8 +90,8 @@ class PoiCategoryNodeTile extends ConsumerWidget {
                   enabled: checked,
                 );
           }
-          return;
         }
+        ref.invalidate(poiCountForCategoryProvider(slug));
       },
     );
   }

@@ -30,7 +30,7 @@ final rawSearchResultsProvider = FutureProvider.autoDispose
       if (!query.toLowerCase().startsWith('osm')) {
         return List<PointOfInterest>.unmodifiable(pois);
       }
-
+  
       final poiService = ref.read(poiServiceProvider);
       final addressLookupQueue = ref.read(addressLookupQueueProvider.notifier);
 
