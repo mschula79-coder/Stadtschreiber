@@ -240,14 +240,22 @@ class PoiRepository {
       if (currentRequestId != _lastRequestId) return [];
       return overpassPois;
     }
+    List<Map<String, dynamic>> response;
 
-    final response = await supabase
-        .from('pois')
-        .select('*') // ⭐ alle Felder
-        .ilike('name', '%$query%') // ⭐ Suche
-        .order('name'); // ⭐ Sortierung
-
-
+    if (safeQuery.startsWith('tag')) {
+      final cleanedQuery = safeQuery.substring('tag'.length).trim();
+      response = await supabase
+          .from('pois')
+          .select('*') // ⭐ alle Felder
+          .ilike('osm_value', '%$cleanedQuery%') // ⭐ Suche
+          .order('name'); // ⭐ Sortierung
+    } else {
+      response = await supabase
+          .from('pois')
+          .select('*') // ⭐ alle Felder
+          .ilike('name', '%$query%') // ⭐ Suche
+          .order('name'); // ⭐ Sortierung
+    }
 
     /*     final response = await supabase.rpc(
       'pois_search_with_distance_and_address',
@@ -258,7 +266,7 @@ class PoiRepository {
     final pois = (response as List)
         .map<PointOfInterest>((row) => PointOfInterest.fromSupabase(row))
         .toList();
-        
+
     return pois;
   }
 

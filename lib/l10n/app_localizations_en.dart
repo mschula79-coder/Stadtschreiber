@@ -21,6 +21,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get apply => 'Apply';
 
   @override
+  String get attention => 'Attention';
+
+  @override
   String get authenticationFailed => 'Authentication failed';
 
   @override
@@ -50,6 +53,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get confirm => 'Confirm';
+
+  @override
+  String get confirmDeletionOfPoint =>
+      'Do you really want to delete this point?';
 
   @override
   String get confirmEmail => 'Please confirm your new email address.';
@@ -128,6 +135,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterCategories => 'Filter categories';
 
   @override
+  String get finishDragMode => 'Finish drag mode';
+
+  @override
+  String get finishEditMode => 'Finish edit mode';
+
+  @override
   String get geometryType => 'Geometry type';
 
   @override
@@ -171,6 +184,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logout => 'Sign out';
 
   @override
+  String get moveMapMessage => 'Move the map to set the new position';
+
+  @override
   String get msgArticleEditError => 'Title, URL and source must not be empty';
 
   @override
@@ -198,6 +214,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newList => '+ new list';
+
+  @override
+  String get newPassword => 'New password';
 
   @override
   String get no => 'No';
@@ -295,6 +314,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get send => 'Send';
+
+  @override
+  String get setNewPassword => 'Set a new password';
 
   @override
   String get showTop10 => 'Show top 10 list';

@@ -1,11 +1,11 @@
-import 'package:stadtschreiber/l10n/app_localizations_de.dart';
 import 'package:stadtschreiber/l10n/app_localizations.dart';
+import 'package:stadtschreiber/l10n/app_localizations_de.dart';
 import 'package:stadtschreiber/l10n/app_localizations_en.dart';
 import 'package:stadtschreiber/l10n/app_localizations_fr.dart';
 
 int germanCompare(String a, String b) {
-  String normalize(String s) {
-    return s
+  String normalize(String value) {
+    return value
         .toLowerCase()
         .replaceAll('ä', 'ae')
         .replaceAll('ö', 'oe')
@@ -16,273 +16,199 @@ int germanCompare(String a, String b) {
   return normalize(a).compareTo(normalize(b));
 }
 
-String getText(String textCode, {String? languageCode}) {
-  AppLocalizations localization;
-  switch (languageCode) {
-    case 'de':
-      localization = AppLocalizationsDe();
-      break;
-    case 'en':
-      localization = AppLocalizationsEn();
-      break;
-    case 'fr':
-      localization = AppLocalizationsFr();
-      break;
-    case 'ch':
-      localization = AppLocalizationsDeCh();
-      break;
-    default:
-      localization = AppLocalizationsDe();
+String getText(
+  String textCode, {
+  String? languageCode,
+  String? countryCode,
+}) {
+  final AppLocalizations localization;
+
+  if (languageCode == 'de' && countryCode == 'CH') {
+    localization = AppLocalizationsDeCh();
+  } else {
+    switch (languageCode) {
+      case 'en':
+        localization = AppLocalizationsEn();
+        break;
+      case 'fr':
+        localization = AppLocalizationsFr();
+        break;
+      case 'ch':
+        localization = AppLocalizationsDeCh();
+        break;
+      case 'de':
+      default:
+        localization = AppLocalizationsDe();
+        break;
+    }
   }
 
   switch (textCode) {
-    case "add":
+    case 'add':
       return localization.add;
-
-    case "address":
+    case 'address':
       return localization.address;
-
-    //TODO update references and aab files
-    case "apply":
-      return "Übernehmen";
-
-    case "attention":
-      return "attention";
-
-    case "cancel":
+    case 'apply':
+      return localization.apply;
+    case 'attention':
+      return localization.attention;
+    case 'cancel':
       return localization.cancel;
-
-    case "close":
-      return 'Schliessen';
-
-    case "checkEmail":
+    case 'changePassword':
+      return localization.changePassword;
+    case 'checkEmail':
       return localization.checkEmail;
-
-    case "changePassword":
-      return "Passwort ändern";
-
-    case "comments":
-      return "Kommentare";
-
-    case "confirmDeletionOfPoint":
-      return "confirm deletion of point";
-
-    case "confirmEmail":
-      return "Bitte bestätige deine neue E-Mail-Adresse.";
-
-    case "criterion":
-      return 'Kriterium';
-
-    case "deleteDate":
-      return "Datum löschen";
-
-    case "deleteUser":
-      return "Benutzer löschen";
-
-    case "description":
-      return "Beschreibung";
-
-    case "editRatingCriterion":
-      return "Bewertungskriterium bearbeiten";
-
-    case "editArticle":
-      return "Artikel bearbeiten";
-
-    case "editCategory":
-      return "Kategorie bearbeiten";
-
-    case "editCategories":
+    case 'close':
+      return localization.close;
+    case 'comments':
+      return localization.comments;
+    case 'confirmDeletionOfPoint':
+      return localization.confirmDeletionOfPoint;
+    case 'confirmEmail':
+      return localization.confirmEmail;
+    case 'criterion':
+      return localization.criterion;
+    case 'deleteDate':
+      return localization.deleteDate;
+    case 'deleteUser':
+      return localization.deleteUser;
+    case 'description':
+      return localization.description;
+    case 'editArticle':
+      return localization.editArticle;
+    case 'editCategories':
       return localization.editCategories;
-
-    case "editFavorite":
-      return "Favorit bearbeiten";
-
-    case "editFeatures":
+    case 'editCategory':
+      return localization.editCategory;
+    case 'editFavorite':
+      return localization.editFavorite;
+    case 'editFeatures':
       return localization.editFeatures;
-
-    case "editGeometryPoints":
+    case 'editGeometryPoints':
       return localization.editGeometryPoints;
-
-    case "editGeometryPointsInstruction":
+    case 'editGeometryPointsInstruction':
       return localization.editGeometryPointsInstruction;
-
-    case "editImageInformation":
-      return "Bildinformationen bearbeiten";
-
-    case "editLinks":
+    case 'editImageInformation':
+      return localization.editImageInformation;
+    case 'editLinks':
       return localization.editLinks;
-
-    case "editProfile":
-      return "Profil bearbeiten";
-
-    case "email":
+    case 'editProfile':
+      return localization.editProfile;
+    case 'editRatingCriterion':
+      return localization.editRatingCriterion;
+    case 'email':
       return localization.email;
-
-    case "enterName":
-      return "Name eingeben";
-
-    case "error":
+    case 'enterName':
+      return localization.enterName;
+    case 'error':
       return localization.error;
-
-    case "favorites":
-      return 'Favoriten';
-
-    case "features":
+    case 'favorites':
+      return localization.favorites;
+    case 'features':
       return localization.features;
-
-    case "filterCategories":
-      return "Kategorien filtern";
-
-    case "finishDragMode":
-      return "finish drag mode";
-
-    case "finishEditMode":
-      return "finish edit mode";
-
-    case "geometryType":
+    case 'filterCategories':
+      return localization.filterCategories;
+    case 'finishDragMode':
+      return localization.finishDragMode;
+    case 'finishEditMode':
+      return localization.finishEditMode;
+    case 'geometryType':
       return localization.geometryType;
-
-    case "joinus1":
-      return "Mach mit!";
-
-    case "joinus2":
-      return "Werde Teil der Stadtschreiber-Community und teile deine Lieblingsorte mit anderen!";
-
-    case "links":
-      return localization.links;
-
-    case "locationAndGeometrie":
-      return localization.locationAndGeometrie;
-
-    case "login":
-      return localization.login;
-
-    case "loginRequired":
-      return "Neu einloggen erforderlich";
-
-    case "hello":
+    case 'hello':
       return localization.hello;
-
+    case 'joinus1':
+      return localization.joinus1;
+    case 'joinus2':
+      return localization.joinus2;
     case 'lengthOfPoiList':
-      return "Länge der Hitliste";
-
-    case "line":
+      return localization.lengthOfPoiList;
+    case 'line':
       return localization.line;
-
-    case "moveMapMessage":
-      return "bewege die Karte um den Punkt zu platzieren";
-
-    case "myRating":
-      return "Meine Bewertung";
-
-    case "newHere":
-      return "Neu hier?";
-
-    case "newList":
-      return "+ neue Liste";
-
-    case 'noFavoritesListsAvailable':
-      return "Keine Favoritenlisten vorhanden";
-
-    case "noEntries":
-      return localization.noEntries;
-
+    case 'links':
+      return localization.links;
+    case 'locationAndGeometrie':
+      return localization.locationAndGeometrie;
+    case 'login':
+      return localization.login;
+    case 'loginRequired':
+      return localization.loginRequired;
+    case 'moveMapMessage':
+      return localization.moveMapMessage;
+    case 'msgArticleEditError':
+      return localization.msgArticleEditError;
+    case 'msgImageEditError':
+      return localization.msgImageEditError;
     case 'msgNewLogin':
-      return "Jetzt neu einloggen";
-    case "msgImageEditError":
-      return "Titel, URL und Eingetragen von dürfen nicht leer sein";
-
-    case "msgRoleUpdate":
-      return "Deine Rollen wurden aktualisiert. Bitte melde dich einmal neu an, damit die Änderungen aktiv werden.";
-
-    case "msgArticleEditError":
-      return "Titel, URL und Quelle dürfen nicht leer sein";
-
-    case "multipolygone":
+      return localization.msgNewLogin;
+    case 'msgRoleUpdate':
+      return localization.msgRoleUpdate;
+    case 'multipolygone':
       return localization.multipolygone;
-
-    case "name":
+    case 'myRating':
+      return localization.myRating;
+    case 'name':
       return localization.name;
-
-    case "newPassword":
-      return "Neues Passwort";
-
+    case 'newHere':
+      return localization.newHere;
+    case 'newList':
+      return localization.newList;
+    case 'newPassword':
+      return localization.newPassword;
+    case 'noEntries':
+      return localization.noEntries;
+    case 'noFavoritesListsAvailable':
+      return localization.noFavoritesListsAvailable;
     case 'noPoiFound':
-      return "kein Ort gefunden";
-
+      return localization.noPoiFound;
     case 'noPoiFoundWithTheseCriteria':
-      return "Keine Orte mit diesen Kriterien vorhanden";
-
-    case "password":
+      return localization.noPoiFoundWithTheseCriteria;
+    case 'password':
       return localization.password;
-
-    case "passwordChanged":
-      return "Passwort erfolgreich geändert";
-
-    case "passwordForgotten":
+    case 'passwordChanged':
+      return localization.passwordChanged;
+    case 'passwordForgotten':
       return localization.passwordForgotten;
-
-    case "passwordsDoNotMatch":
-      return "Passwörter stimmen nicht überein";
-
+    case 'passwordsDoNotMatch':
+      return localization.passwordsDoNotMatch;
     case 'poiNotFound':
-      return "Ort nicht gefunden";
-
-    case "point":
+      return localization.poiNotFound;
+    case 'point':
       return localization.point;
-
-    case "polygone":
+    case 'polygone':
       return localization.polygone;
-
-    case "processLink":
-      return "Link prüfen";
-
-    case "register":
+    case 'processLink':
+      return localization.processLink;
+    case 'register':
       return localization.register;
-
-    case "results":
-      return "Resultate";
-
-    case "role":
-      return "Rolle";
-
-    case "save":
+    case 'results':
+      return localization.results;
+    case 'role':
+      return localization.role;
+    case 'save':
       return localization.save;
-
-    case "search":
+    case 'search':
       return localization.search;
-
-    case "selectAll":
-      return "Alle auswählen";
-
-    case "selectCategory":
+    case 'selectAll':
+      return localization.selectAll;
+    case 'selectCategory':
       return localization.selectCategory;
-
     case 'selectLengthOfPoiList':
-      return "Länge der Hitliste auswählen";
-
-    case "selectRatingCriterion":
+      return localization.selectLengthOfPoiList;
+    case 'selectRatingCriterion':
       return localization.selectRatingCriterion;
-
-    case "setNewPassword":
-      return "neues Password eingeben";
-
-    case "slogan":
-      return "Entdecke dein Zuhause";
-
-    case "upload":
-      return "Upload";
-
-    case "underConstruction":
-      return "Die App befindet sich noch im Aufbau.";
-
-    case "user":
-      return "User";
-
-    case "username":
+    case 'setNewPassword':
+      return localization.setNewPassword;
+    case 'slogan':
+      return localization.slogan;
+    case 'underConstruction':
+      return localization.underConstruction;
+    case 'upload':
+      return localization.upload;
+    case 'user':
+      return localization.user;
+    case 'username':
       return localization.userName;
-
     default:
-      return "NO TEXT FOUND FOR $textCode";
+      return 'NO TEXT FOUND FOR $textCode';
   }
 }

@@ -1,5 +1,7 @@
 // ignore_for_file: unused_local_variable
 
+// TODO Features auswählen
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/poi_selection_modes.dart';
@@ -361,11 +363,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                 style: const TextStyle(fontSize: 16),
               ),
             ),
-            if (allDescendantLeaves.isNotEmpty)
-              Text(
-                '$checkedChildren/${allDescendantLeaves.length}',
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
+            
           ],
         ),
         children: node.children

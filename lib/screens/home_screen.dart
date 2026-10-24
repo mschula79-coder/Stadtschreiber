@@ -174,11 +174,11 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
                   ),
 
                 // TODO Thumbnail Click Zentrierung Browser fixen
-                // TODO Bg remove Basel Icon
+        
                 Positioned(
                   top: 25,
                   left: 25,
-                  child: Image.asset('assets/icons/basel.jpg', height: 35),
+                  child: Image.asset('assets/icons/basel-no-bg.png', height: 35),
                 ),
                 Positioned(
                   top: 20,

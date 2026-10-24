@@ -125,6 +125,12 @@ abstract class AppLocalizations {
   /// **'Apply'**
   String get apply;
 
+  /// No description provided for @attention.
+  ///
+  /// In en, this message translates to:
+  /// **'Attention'**
+  String get attention;
+
   /// No description provided for @authenticationFailed.
   ///
   /// In en, this message translates to:
@@ -184,6 +190,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirm'**
   String get confirm;
+
+  /// No description provided for @confirmDeletionOfPoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you really want to delete this point?'**
+  String get confirmDeletionOfPoint;
 
   /// No description provided for @confirmEmail.
   ///
@@ -335,6 +347,18 @@ abstract class AppLocalizations {
   /// **'Filter categories'**
   String get filterCategories;
 
+  /// No description provided for @finishDragMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish drag mode'**
+  String get finishDragMode;
+
+  /// No description provided for @finishEditMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish edit mode'**
+  String get finishEditMode;
+
   /// No description provided for @geometryType.
   ///
   /// In en, this message translates to:
@@ -419,6 +443,12 @@ abstract class AppLocalizations {
   /// **'Sign out'**
   String get logout;
 
+  /// No description provided for @moveMapMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the map to set the new position'**
+  String get moveMapMessage;
+
   /// No description provided for @msgArticleEditError.
   ///
   /// In en, this message translates to:
@@ -472,6 +502,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'+ new list'**
   String get newList;
+
+  /// No description provided for @newPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get newPassword;
 
   /// No description provided for @no.
   ///
@@ -664,6 +700,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send'**
   String get send;
+
+  /// No description provided for @setNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a new password'**
+  String get setNewPassword;
 
   /// No description provided for @showTop10.
   ///

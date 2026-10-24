@@ -98,8 +98,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               fontWeight: FontWeight.w300,
                             ),
                           ),
-                          const SizedBox(height: 20),
-
+                          const SizedBox(height: 30),
+/* 
                           TextButton(
                             style: TextButton.styleFrom(
                               backgroundColor: Theme.of(
@@ -128,7 +128,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             child: Text(
                               getText('newHere', languageCode: languageCode),
                             ),
-                          ),
+                          ), */
 
                           const SizedBox(height: 20),
                           TextField(
@@ -186,47 +186,54 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             ),
                           ),
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: 12,
-                            runSpacing: 12,
-                            children: [
-                              buildLanguageDropdown(context, ref),
-                              ElevatedButton(
-                                onPressed: loading ? null : _login,
-                                child: Text(
-                                  getText('login', languageCode: languageCode),
-                                ),
-                              ),
-                              ElevatedButton(
-                                onPressed: loading
-                                    ? null
-                                    : () async {
-                                        if (passwordController.text
-                                                .trim()
-                                                .length >=
-                                            8) {
-                                          await _askUsernameAndRegister();
-                                        } else {
-                                          if (!context.mounted) {
-                                            return;
-                                          }
-
-                                          messageBox(
-                                            context,
-                                            'Bitte Passwort mit min. 8 Zeichen setzen',
-                                            '',
-                                          );
-                                        }
-                                      },
-                                child: Text(
-                                  getText(
-                                    'register',
-                                    languageCode: languageCode,
+                          SizedBox(height: 5,),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Wrap(
+                              alignment: WrapAlignment.start,
+                              spacing: 12,
+                              runSpacing: 12,
+                              children: [
+                                buildLanguageDropdown(context, ref),
+                                ElevatedButton(
+                                  onPressed: loading ? null : _login,
+                                  child: Text(
+                                    getText(
+                                      'login',
+                                      languageCode: languageCode,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                                ElevatedButton(
+                                  onPressed: loading
+                                      ? null
+                                      : () async {
+                                          if (passwordController.text
+                                                  .trim()
+                                                  .length >=
+                                              8) {
+                                            await _askUsernameAndRegister();
+                                          } else {
+                                            if (!context.mounted) {
+                                              return;
+                                            }
+
+                                            messageBox(
+                                              context,
+                                              'Bitte Passwort mit min. 8 Zeichen setzen',
+                                              '',
+                                            );
+                                          }
+                                        },
+                                  child: Text(
+                                    getText(
+                                      'register',
+                                      languageCode: languageCode,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                           if (checkEmail) ...[
                             const SizedBox(height: 16),
@@ -650,5 +657,5 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
       ),
     );
-  } 
+  }
 }

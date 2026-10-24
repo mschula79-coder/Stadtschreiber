@@ -21,6 +21,9 @@ class PointOfInterest {
   Map<String, dynamic>? geomArea;
   String geometryType; // 'point' | 'linestring' | 'polygon' | 'multipolygon',
   final int? osmId;
+  final String? osmKey;
+  final String? osmValue;
+
   bool newPoi = false;
   final List<ImageEntry> images;
 
@@ -39,6 +42,8 @@ class PointOfInterest {
     this.geomArea,
     this.geometryType = 'point',
     this.osmId,
+    this.osmKey,
+    this.osmValue,
     required newPoi,
     required this.images,
   });
@@ -98,6 +103,8 @@ class PointOfInterest {
       geometryType:
           (row['geom_area']?['type'] as String?)?.toLowerCase() ?? 'point',
       osmId: row['osm_id'] as int?,
+      osmKey: row['osm_key'] as String?,
+      osmValue: row['osm_value'] as String?,
       newPoi: false,
       images: row['images'] == null
           ? []
@@ -170,6 +177,8 @@ class PointOfInterest {
               : null),
       geometryType: geometryType ?? this.geometryType,
       osmId: osmId ?? this.osmId,
+      osmKey: osmKey,
+      osmValue: osmValue,
       newPoi: newPoi ?? this.newPoi,
       images: images ?? this.images,
     );
@@ -187,14 +196,16 @@ class PointOfInterest {
       'history': historyEntries.map((e) => e.toJson()).toList(),
       'articles': articles.map((e) => e.toJson()).toList(),
       'street': address?.street,
-      'house_number':  address?.houseNumber,
-      'postcode':address?.postcode,
+      'house_number': address?.houseNumber,
+      'postcode': address?.postcode,
       'city': address?.city,
       'district': address?.district,
       'country': address?.country,
       'description': description,
       'geom_area': geomArea,
       'osm_id': osmId,
+      'osm_key': osmKey,
+      'osm_value': osmValue,
       'images': images.map((e) => e.toJson()).toList(),
     };
   }

@@ -21,6 +21,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get apply => 'Übernehmen';
 
   @override
+  String get attention => 'Achtung';
+
+  @override
   String get authenticationFailed => 'Authentifizierung fehlgeschlagen';
 
   @override
@@ -50,6 +53,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get confirm => 'Bestätigen';
+
+  @override
+  String get confirmDeletionOfPoint => 'Punkt wirklich löschen?';
 
   @override
   String get confirmEmail => 'Bitte bestätige deine neue E-Mail-Adresse.';
@@ -128,6 +134,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get filterCategories => 'Kategorien filtern';
 
   @override
+  String get finishDragMode => 'Beende den Drag Mode';
+
+  @override
+  String get finishEditMode => 'Beende den Edit Mode';
+
+  @override
   String get geometryType => 'Geometrietyp';
 
   @override
@@ -171,6 +183,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get logout => 'Abmelden';
 
   @override
+  String get moveMapMessage =>
+      'Bewege die Karte, um die neue Position festzulegen';
+
+  @override
   String get msgArticleEditError =>
       'Titel, URL und Quelle dürfen nicht leer sein';
 
@@ -199,6 +215,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get newList => '+ neue Liste';
+
+  @override
+  String get newPassword => 'neues Passwort';
 
   @override
   String get no => 'Nein';
@@ -298,6 +317,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get send => 'Senden';
 
   @override
+  String get setNewPassword => 'Setze ein neues Passwort';
+
+  @override
   String get showTop10 => 'Top-10-Liste anzeigen';
 
   @override
@@ -342,6 +364,9 @@ class AppLocalizationsDeCh extends AppLocalizationsDe {
   String get apply => 'Übernää';
 
   @override
+  String get attention => 'Obacht';
+
+  @override
   String get authenticationFailed => 'D Aamäldig het nid klappt';
 
   @override
@@ -371,6 +396,9 @@ class AppLocalizationsDeCh extends AppLocalizationsDe {
 
   @override
   String get confirm => 'Bestätige';
+
+  @override
+  String get confirmDeletionOfPoint => 'Wottsch dä Punkt würklig lösche?';
 
   @override
   String get confirmEmail => 'Bitte bestätig dini neui E-Mail-Adrässe.';
@@ -449,6 +477,12 @@ class AppLocalizationsDeCh extends AppLocalizationsDe {
   String get filterCategories => 'Kategorie filtere';
 
   @override
+  String get finishDragMode => 'S Verschiebe beände';
+
+  @override
+  String get finishEditMode => 'S Bearbeite beände';
+
+  @override
   String get geometryType => 'Geometrietyp';
 
   @override
@@ -492,6 +526,10 @@ class AppLocalizationsDeCh extends AppLocalizationsDe {
   String get logout => 'Abmälde';
 
   @override
+  String get moveMapMessage =>
+      'Verschieb d Charte, zum die neui Position feschtzlege';
+
+  @override
   String get msgArticleEditError => 'Titel, URL und Quälle dörfe nid läär syy';
 
   @override
@@ -519,6 +557,9 @@ class AppLocalizationsDeCh extends AppLocalizationsDe {
 
   @override
   String get newList => '+ neui Lischte';
+
+  @override
+  String get newPassword => 'Neus Passwort';
 
   @override
   String get no => 'Nai';
@@ -616,6 +657,9 @@ class AppLocalizationsDeCh extends AppLocalizationsDe {
 
   @override
   String get send => 'Abschigge';
+
+  @override
+  String get setNewPassword => 'Gib e neus Passwort yy';
 
   @override
   String get showTop10 => 'Top-10-Lischte aazeige';

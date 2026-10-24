@@ -21,6 +21,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get apply => 'Appliquer';
 
   @override
+  String get attention => 'Attention';
+
+  @override
   String get authenticationFailed => 'Échec de l’authentification';
 
   @override
@@ -50,6 +53,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get confirm => 'Confirmer';
+
+  @override
+  String get confirmDeletionOfPoint =>
+      'Voulez-vous vraiment supprimer ce point ?';
 
   @override
   String get confirmEmail =>
@@ -129,6 +136,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get filterCategories => 'Filtrer les catégories';
 
   @override
+  String get finishDragMode => 'Terminer le déplacement';
+
+  @override
+  String get finishEditMode => 'Terminer la modification';
+
+  @override
   String get geometryType => 'Type de géométrie';
 
   @override
@@ -172,6 +185,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get logout => 'Se déconnecter';
 
   @override
+  String get moveMapMessage =>
+      'Déplacez la carte pour définir la nouvelle position';
+
+  @override
   String get msgArticleEditError =>
       'Le titre, l’URL et la source ne doivent pas être vides';
 
@@ -200,6 +217,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get newList => '+ nouvelle liste';
+
+  @override
+  String get newPassword => 'Nouveau mot de passe';
 
   @override
   String get no => 'Non';
@@ -297,6 +317,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get send => 'Envoyer';
+
+  @override
+  String get setNewPassword => 'Définir un nouveau mot de passe';
 
   @override
   String get showTop10 => 'Afficher le classement des 10 meilleurs';

@@ -5,10 +5,10 @@ import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/provider/camera_provider.dart';
 import 'package:stadtschreiber/provider/poi_ratings_provider.dart';
 import 'package:stadtschreiber/provider/poi_selection_provider.dart';
+import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/user_location_state_provider.dart';
 import 'package:stadtschreiber/services/geo_service.dart';
 import 'package:stadtschreiber/widgets/_icon_getter.dart';
-
 
 class PoiListItem extends ConsumerWidget {
   final PointOfInterest poi;
@@ -48,6 +48,7 @@ class PoiListItem extends ConsumerWidget {
     final isSelected = selection.contains(poi);
     final selectionMode = selection.isNotEmpty;
 
+    final isAdmin = ref.watch(supabaseUserStateProvider).isAdmin;
 
     return Column(
       children: [
@@ -221,6 +222,28 @@ class PoiListItem extends ConsumerWidget {
                           );
                         },
                       ),
+                      isAdmin
+                          ? Text(
+                              poi.categories.toString(),
+                              maxLines: 99,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w300,
+                              ),
+                            )
+                          : SizedBox.shrink(),
+                      isAdmin
+                          ? Text(
+                              '${poi.osmKey??'-'}: ${poi.osmValue??'-'}',
+                              maxLines: 99,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w300,
+                              ),
+                            )
+                          : SizedBox.shrink(),
                     ],
                   ),
                 ),
