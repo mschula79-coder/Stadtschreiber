@@ -3,15 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
+import 'package:maplibre/maplibre.dart';
 import 'dart:async';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/models/poi_selection_modes.dart';
+import 'package:stadtschreiber/provider/camera_provider.dart';
 import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/poi_selection_provider.dart';
 import 'package:stadtschreiber/provider/search_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
+import 'package:stadtschreiber/services/geo_service.dart';
 import 'package:stadtschreiber/utils/language_utils.dart';
 import 'package:stadtschreiber/widgets/modal_message_box.dart';
 import 'package:stadtschreiber/widgets/poi_list_item.dart';
@@ -35,6 +38,11 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
 
   Timer? _searchDebounce;
 
+  Timer? _radiusDebounce;
+
+  double _searchRadiusKm = 5;
+  double _appliedSearchRadiusKm = 5;
+
   @override
   void initState() {
     super.initState();
@@ -45,6 +53,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
     _searchController.dispose();
     expansionController.dispose();
     _searchDebounce?.cancel();
+    _radiusDebounce?.cancel();
     super.dispose();
   }
 
@@ -70,6 +79,8 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
     });
 
     final isAdmin = ref.watch(supabaseUserStateProvider).isAdmin;
+
+    final correctedCamera = ref.watch(cameraPositionPanelCorrectedProvider);
 
     return Theme(
       data: Theme.of(context).copyWith(
@@ -174,8 +185,83 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
             ),
 
             if (_searchQuery.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.radar,
+                          size: 20,
+                          color: Colors.black54,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${getText('searchRadius', languageCode: languageCode)}: ${_formatRadius(_searchRadiusKm)}',
+
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Slider(
+                      min: 0.5,
+                      max: 20,
+                      divisions: null,
+                      value: _searchRadiusKm,
+                      label: _formatRadius(_searchRadiusKm),
+                      onChanged: (value) {
+                        _radiusDebounce?.cancel();
+
+                        setState(() {
+                          _searchRadiusKm = value;
+                        });
+
+                        _radiusDebounce = Timer(
+                          const Duration(milliseconds: 300),
+                          () {
+                            if (!mounted) {
+                              return;
+                            }
+
+                            setState(() {
+                              _appliedSearchRadiusKm = _searchRadiusKm;
+                            });
+                          },
+                        );
+                      },
+                      onChangeEnd: (value) {
+                        _radiusDebounce?.cancel();
+
+                        setState(() {
+                          _searchRadiusKm = value;
+                          _appliedSearchRadiusKm = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+            if (_searchQuery.isNotEmpty)
               searchResults.when(
                 data: (foundPois) {
+                  final radiusMeters = _appliedSearchRadiusKm * 1000;
+                  final filteredPois = foundPois.where((poi) {
+                    final distanceMeters = geoDistanceMeters(
+                      Geographic(lon: poi.location.lon, lat: poi.location.lat),
+                      correctedCamera,
+                    );
+
+                    return distanceMeters <= radiusMeters;
+                  }).toList();
+
                   // TODO Check ob benötigt
                   /* WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (mounted) {
@@ -184,7 +270,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                           .setAll(foundPois);
                     }
                   }); */
-                  if (foundPois.isEmpty) {
+                  if (filteredPois.isEmpty) {
                     return Padding(
                       padding: EdgeInsetsGeometry.fromLTRB(5, 15, 0, 0),
                       child: Text(
@@ -228,7 +314,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                                 onPressed: () {
                                   ref
                                       .read(poiSelectionProvider.notifier)
-                                      .setAll(foundPois);
+                                      .setAll(filteredPois);
                                 },
                               ),
                               // Alle de-markieren
@@ -253,13 +339,13 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                         ListView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          itemCount: foundPois.length,
+                          itemCount: filteredPois.length,
                           itemBuilder: (context, index) {
                             return PoiListItem(
                               selectEnabled: true,
-                              poi: foundPois[index],
+                              poi: filteredPois[index],
                               onTap: () async {
-                                final poi = foundPois[index];
+                                final poi = filteredPois[index];
 
                                 _handlePoiSelection(poi);
 
@@ -285,6 +371,10 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
         ),
       ),
     );
+  }
+
+  String _formatRadius(double radiusKm) {
+    return '${radiusKm.toStringAsFixed(1).replaceAll('.', '.')} km';
   }
 
   void _handlePoiSelection(PointOfInterest poi) {

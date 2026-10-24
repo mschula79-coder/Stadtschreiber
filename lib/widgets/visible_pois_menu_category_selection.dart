@@ -35,6 +35,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
       TextEditingController();
   bool isFilterActive = false;
   bool expandAll = false;
+  // TODO isAdmin oder isAdminViewEnabled
   bool isAdminViewEnabled = false;
   final ExpansibleController expansionController = ExpansibleController();
   PoiSelectionMode? _lastMode;

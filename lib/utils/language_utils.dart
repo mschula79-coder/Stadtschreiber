@@ -188,6 +188,8 @@ String getText(
       return localization.save;
     case 'search':
       return localization.search;
+    case 'searchRadius':
+      return "Umkreis um Kartenmitte";
     case 'selectAll':
       return localization.selectAll;
     case 'selectCategory':
