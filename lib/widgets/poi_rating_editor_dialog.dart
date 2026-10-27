@@ -33,8 +33,10 @@ class _PoiRatingEditorDialogState extends ConsumerState<PoiRatingEditorDialog> {
   @override
   Widget build(BuildContext context) {
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
     return AlertDialog(
-      title: Text(getText('myRating', languageCode: languageCode)),
+      title: Text(getText('myRating', languageCode: languageCode, countryCode: countryCode)),
       content: SizedBox(
         width: double.maxFinite,
         height: 500,
@@ -64,14 +66,14 @@ class _PoiRatingEditorDialogState extends ConsumerState<PoiRatingEditorDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(getText("Abbrechen", languageCode: languageCode)),
+          child: Text(getText("Abbrechen", languageCode: languageCode, countryCode: countryCode)),
         ),
         ElevatedButton(
           onPressed: () {
             widget.onRatingChanged(updatedScores, updatedComments);
             Navigator.pop(context);
           },
-          child: Text(getText("save", languageCode: languageCode)),
+          child: Text(getText("save", languageCode: languageCode, countryCode: countryCode)),
         ),
       ],
     );

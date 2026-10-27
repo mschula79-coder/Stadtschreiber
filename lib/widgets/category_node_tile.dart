@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stadtschreiber/models/category_node_localized.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
 import 'package:stadtschreiber/provider/category_repository_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 
-import '../models/category.dart';
 
 class PoiCategoryNodeTile extends ConsumerWidget {
-  final CategoryNode node;
+  final LocalizedCategoryNode node;
   final bool? isCriterionMode;
   final String? criterionId;
 
@@ -46,7 +46,7 @@ class PoiCategoryNodeTile extends ConsumerWidget {
 
     // Kriterien bearbeiten
 
-    final slug = node.slug!;
+    final slug = node.slug;
 
     List<String> criterionCategories = [];
 

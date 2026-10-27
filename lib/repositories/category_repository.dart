@@ -1,5 +1,4 @@
 import 'package:stadtschreiber/models/rating_criterion.dart';
-import 'package:stadtschreiber/utils/language_utils.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/category.dart';
@@ -11,9 +10,8 @@ class CategoryRepository {
 
     final catListRaw = await supabase
         .from('categories')
-        .select('id, slug, name, sort_order')
-        .eq('is_active', true)
-        .order('name', ascending: true);
+        .select('id, slug, sort_order, labels')
+        .eq('is_active', true);
 
     final Map<String, CategoryDto> categories = {
       for (var c in catListRaw) c['id'] as String: CategoryDto.fromJson(c),
@@ -42,19 +40,9 @@ class CategoryRepository {
     final rootIds = categories.keys.where((id) => !allChildren.contains(id));
 
     // **ADDED**: pass allChildren into _buildNode so nodes know if they have parents
-    final roots =
-        rootIds
-            .map((id) => _buildNode(id, categories, childrenMap, allChildren))
-            .toList()
-          ..sort((a, b) {
-            final dtoA = categories[a.id]!;
-            final dtoB = categories[b.id]!;
-
-            final orderCompare = dtoA.sortOrder.compareTo(dtoB.sortOrder);
-            if (orderCompare != 0) return orderCompare;
-
-            return germanCompare(dtoA.name, dtoB.name);
-          });
+    final roots = rootIds
+        .map((id) => _buildNode(id, categories, childrenMap, allChildren))
+        .toList();
 
     return roots;
   }
@@ -62,28 +50,43 @@ class CategoryRepository {
   Future<List<CategoryDto>> categoriesList() async {
     final supabase = Supabase.instance.client;
 
-    final catListRaw = await supabase
+    final response = await supabase
         .from('categories')
-        .select('id, slug, name')
-        .eq('is_active', true)
-        .order('name', ascending: true);
+        .select('id, slug, sort_order, labels')
+        .eq('is_active', true);
 
-    final List<CategoryDto> categories = (catListRaw as List)
-        .map<CategoryDto>((c) => CategoryDto.fromJson(c))
+    return response
+        .map<CategoryDto>((row) => CategoryDto.fromJson(row))
         .toList();
-    return categories;
   }
 
   Future<CategoryDto> addCategory({
-    required String name,
     required String slug,
+    required Map<String, String> labels,
   }) async {
     final supabase = Supabase.instance.client;
 
+    final normalizedSlug = slug.trim();
+
+    if (normalizedSlug.isEmpty) {
+      throw ArgumentError('Der Kategorie-Slug darf nicht leer sein.');
+    }
+
+    final germanLabel = labels['de-DE']?.trim();
+
+    if (germanLabel == null || germanLabel.isEmpty) {
+      throw ArgumentError('Das deutsche Label darf nicht leer sein.');
+    }
+
     final newCategoryRaw = await supabase
         .from('categories')
-        .insert({'name': name, 'slug': slug, 'is_active': true})
-        .select()
+        .insert({
+          'name': germanLabel,
+          'slug': normalizedSlug,
+          'labels': labels,
+          'is_active': true,
+        })
+        .select('id, slug, sort_order, labels')
         .single();
 
     return CategoryDto.fromJson(newCategoryRaw);
@@ -91,16 +94,28 @@ class CategoryRepository {
 
   Future<CategoryDto> updateCategory({
     required String id,
-    required String name,
-    String? slug,
+    required String slug,
+    required Map<String, String> labels,
   }) async {
     final supabase = Supabase.instance.client;
 
+    final normalizedSlug = slug.trim();
+
+    if (normalizedSlug.isEmpty) {
+      throw ArgumentError('Der Kategorie-Slug darf nicht leer sein.');
+    }
+
+    final germanLabel = labels['de-DE']?.trim();
+
+    if (germanLabel == null || germanLabel.isEmpty) {
+      throw ArgumentError('Das deutsche Label darf nicht leer sein.');
+    }
+
     final updatedRaw = await supabase
         .from('categories')
-        .update({'name': name, if (slug != null) 'slug': slug})
+        .update({'name': germanLabel, 'slug': normalizedSlug, 'labels': labels})
         .eq('id', id)
-        .select()
+        .select('id, slug, sort_order, labels')
         .single();
 
     return CategoryDto.fromJson(updatedRaw);
@@ -127,32 +142,28 @@ class CategoryRepository {
   Future<List<CategoryDto>> childrenForParentId(String parentId) async {
     final supabase = Supabase.instance.client;
 
-    try {
-      final response = await supabase
-          .from('category_relations')
-          .select('child_id, categories!category_relations_child_id_fkey(*)')
-          .eq('parent_id', parentId);
+    final response = await supabase
+        .from('category_relations')
+        .select('''
+        child_id,
+        categories!category_relations_child_id_fkey(
+          id,
+          slug,
+          sort_order,
+          labels
+        )
+        ''')
+        .eq('parent_id', parentId);
 
-      /*    print('childrenForParentId response type=${response.runtimeType}');
-      print('childrenForParentId raw=$response'); */
+    return response.map<CategoryDto>((row) {
+      final categoryData = row['categories'];
 
-      final List<CategoryDto> children = (response as List).map((row) {
-        final categoriesData = row['categories'];
-        if (categoriesData == null) {
-          throw Exception('Erwartetes "categories" Objekt fehlt in row: $row');
-        }
-        final Map<String, dynamic> map = Map<String, dynamic>.from(
-          categoriesData as Map,
-        );
-        return CategoryDto.fromJson(map);
-      }).toList();
+      if (categoryData is! Map) {
+        throw FormatException('Das erwartete Kategorieobjekt fehlt: $row');
+      }
 
-      return children;
-    } catch (e) {
-      /*       print('Fehler in childrenForParentId: $e');
-      print('$st'); */
-      rethrow;
-    }
+      return CategoryDto.fromJson(Map<String, dynamic>.from(categoryData));
+    }).toList();
   }
 
   Future<void> addCategoryRelation({
@@ -245,27 +256,25 @@ class CategoryRepository {
     String id,
     Map<String, CategoryDto> categories,
     Map<String, List<String>> childrenMap,
-    // **ADDED**: receive allChildren to determine hasParents for each node
     Set<String> allChildren,
   ) {
     final dto = categories[id]!;
+    final childIds = childrenMap[id] ?? const <String>[];
 
-    final childIds = childrenMap[id] ?? [];
-    final children =
-        childIds
-            .map(
-              (childId) =>
-                  _buildNode(childId, categories, childrenMap, allChildren),
-            )
-            .toList()
-          ..sort((a, b) => a.label.compareTo(b.label));
+    final children = childIds
+        .where(categories.containsKey)
+        .map(
+          (childId) =>
+              _buildNode(childId, categories, childrenMap, allChildren),
+        )
+        .toList();
 
     return CategoryNode(
       id: dto.id,
-      label: dto.name,
       slug: dto.slug,
+      sortOrder: dto.sortOrder,
+      labels: dto.labels,
       children: children,
-      // **ADDED**: set hasParents based on whether this id appears as a child anywhere
       hasParents: allChildren.contains(id),
     );
   }
@@ -322,15 +331,27 @@ class CategoryRepository {
 
     final response = await supabase
         .from('category_rating_criteria_relations')
-        .select('categories(*)')
-        .eq('criterion_id', criterionId)
-        .order('categories.name');
+        .select('''
+        categories!category_rating_criteria_relations_category_id_fkey(
+          slug
+        )
+        ''')
+        .eq('criterion_id', criterionId);
 
-    return response.map((row) {
-      final data = row['categories'];
-      final slug = data['slug'];
-      if (slug is String) return slug;
-      throw Exception("Invalid row format: $row");
+    return response.map<String>((row) {
+      final categoryData = row['categories'];
+
+      if (categoryData is! Map) {
+        throw FormatException('Das erwartete Kategorieobjekt fehlt: $row');
+      }
+
+      final slug = categoryData['slug'];
+
+      if (slug is! String || slug.trim().isEmpty) {
+        throw FormatException('Ungültiger Kategorie-Slug: $row');
+      }
+
+      return slug;
     }).toList();
   }
 

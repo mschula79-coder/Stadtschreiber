@@ -1,45 +1,59 @@
-import 'package:stadtschreiber/models/category.dart';
+import 'package:stadtschreiber/models/category_node_localized.dart';
+import 'package:stadtschreiber/utils/category_localization_utils.dart';
 
 class CategoryUtils {
-  static List<CategoryNode> collectLeafCategories(CategoryNode node) {
-    final result = <CategoryNode>[];
+  const CategoryUtils._();
 
-    void traverse(CategoryNode n) {
-      if (n.children.isEmpty) {
-        result.add(n);
-      } else {
-        for (final child in n.children) {
-          traverse(child);
-        }
-      }
-    }
+  static List<LocalizedCategoryNode> collectLeafCategories(
+    LocalizedCategoryNode node, {
+    bool useSortOrder = false,
+  }) {
+    final result = <LocalizedCategoryNode>[];
 
-    traverse(node);
+    _collectLeaves(
+      node,
+      result,
+    );
 
-    // ⭐ alphabetisch sortieren
-    result.sort((a, b) => a.label.compareTo(b.label));
-
-    return result;
+    return CategoryLocalizationUtils.sortLocalizedNodes(
+      result,
+      useSortOrder: useSortOrder,
+    );
   }
 
-  static List<CategoryNode> collectAllLeafCategories(List<CategoryNode> roots) {
-    final result = <CategoryNode>[];
-
-    void traverse(CategoryNode n) {
-      if (n.children.isEmpty) {
-        result.add(n);
-      } else {
-        for (final child in n.children) {
-          traverse(child);
-        }
-      }
-    }
+  static List<LocalizedCategoryNode> collectAllLeafCategories(
+    Iterable<LocalizedCategoryNode> roots, {
+    bool useSortOrder = false,
+  }) {
+    final result = <LocalizedCategoryNode>[];
 
     for (final root in roots) {
-      traverse(root);
+      _collectLeaves(
+        root,
+        result,
+      );
     }
 
-    result.sort((a, b) => a.label.compareTo(b.label));
-    return result;
+    return CategoryLocalizationUtils.sortLocalizedNodes(
+      result,
+      useSortOrder: useSortOrder,
+    );
+  }
+
+  static void _collectLeaves(
+    LocalizedCategoryNode node,
+    List<LocalizedCategoryNode> result,
+  ) {
+    if (node.children.isEmpty) {
+      result.add(node);
+      return;
+    }
+
+    for (final child in node.children) {
+      _collectLeaves(
+        child,
+        result,
+      );
+    }
   }
 }

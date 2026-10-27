@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart' as geo;
 import 'package:maplibre/maplibre.dart' as maplibre;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
+import 'package:stadtschreiber/layout/app_breakpoints.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/provider/address_lookup_queue_provider.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
@@ -95,6 +96,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
     // ignore: unused_local_variable
     final favorites = ref.watch(userFavoritesProvider);
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
 
     final poiRepository = ref.read(poiRepositoryProvider);
     final dragPoiState = ref.watch(dragPoiProvider);
@@ -407,7 +409,11 @@ class MapScreenState extends ConsumerState<MapScreen> {
                             .stopDraggingPointMode();
                       },
                       child: Text(
-                        getText('finishEditMode', languageCode: languageCode),
+                        getText(
+                          'finishEditMode',
+                          languageCode: languageCode,
+                          countryCode: countryCode,
+                        ),
                       ),
                     ),
                   ),
@@ -496,7 +502,11 @@ class MapScreenState extends ConsumerState<MapScreen> {
               child: Center(
                 child: ElevatedButton(
                   child: Text(
-                    getText('finishDragMode', languageCode: languageCode),
+                    getText(
+                      'finishDragMode',
+                      languageCode: languageCode,
+                      countryCode: countryCode,
+                    ),
                   ),
                   onPressed: () {
                     final dragPoi = ref.read(dragPoiProvider).dragPoi;
@@ -530,8 +540,13 @@ class MapScreenState extends ConsumerState<MapScreen> {
                           getText(
                             'confirmDeletionOfPoint',
                             languageCode: languageCode,
+                            countryCode: countryCode,
                           ),
-                          getText('attention', languageCode: languageCode),
+                          getText(
+                            'attention',
+                            languageCode: languageCode,
+                            countryCode: countryCode,
+                          ),
                         );
                         if (confirmed) {
                           final index = ref
@@ -575,7 +590,11 @@ class MapScreenState extends ConsumerState<MapScreen> {
                   child: Center(
                     widthFactor: 0.6,
                     child: Text(
-                      getText('moveMapMessage', languageCode: languageCode),
+                      getText(
+                        'moveMapMessage',
+                        languageCode: languageCode,
+                        countryCode: countryCode,
+                      ),
                       style: TextStyle(
                         color: Colors.black,
                         fontSize: 12,
@@ -900,6 +919,8 @@ NEWPOI
 
     final halfWidth = screenSize.width / 2;
 
+    final isCompact = screenSize.width < AppBreakpoints.compact;
+
     final screenTop = mapController!.toLngLat(Offset(halfWidth, 0)).lat;
     final screenBottom = mapController!
         .toLngLat(Offset(halfWidth, screenSize.height))
@@ -908,9 +929,13 @@ NEWPOI
         .toLngLat(Offset(halfWidth, (screenSize.height - panelHeight)))
         .lat;
 
-    final distanceMapCentertoScreenCenter =
-        (screenTop - mapScreenBottom) / 2 - (screenTop - screenBottom) / 2;
-
+    double distanceMapCentertoScreenCenter;
+    if (isCompact) {
+      distanceMapCentertoScreenCenter =
+          (screenTop - mapScreenBottom) / 2 - (screenTop - screenBottom) / 2;
+    } else {
+      distanceMapCentertoScreenCenter = 0; 
+    }
     try {
       await mapController!.animateCamera(
         center: maplibre.Geographic(
@@ -918,9 +943,6 @@ NEWPOI
           lon: poi.location.x,
         ),
         nativeDuration: const Duration(milliseconds: 200),
-      );
-      DebugService.log(
-        "centerSelectedPoiConsideringPanel: Camera animated considering panel height: $panelHeight, screen: $screenSize, distanceMapCentertoScreenCenter: $distanceMapCentertoScreenCenter",
       );
     } catch (e) {
       DebugService.log(

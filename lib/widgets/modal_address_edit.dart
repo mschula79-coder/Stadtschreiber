@@ -71,8 +71,10 @@ class _AddressEditModalState extends ConsumerState<AddressEditModal> {
   @override
   Widget build(BuildContext context) {
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
     return AlertDialog(
-      title: Text(getText('editArticle', languageCode: languageCode)),
+      title: Text(getText('editArticle', languageCode: languageCode, countryCode: countryCode)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -130,9 +132,9 @@ class _AddressEditModalState extends ConsumerState<AddressEditModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(getText('cancel', languageCode: languageCode)),
+          child: Text(getText('cancel', languageCode: languageCode, countryCode: countryCode)),
         ),
-        ElevatedButton(onPressed: _save, child: Text(getText('save', languageCode: languageCode))),
+        ElevatedButton(onPressed: _save, child: Text(getText('save', languageCode: languageCode, countryCode: countryCode))),
       ],
     );
   }

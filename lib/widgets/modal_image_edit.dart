@@ -62,11 +62,17 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
     final creditsName = _creditsNameController.text.trim();
     final creditsUrl = _creditsUrlController.text.trim();
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
     if (title.isEmpty || url.isEmpty || enteredBy.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            getText("msgImageEditError", languageCode: languageCode),
+            getText(
+              "msgImageEditError",
+              languageCode: languageCode,
+              countryCode: countryCode,
+            ),
           ),
         ),
       );
@@ -105,9 +111,16 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
     isFeatured = (selectedPoi?.featuredImageUrl == image.url);
 
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
 
     return AlertDialog(
-      title: Text(getText("editImageInformation", languageCode: languageCode)),
+      title: Text(
+        getText(
+          "editImageInformation",
+          languageCode: languageCode,
+          countryCode: countryCode,
+        ),
+      ),
       content: SingleChildScrollView(
         child: ConstrainedBox(
           constraints: const BoxConstraints(
@@ -141,7 +154,7 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
                   /* ElevatedButton.icon(
                     icon: const Icon(Icons.link),
                     label: Text(
-                      getText("processLink", languageCode: languageCode),
+                      getText("processLink", languageCode: languageCode, countryCode: countryCode),
                     ),
                     onPressed: () async {
                       if (_urlController.text.isNotEmpty) {
@@ -159,7 +172,13 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
                   // Bild auswählen
                   ElevatedButton.icon(
                     icon: const Icon(Icons.upload),
-                    label: Text(getText("upload", languageCode: languageCode)),
+                    label: Text(
+                      getText(
+                        "upload",
+                        languageCode: languageCode,
+                        countryCode: countryCode,
+                      ),
+                    ),
                     onPressed: () async {
                       final imageEntry = await imageRepo
                           .pickProcessAndUploadImage();
@@ -261,11 +280,23 @@ class _ImageEditModalState extends ConsumerState<ImageEditModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(getText("cancel", languageCode: languageCode)),
+          child: Text(
+            getText(
+              "cancel",
+              languageCode: languageCode,
+              countryCode: countryCode,
+            ),
+          ),
         ),
         ElevatedButton(
           onPressed: () => _save(selectedPoi!),
-          child: Text(getText("save", languageCode: languageCode)),
+          child: Text(
+            getText(
+              "save",
+              languageCode: languageCode,
+              countryCode: countryCode,
+            ),
+          ),
         ),
       ],
     );

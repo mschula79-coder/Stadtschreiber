@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:stadtschreiber/l10n/app_localizations.dart';
-import 'package:stadtschreiber/models/category.dart';
+import 'package:stadtschreiber/models/category_node_localized.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/models/poi_selection_modes.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
+import 'package:stadtschreiber/provider/categories_localized_provider.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
 import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/poi_selection_provider.dart';
@@ -34,7 +35,7 @@ class PoiTop10List extends ConsumerStatefulWidget {
 
 class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
   double top10ListLength = 10;
-  CategoryNode? top10Category;
+  LocalizedCategoryNode? top10Category;
   RatingCriterionDTO? top10Criterion;
 
   final ExpansibleController expansionController = ExpansibleController();
@@ -47,6 +48,8 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
   @override
   Widget build(BuildContext context) {
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
     final top10ListAsync = ref.watch(top10PoisProvider);
     final mode = ref.watch(visiblePoisMenuStateProvider).poiSelectionMode;
 
@@ -129,6 +132,7 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
                         getText(
                           'noPoiFoundWithTheseCriteria',
                           languageCode: languageCode,
+                          countryCode: countryCode,
                         ),
                         style: TextStyle(
                           fontSize: 16,
@@ -147,7 +151,11 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
                           children: [
                             Expanded(
                               child: Text(
-                                getText('results', languageCode: languageCode),
+                                getText(
+                                  'results',
+                                  languageCode: languageCode,
+                                  countryCode: countryCode,
+                                ),
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -224,7 +232,7 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, stack) => Text(
-                  "${getText('error', languageCode: languageCode)}: $err",
+                  "${getText('error', languageCode: languageCode, countryCode: countryCode)}: $err",
                 ),
               ),
 
@@ -235,61 +243,73 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
     );
   }
 
-  // ⭐ Dropdowns bleiben unverändert
   Widget buildCategoryDropdown(BuildContext context, WidgetRef ref) {
-    final roots = ref.watch(categoriesProvider).categories;
-    final allLeafs = CategoryUtils.collectAllLeafCategories(roots);
-    final languageCode = ref.watch(localeProvider).languageCode;
+    final roots = ref.watch(localizedCategoriesProvider);
 
-    return Stack(
-      children: [
-        Positioned(
-          left: 16,
-          top: 0,
-          child: Text(
-            getText('category', languageCode: languageCode),
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+    final allLeafs = CategoryUtils.collectAllLeafCategories(roots);
+
+    final locale = ref.watch(localeProvider);
+    final languageCode = locale.languageCode;
+    final countryCode = locale.countryCode;
+
+    final selectedCategory = top10Category == null
+        ? null
+        : allLeafs.cast<LocalizedCategoryNode?>().firstWhere(
+            (category) => category?.slug == top10Category?.slug,
+            orElse: () => null,
+          );
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(50),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: DropdownButton<LocalizedCategoryNode>(
+        value: selectedCategory,
+        isExpanded: true,
+        underline: const SizedBox.shrink(),
+        hint: Text(
+          getText(
+            'selectCategory',
+            languageCode: languageCode,
+            countryCode: countryCode,
           ),
+          style: const TextStyle(fontSize: 14),
         ),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.grey.shade200,
-            borderRadius: BorderRadius.circular(50),
-          ),
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-          child: DropdownButton<CategoryNode>(
-            value: top10Category,
-            isExpanded: true,
-            underline: const SizedBox(),
-            hint: Text(
-              getText('selectCategory', languageCode: languageCode),
-              style: const TextStyle(fontSize: 14),
-            ),
-            items: allLeafs.map((item) {
-              return DropdownMenuItem(value: item, child: Text(item.label));
-            }).toList(),
-            onChanged: (value) {
-              if (value == null) return;
-              setState(() => top10Category = value);
-              ref.read(top10StateProvider.notifier).setCategory(value);
-            },
-          ),
-        ),
-      ],
+        items: allLeafs.map((item) {
+          return DropdownMenuItem<LocalizedCategoryNode>(
+            value: item,
+            child: Text(item.label, overflow: TextOverflow.ellipsis),
+          );
+        }).toList(),
+        onChanged: (LocalizedCategoryNode? selected) {
+          if (selected == null) {
+            return;
+          }
+
+          setState(() {
+            top10Category = selected;
+          });
+        },
+      ),
     );
   }
 
   Widget buildCriteriaDropdown(BuildContext context, WidgetRef ref) {
     if (top10Category == null) return const SizedBox.shrink();
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
     final criteriaAsync = ref.watch(
       criteriaForCategoryProvider(top10Category!.id),
     );
 
     return criteriaAsync.when(
       loading: () => const CircularProgressIndicator(),
-      error: (error, stackTrace) =>
-          Text('${getText('error', languageCode: languageCode)}: $error'),
+      error: (error, stackTrace) => Text(
+        '${getText('error', languageCode: languageCode, countryCode: countryCode)}: $error',
+      ),
       data: (criteria) {
         return Stack(
           children: [
@@ -297,7 +317,11 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
               left: 16,
               top: 0,
               child: Text(
-                getText('criterion', languageCode: languageCode),
+                getText(
+                  'criterion',
+                  languageCode: languageCode,
+                  countryCode: countryCode,
+                ),
                 style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
               ),
             ),
@@ -312,7 +336,11 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
                 isExpanded: true,
                 underline: const SizedBox(),
                 hint: Text(
-                  getText('selectRatingCriterion', languageCode: languageCode),
+                  getText(
+                    'selectRatingCriterion',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
                   style: const TextStyle(fontSize: 14),
                 ),
                 items: criteria.map((item) {
@@ -342,6 +370,7 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
     ];
 
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
 
     return Stack(
       children: [
@@ -349,7 +378,11 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
           left: 16,
           top: 0,
           child: Text(
-            getText('lengthOfPoiList', languageCode: languageCode),
+            getText(
+              'lengthOfPoiList',
+              languageCode: languageCode,
+              countryCode: countryCode,
+            ),
             style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
           ),
         ),
@@ -366,7 +399,11 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
             isExpanded: true,
             underline: const SizedBox(),
             hint: Text(
-              getText('selectLengthOfPoiList', languageCode: languageCode),
+              getText(
+                'selectLengthOfPoiList',
+                languageCode: languageCode,
+                countryCode: countryCode,
+              ),
               style: const TextStyle(fontSize: 14),
             ),
             items: items.map((item) {

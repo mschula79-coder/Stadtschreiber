@@ -33,6 +33,8 @@ class _RatingListItemState extends ConsumerState<RatingListItem> {
   Widget build(BuildContext context) {
     // General properties of a criterion, no ratings inside
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
     final criterion = widget.criterion;
     final String criterionName = criterion.name;
     final String criterionDescription = criterion.description;
@@ -163,7 +165,7 @@ class _RatingListItemState extends ConsumerState<RatingListItem> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "${getText("comments", languageCode: languageCode)}: ${comments.length}",
+                              "${getText("comments", languageCode: languageCode, countryCode: countryCode)}: ${comments.length}",
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,

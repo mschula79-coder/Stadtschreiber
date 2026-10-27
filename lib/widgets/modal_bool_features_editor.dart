@@ -31,6 +31,8 @@ class _BoolFeaturesEditorDialogState extends ConsumerState<BoolFeaturesEditorDia
   @override
   Widget build(BuildContext context) {
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
     return AlertDialog(
       title: Text(widget.dialogTitle),
       content: SizedBox(
@@ -57,11 +59,11 @@ class _BoolFeaturesEditorDialogState extends ConsumerState<BoolFeaturesEditorDia
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(getText("close", languageCode: languageCode)),
+          child: Text(getText("close", languageCode: languageCode, countryCode: countryCode)),
         ),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, features),
-          child: Text(getText("save", languageCode: languageCode)),
+          child: Text(getText("save", languageCode: languageCode, countryCode: countryCode)),
         ),
       ],
     );

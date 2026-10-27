@@ -27,10 +27,12 @@ class _PoiFavoriteEditModalState extends ConsumerState<PoiFavoriteEditModal> {
   Widget build(BuildContext context) {
     final userID = ref.watch(supabaseUserStateProvider).userid;
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
     return Consumer(
       builder: (context, ref, _) {
         return AlertDialog(
-          title: Text(getText("editFavorite", languageCode: languageCode)),
+          title: Text(getText("editFavorite", languageCode: languageCode, countryCode: countryCode)),
           contentPadding: EdgeInsets.fromLTRB(12, 12, 0, 0),
           actionsPadding: EdgeInsets.fromLTRB(24, 0, 0, 8),
           content: SingleChildScrollView(
@@ -46,7 +48,7 @@ class _PoiFavoriteEditModalState extends ConsumerState<PoiFavoriteEditModal> {
                     tapTargetSize: MaterialTapTargetSize
                         .shrinkWrap, // ⭐ kompakter Touch‑Bereich
                   ),
-                  child: Text(getText("newList", languageCode: languageCode)),
+                  child: Text(getText("newList", languageCode: languageCode, countryCode: countryCode)),
                   onPressed: () async {
                     final listname = await showDialog<String>(
                       context: context,

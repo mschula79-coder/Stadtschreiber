@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:iconify_flutter/iconify_flutter.dart';
+import 'package:iconify_flutter/icons/mdi.dart';
 // ignore: unused_import
 import 'package:stadtschreiber/l10n/app_localizations.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
+/* import 'package:stadtschreiber/provider/locale_provider.dart';
+ */
+import 'package:stadtschreiber/provider/poi_selection_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
+import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_provider.dart';
 import 'package:stadtschreiber/theme/app_layout.dart';
+import 'package:stadtschreiber/widgets/modal_poi_categories_edit.dart';
+/* import 'package:stadtschreiber/utils/language_utils.dart';
+ */
 import 'package:stadtschreiber/widgets/poi_list_item.dart';
 
 class PoiListPanel extends ConsumerStatefulWidget {
@@ -29,6 +38,9 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
     /*     final horizontalPadding = width < 600 ? 24.0 : width * 0.3;*/
     /*     final visiblePoisAsync = ref.watch(visiblePoisProvider);
  */
+
+    final isAdmin = ref.watch(supabaseUserStateProvider).isAdmin;
+
     final visiblePois = ref.watch(sortedVisiblePoisProvider);
     return Container(
       decoration: const BoxDecoration(
@@ -108,6 +120,7 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
               itemCount: visiblePois.length,
               itemBuilder: (context, index) {
                 return PoiListItem(
+                  selectEnabled: true,
                   imageWidth: 140,
                   imageHeight: 105,
                   paddingLeft: 16,
@@ -121,6 +134,82 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
               },
             ),
           ),
+          SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+
+            children: [
+              IconButton(
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                icon: Iconify(
+                  Mdi.checkbox_multiple_marked_outline,
+                  color: Colors.black87,
+                  size: 24,
+                ),
+                onPressed: () {
+                  ref.read(poiSelectionProvider.notifier).setAll(visiblePois);
+                },
+              ),
+              SizedBox(width: 5),
+
+              // Alle de-markieren
+              IconButton(
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                icon: const Iconify(
+                  Mdi.checkbox_multiple_blank_outline,
+                  color: Colors.black87,
+                  size: 24,
+                ),
+                onPressed: () {
+                  ref.read(poiSelectionProvider.notifier).clear();
+                },
+              ),
+              SizedBox(width: 5),
+              isAdmin
+                  ? Row(
+                      children: [
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact,
+                          icon: const Iconify(
+                            Mdi.shape_plus,
+                            color: Colors.black87,
+                            size: 24,
+                          ),
+                          onPressed: () async {
+                            final selectedPois = ref.read(poiSelectionProvider);
+
+                            if (selectedPois.isEmpty) {
+                              return;
+                            }
+
+                            await showPoiCategoriesEditModal(
+                              context,
+                              pois: selectedPois,
+                            );
+                          },
+                        ),
+                        SizedBox(width: 5),
+                      ],
+                    )
+                  : SizedBox.shrink(),
+              IconButton(
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                icon: const Iconify(
+                  Mdi.playlist_add,
+                  color: Colors.black87,
+                  size: 24,
+                ),
+                onPressed: () {
+                  // TODO List add
+                },
+              ),
+            ],
+          ),
+          SizedBox(height: 10),
         ],
       ),
     );

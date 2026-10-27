@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:stadtschreiber/provider/categories_provider.dart';
+import 'package:stadtschreiber/provider/categories_localized_provider.dart';
 import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/utils/language_utils.dart';
 
@@ -78,15 +78,17 @@ class _PoiListCategoryFilterState extends ConsumerState<PoiListCategoryFilter> {
   @override
   Widget build(BuildContext context) {
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
     return AlertDialog(
       titlePadding: const EdgeInsets.fromLTRB(24, 20, 8, 0),
       contentPadding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       title: Row(
         children: [
-          Expanded(child: Text(getText("filterCategories", languageCode: languageCode))),
+          Expanded(child: Text(getText("filterCategories", languageCode: languageCode, countryCode: countryCode))),
           IconButton(
-            tooltip: getText("close", languageCode: languageCode),
+            tooltip: getText("close", languageCode: languageCode, countryCode: countryCode),
             icon: const Icon(Icons.close),
             onPressed: () {
               Navigator.of(context).pop();
@@ -100,7 +102,7 @@ class _PoiListCategoryFilterState extends ConsumerState<PoiListCategoryFilter> {
             ? Padding(
                 padding: EdgeInsets.all(16),
                 child: Text(
-                  getText("noEntries", languageCode: languageCode),
+                  getText("noEntries", languageCode: languageCode, countryCode: countryCode),
                   textAlign: TextAlign.center,
                 ),
               )
@@ -112,7 +114,7 @@ class _PoiListCategoryFilterState extends ConsumerState<PoiListCategoryFilter> {
                     controlAffinity: ListTileControlAffinity.leading,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                     title: Text(
-                      getText("selectAll", languageCode: languageCode),
+                      getText("selectAll", languageCode: languageCode, countryCode: countryCode),
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     onChanged: (isSelected) {
@@ -163,7 +165,7 @@ class _PoiListCategoryFilterState extends ConsumerState<PoiListCategoryFilter> {
             children: [
               FilledButton(
                 onPressed: applyFilter,
-                child: Text(getText("apply", languageCode: languageCode)),
+                child: Text(getText("apply", languageCode: languageCode, countryCode: countryCode)),
               ),
               FilledButton(
                 style: FilledButton.styleFrom(
@@ -172,7 +174,7 @@ class _PoiListCategoryFilterState extends ConsumerState<PoiListCategoryFilter> {
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                child: Text(getText("cancel", languageCode: languageCode)),
+                child: Text(getText("cancel", languageCode: languageCode, countryCode: countryCode)),
               ),
             ],
           ),

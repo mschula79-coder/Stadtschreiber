@@ -132,8 +132,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
             menuHeightFactor = anyExpanded ? 0.85 : 0.55;
             menuRight = 30.0;
           } else if (isWide) {
-            menuWidth = anyExpanded ? 720.0 : 520.0;
-            menuHeightFactor = anyExpanded ? 0.85 : 0.55;
+            menuWidth = anyExpanded ? 720.0 : 250.0;
+            menuHeightFactor = anyExpanded ? 0.85 : 0.45;
             menuRight = 30.0;
           }
 
@@ -172,8 +172,6 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
                       },
                     ),
                   ),
-
-                // TODO Thumbnail Click Zentrierung Browser fixen
         
                 Positioned(
                   top: 25,

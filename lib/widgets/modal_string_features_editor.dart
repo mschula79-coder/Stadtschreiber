@@ -47,6 +47,8 @@ class _StringFeaturesEditorDialogState
   @override
   Widget build(BuildContext context) {
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
     return AlertDialog(
       title: Text(widget.dialogTitle),
       content: SizedBox(
@@ -79,7 +81,7 @@ class _StringFeaturesEditorDialogState
         ),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, values),
-          child: Text(getText("save", languageCode: languageCode)),
+          child: Text(getText("save", languageCode: languageCode, countryCode: countryCode)),
         ),
       ],
     );

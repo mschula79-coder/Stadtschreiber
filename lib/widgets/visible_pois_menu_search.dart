@@ -60,6 +60,8 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
   @override
   Widget build(BuildContext context) {
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
 
     final searchParams = (query: _searchQuery, searchActive: true);
 
@@ -120,7 +122,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
 
               Expanded(
                 child: Text(
-                  getText('search', languageCode: languageCode),
+                  getText('search', languageCode: languageCode, countryCode: countryCode),
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -200,7 +202,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            '${getText('searchRadius', languageCode: languageCode)}: ${_formatRadius(_searchRadiusKm)}',
+                            '${getText('searchRadius', languageCode: languageCode, countryCode: countryCode)}: ${_formatRadius(_searchRadiusKm)}',
 
                             style: const TextStyle(
                               fontSize: 16,
@@ -210,6 +212,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                         ),
                       ],
                     ),
+                    // categories slider
                     Slider(
                       min: 0.5,
                       max: 20,
@@ -274,7 +277,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                     return Padding(
                       padding: EdgeInsetsGeometry.fromLTRB(5, 15, 0, 0),
                       child: Text(
-                        getText('noPoiFound', languageCode: languageCode),
+                        getText('noPoiFound', languageCode: languageCode, countryCode: countryCode),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -294,7 +297,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                                 child: Text(
                                   getText(
                                     'results',
-                                    languageCode: languageCode,
+                                    languageCode: languageCode, countryCode: countryCode,
                                   ),
                                   style: TextStyle(
                                     fontSize: 18,
@@ -363,7 +366,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, stack) => Text(
-                  "${getText('error', languageCode: languageCode)}: $err",
+                  "${getText('error', languageCode: languageCode, countryCode: countryCode)}: $err",
                 ),
               ),
             SizedBox(height: 20),

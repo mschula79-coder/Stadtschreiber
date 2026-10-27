@@ -129,17 +129,26 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
 
                       SizedBox(width: 5),
                       isEditor
-                          ? GestureDetector(
-                              onTap: widget.onTogglePoiEditView,
-                              child: !ref.read(appStateProvider).isPoiEditMode
-                                  ? const Icon(
-                                      Icons.edit,
-                                      color: Color.fromARGB(255, 42, 23, 86),
-                                    )
-                                  : const Icon(
-                                      Icons.edit_off,
-                                      color: Color.fromARGB(255, 42, 23, 86),
-                                    ),
+                          ? Padding(
+                              padding: EdgeInsetsGeometry.only(
+                                left: 0,
+                                right: 5,
+                              ),
+                              child: IconButton(
+                                visualDensity: VisualDensity.compact,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: widget.onTogglePoiEditView,
+                                icon: !ref.read(appStateProvider).isPoiEditMode
+                                    ? const Icon(
+                                        Icons.edit,
+                                        color: Color.fromARGB(255, 42, 23, 86),
+                                      )
+                                    : const Icon(
+                                        Icons.edit_off,
+                                        color: Color.fromARGB(255, 42, 23, 86),
+                                      ),
+                              ),
                             )
                           : SizedBox.shrink(),
                     ],

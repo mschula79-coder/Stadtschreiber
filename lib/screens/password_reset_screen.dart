@@ -21,24 +21,25 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(getText('setNewPassword', languageCode: languageCode)),
+        title: Text(getText('setNewPassword', languageCode: languageCode, countryCode: countryCode)),
       ),
 
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            Text(getText('setNewPassword', languageCode: languageCode)),
+            Text(getText('setNewPassword', languageCode: languageCode, countryCode: countryCode)),
             const SizedBox(height: 16),
 
             TextField(
               controller: passwordCtrl,
               obscureText: true,
               decoration: InputDecoration(
-                labelText: getText('newPassword', languageCode: languageCode),
+                labelText: getText('newPassword', languageCode: languageCode, countryCode: countryCode),
                 border: OutlineInputBorder(),
               ),
             ),

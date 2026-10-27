@@ -1,26 +1,33 @@
 class CategoryDto {
   final String id;
   final String slug;
-  final String name;
   final int sortOrder;
-  List<CategoryDto>? children;
-  List<CategoryDto>? parents;
+  final Map<String, String> labels;
 
-  CategoryDto({
+  const CategoryDto({
     required this.id,
     required this.slug,
-    required this.name,
     required this.sortOrder,
-    this.children,
-    this.parents
+    required this.labels,
   });
 
-  factory CategoryDto.fromJson(Map<String, dynamic> json) {
+  factory CategoryDto.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    final rawLabels = json['labels'];
+
     return CategoryDto(
-      id: json['id'],
-      slug: json['slug'],
-      name: json['name'],
-      sortOrder: json['sort_order'] ?? 9999,
+      id: json['id'] as String,
+      slug: json['slug'] as String,
+      sortOrder: json['sort_order'] as int? ?? 0,
+      labels: rawLabels is Map
+          ? rawLabels.map<String, String>(
+              (key, value) => MapEntry(
+                key.toString(),
+                value.toString(),
+              ),
+            )
+          : const <String, String>{},
     );
   }
 }

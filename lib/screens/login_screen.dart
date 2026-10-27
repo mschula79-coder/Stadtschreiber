@@ -44,6 +44,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
 
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+    
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -91,7 +93,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 0),
                           Text(
-                            getText('slogan', languageCode: languageCode),
+                            getText('slogan', languageCode: languageCode, countryCode: countryCode),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 28,
@@ -126,7 +128,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               );
                             },
                             child: Text(
-                              getText('newHere', languageCode: languageCode),
+                              getText('newHere', languageCode: languageCode, countryCode: countryCode),
                             ),
                           ), */
 
@@ -142,7 +144,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             decoration: InputDecoration(
                               labelText: getText(
                                 'email',
-                                languageCode: languageCode,
+                                languageCode: languageCode, countryCode: countryCode,
                               ),
                               border: const OutlineInputBorder(),
                             ),
@@ -161,7 +163,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             decoration: InputDecoration(
                               labelText: getText(
                                 'password',
-                                languageCode: languageCode,
+                                languageCode: languageCode, countryCode: countryCode,
                               ),
                               border: const OutlineInputBorder(),
                             ),
@@ -181,7 +183,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               child: Text(
                                 getText(
                                   'passwordForgotten',
-                                  languageCode: languageCode,
+                                  languageCode: languageCode, countryCode: countryCode,
                                 ),
                               ),
                             ),
@@ -200,7 +202,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   child: Text(
                                     getText(
                                       'login',
-                                      languageCode: languageCode,
+                                      languageCode: languageCode, countryCode: countryCode,
                                     ),
                                   ),
                                 ),
@@ -228,7 +230,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   child: Text(
                                     getText(
                                       'register',
-                                      languageCode: languageCode,
+                                      languageCode: languageCode, countryCode: countryCode,
                                     ),
                                   ),
                                 ),
@@ -238,7 +240,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           if (checkEmail) ...[
                             const SizedBox(height: 16),
                             Text(
-                              getText('checkEmail', languageCode: languageCode),
+                              getText('checkEmail', languageCode: languageCode, countryCode: countryCode),
                               textAlign: TextAlign.center,
                               style: const TextStyle(color: Colors.red),
                             ),
@@ -249,7 +251,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           Text(
                             getText(
                               'underConstruction',
-                              languageCode: languageCode,
+                              languageCode: languageCode, countryCode: countryCode,
                             ),
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -284,12 +286,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               );
                             },
                             child: Text(
-                              getText('joinus1', languageCode: languageCode),
+                              getText('joinus1', languageCode: languageCode, countryCode: countryCode),
                             ),
                           ),
                           SizedBox(height: 8),
                           Text(
-                            getText('joinus2', languageCode: languageCode),
+                            getText('joinus2', languageCode: languageCode, countryCode: countryCode),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 16,

@@ -40,6 +40,8 @@ class _UserEditModalState extends ConsumerState<UserEditModal> {
   @override
   Widget build(BuildContext context) {
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
     return AlertDialog(
       title: Text(getText("editProfile")),
       content: SingleChildScrollView(
@@ -67,7 +69,7 @@ class _UserEditModalState extends ConsumerState<UserEditModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(getText("cancel", languageCode: languageCode)),
+          child: Text(getText("cancel", languageCode: languageCode, countryCode: countryCode)),
         ),
         ElevatedButton(onPressed: _save, child: Text(getText("save"))),
       ],

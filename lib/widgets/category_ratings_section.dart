@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
+import 'package:stadtschreiber/provider/categories_localized_provider.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
 import 'package:stadtschreiber/provider/poi_ratings_provider.dart';
 import 'package:stadtschreiber/provider/poi_ratings_stats_provider.dart';

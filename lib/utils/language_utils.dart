@@ -54,6 +54,9 @@ String getText(
       return localization.attention;
     case 'cancel':
       return localization.cancel;
+    case 'categories':
+      return "Kategorien";
+    
     case 'changePassword':
       return localization.changePassword;
     case 'checkEmail':

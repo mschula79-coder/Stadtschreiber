@@ -1,64 +1,94 @@
-// ignore_for_file: unused_local_variable
-
-// TODO Features auswählen
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stadtschreiber/models/category_node_localized.dart';
 import 'package:stadtschreiber/models/poi_selection_modes.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
+import 'package:stadtschreiber/provider/categories_localized_provider.dart';
 import 'package:stadtschreiber/provider/categories_menu_provider.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
 import 'package:stadtschreiber/provider/category_repository_provider.dart';
 import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
+import 'package:stadtschreiber/utils/category_localization_utils.dart';
 import 'package:stadtschreiber/utils/dialog_utils.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
 import 'package:stadtschreiber/widgets/_editable_list.dart';
 import 'package:stadtschreiber/widgets/_icon_getter.dart';
 import 'package:stadtschreiber/widgets/modal_categories_list_edit.dart';
 import 'package:stadtschreiber/widgets/modal_rating_criteria_edit.dart';
 import 'package:uuid/uuid.dart';
 
-import '../models/category.dart';
-
 class PoiCategorySelection extends ConsumerStatefulWidget {
   const PoiCategorySelection({super.key});
 
   @override
-  ConsumerState<PoiCategorySelection> createState() =>
-      _PoiCategorySelectionState();
+  ConsumerState<PoiCategorySelection> createState() {
+    return _PoiCategorySelectionState();
+  }
 }
 
 class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
-  String _categoryFilter = "";
   final TextEditingController _categoryFilterController =
       TextEditingController();
+
+  final ExpansibleController expansionController = ExpansibleController();
+
+  String _categoryFilter = '';
+
   bool isFilterActive = false;
   bool expandAll = false;
-  // TODO isAdmin oder isAdminViewEnabled
   bool isAdminViewEnabled = false;
-  final ExpansibleController expansionController = ExpansibleController();
+
   PoiSelectionMode? _lastMode;
 
   @override
-  Widget build(BuildContext context) {
-    final categories = ref.watch(categoriesProvider).categories;
-    final isAdmin = ref.read(supabaseUserStateProvider).isAdmin;
-    final languageCode = ref.watch(localeProvider).languageCode;
+  void dispose() {
+    _categoryFilterController.dispose();
+    expansionController.dispose();
+    super.dispose();
+  }
 
-    final mode = ref.watch(visiblePoisMenuStateProvider).poiSelectionMode;
+  @override
+  Widget build(BuildContext context) {
+    final locale = ref.watch(localeProvider);
+
+    final languageCode = locale.languageCode;
+    final countryCode = locale.countryCode;
+
+    final categories = ref.watch(localizedCategoriesProvider);
+
+    final isAdmin = ref.watch(
+      supabaseUserStateProvider.select((state) => state.isAdmin),
+    );
+
+    final mode = ref.watch(
+      visiblePoisMenuStateProvider.select((state) => state.poiSelectionMode),
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_lastMode != mode) {
-        if (mode == PoiSelectionMode.categories) {
-          expansionController.expand();
-        } else {
-          expansionController.collapse();
-        }
-        _lastMode = mode;
+      if (!mounted || _lastMode == mode) {
+        return;
       }
+
+      if (mode == PoiSelectionMode.categories) {
+        expansionController.expand();
+      } else {
+        expansionController.collapse();
+      }
+
+      _lastMode = mode;
     });
 
+    final sortedRootCategories = CategoryLocalizationUtils.sortLocalizedNodes(
+      categories,
+      useSortOrder: true,
+    );
+
+    final filteredCategories = _filterCategoryTree(
+      sortedRootCategories,
+      _categoryFilter,
+    );
     return Theme(
       data: Theme.of(context).copyWith(
         listTileTheme: const ListTileThemeData(contentPadding: EdgeInsets.zero),
@@ -73,13 +103,12 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
           visualDensity: VisualDensity.compact,
           initiallyExpanded: false,
           controller: expansionController,
-
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           expandedAlignment: Alignment.topLeft,
           onExpansionChanged: (value) {
             ref
                 .read(visiblePoisMenuStateProvider.notifier)
-                .setTileExpanded("categories", value);
+                .setTileExpanded('categories', value);
 
             if (value) {
               ref
@@ -87,23 +116,26 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                   .setPoiSelectionMode(PoiSelectionMode.categories);
             }
           },
-
           title: Row(
             children: [
               Icon(Icons.category, color: Colors.grey.shade600),
-              SizedBox(width: 8),
-
+              const SizedBox(width: 8),
               Expanded(
-                child: const Text(
-                  "Kategorien",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                child: Text(
+                  getText(
+                    'categories',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
-
           children: [
-            // ---------------- FILTER ----------------
             Container(
               padding: const EdgeInsets.fromLTRB(6, 0, 4, 0),
               margin: const EdgeInsets.fromLTRB(4, 0, 4, 4),
@@ -119,32 +151,39 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                   Expanded(
                     child: TextField(
                       controller: _categoryFilterController,
-                      decoration: const InputDecoration(
-                        hintText: "Kategorien filtern",
+                      decoration: InputDecoration(
+                        hintText: getText(
+                          'filterCategories',
+                          languageCode: languageCode,
+                          countryCode: countryCode,
+                        ),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.fromLTRB(0, 8, 0, 8),
+                        contentPadding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
                         isDense: true,
                       ),
                       onChanged: (value) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (!mounted) return;
-                          setState(() {
-                            _categoryFilter = value.trim().toLowerCase();
-                            expandAll = _categoryFilter.isNotEmpty;
-                          });
+                        if (!mounted) {
+                          return;
+                        }
+
+                        setState(() {
+                          _categoryFilter =
+                              CategoryLocalizationUtils.normalizeLabel(value);
+
+                          expandAll = _categoryFilter.isNotEmpty;
                         });
                       },
                     ),
                   ),
-
                   IconButton(
                     onPressed: () {
                       setState(() {
                         if (isFilterActive) {
-                          _categoryFilter = "";
+                          _categoryFilter = '';
                           _categoryFilterController.clear();
                           expandAll = false;
                         }
+
                         isFilterActive = !isFilterActive;
                       });
                     },
@@ -155,31 +194,31 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                 ],
               ),
             ),
-
             const SizedBox(height: 8),
-
-            // ---------------- CATEGORY TREE ----------------
-            ..._filterCategoryTree(
-              categories,
-              _categoryFilter,
-            ).map((node) => _buildCategoryNode(context, ref, node)),
-
-            isAdmin
-                ? ElevatedButton.icon(
-                    icon: const Icon(Icons.edit),
-                    label: const Text("Kategorien bearbeiten"),
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (_) => Dialog(
-                          child: SizedBox(width: 600, child: CategoryEditor()),
-                        ),
+            ...filteredCategories.map(
+              (node) => _buildCategoryNode(context, ref, node),
+            ),
+            if (isAdmin)
+              ElevatedButton.icon(
+                icon: const Icon(Icons.edit),
+                label: Text(
+                  getText(
+                    'editCategories',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
+                ),
+                onPressed: () async {
+                  await showDialog<void>(
+                    context: context,
+                    builder: (dialogContext) {
+                      return const Dialog(
+                        child: SizedBox(width: 600, child: CategoryEditor()),
                       );
                     },
-                  )
-                : const SizedBox.shrink(),
-
-            // ---------------- ADMIN SWITCH FOR CRITERIA EDITING----------------
+                  );
+                },
+              ),
             if (isAdmin)
               SwitchListTile(
                 title: const Text(
@@ -190,16 +229,11 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                 contentPadding: const EdgeInsets.only(top: 10),
                 value: isAdminViewEnabled,
                 onChanged: (newValue) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (!mounted) return;
-                    setState(() {
-                      isAdminViewEnabled = newValue;
-                    });
+                  setState(() {
+                    isAdminViewEnabled = newValue;
                   });
                 },
               ),
-
-            // ---------------- ADMIN CRITERIA LIST ----------------
             if (isAdminViewEnabled)
               Padding(
                 padding: const EdgeInsets.only(left: 5),
@@ -210,13 +244,15 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                         return EditableList<RatingCriterionDTO>(
                           items: ratingCriteria,
                           isEditModeEnabled: true,
-                          itemBuilder: (entry) => Padding(
-                            padding: const EdgeInsets.all(0),
-                            child: Text(
-                              entry.name,
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ),
+                          itemBuilder: (entry) {
+                            return Padding(
+                              padding: EdgeInsets.zero,
+                              child: Text(
+                                entry.name,
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            );
+                          },
                           onDelete: (entry) async {
                             final confirmed = await openConfirmDialog(
                               context,
@@ -226,14 +262,15 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                               optionFalse: 'Nein',
                             );
 
-                            if (confirmed == true) {
-                              ref
-                                  .read(categoriesRepositoryProvider)
-                                  .deleteCriterion(entry);
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                ref.invalidate(globalCriteriaProvider);
-                              });
+                            if (confirmed != true) {
+                              return;
                             }
+
+                            await ref
+                                .read(categoriesRepositoryProvider)
+                                .deleteCriterion(entry);
+
+                            ref.invalidate(globalCriteriaProvider);
                           },
                           onAdd: () async {
                             final emptyCriterion = RatingCriterionDTO(
@@ -246,48 +283,68 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                                 .read(categoriesRepositoryProvider)
                                 .newCriterion(emptyCriterion);
 
-                            if (!context.mounted) return;
+                            if (!context.mounted) {
+                              return null;
+                            }
 
                             final newCriterion =
                                 await showDialog<RatingCriterionDTO>(
                                   context: context,
                                   barrierDismissible: false,
-                                  builder: (_) => RatingCriteriaEditModal(
-                                    criterionDTO: emptyCriterionWithId,
-                                  ),
+                                  builder: (dialogContext) {
+                                    return RatingCriteriaEditModal(
+                                      criterionDTO: emptyCriterionWithId,
+                                    );
+                                  },
                                 );
 
-                            if (newCriterion == null) return;
+                            if (newCriterion == null) {
+                              return null;
+                            }
 
                             await ref
                                 .read(categoriesRepositoryProvider)
                                 .updateCriterion(newCriterion);
 
                             ref.invalidate(globalCriteriaProvider);
-                            return;
-                          },
 
+                            return newCriterion;
+                          },
                           onEdit: (entry) async {
                             final edited = await showDialog<RatingCriterionDTO>(
                               context: context,
                               barrierDismissible: false,
-                              builder: (_) =>
-                                  RatingCriteriaEditModal(criterionDTO: entry),
+                              builder: (dialogContext) {
+                                return RatingCriteriaEditModal(
+                                  criterionDTO: entry,
+                                );
+                              },
                             );
 
-                            if (edited == null) return;
+                            if (edited == null) {
+                              return null;
+                            }
 
                             await ref
                                 .read(categoriesRepositoryProvider)
                                 .updateCriterion(edited);
+
                             ref.invalidate(globalCriteriaProvider);
-                            return;
+
+                            return edited;
                           },
                         );
                       },
-                      loading: () =>
-                          const CircularProgressIndicator(strokeWidth: 2),
-                      error: (e, st) => Text("Fehler: $e"),
+                      loading: () {
+                        return const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        );
+                      },
+                      error: (error, stackTrace) {
+                        return Text(
+                          '${getText('error', languageCode: languageCode, countryCode: countryCode)}: $error',
+                        );
+                      },
                     ),
               ),
           ],
@@ -296,63 +353,70 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
     );
   }
 
-  // ---------- category tree ----------
-  List<CategoryNode> _filterCategoryTree(
-    List<CategoryNode> nodes,
+  List<LocalizedCategoryNode> _filterCategoryTree(
+    List<LocalizedCategoryNode> nodes,
     String filter,
   ) {
-    if (filter.isEmpty) return nodes;
+    if (filter.isEmpty) {
+      return nodes;
+    }
 
-    final result = <CategoryNode>[];
+    final result = <LocalizedCategoryNode>[];
 
     for (final node in nodes) {
-      final labelMatches = node.label.toLowerCase().contains(filter);
+      final normalizedLabel = CategoryLocalizationUtils.normalizeLabel(
+        node.label,
+      );
+
+      final labelMatches = normalizedLabel.contains(filter);
 
       if (node.isLeaf) {
-        if (labelMatches) result.add(node);
-      } else {
-        final filteredChildren = _filterCategoryTree(node.children, filter);
-
-        if (labelMatches || filteredChildren.isNotEmpty) {
-          result.add(
-            CategoryNode(
-              id: node.id,
-              label: node.label,
-              slug: node.slug,
-              children: filteredChildren,
-              hasParents: false,
-            ),
-          );
+        if (labelMatches) {
+          result.add(node);
         }
+
+        continue;
+      }
+
+      final filteredChildren = _filterCategoryTree(node.children, filter);
+
+      if (labelMatches || filteredChildren.isNotEmpty) {
+        result.add(
+          LocalizedCategoryNode(
+            id: node.id,
+            slug: node.slug,
+            label: node.label,
+            sortOrder: node.sortOrder,
+            labels: node.labels,
+            children: filteredChildren,
+            hasParents: node.hasParents,
+          ),
+        );
       }
     }
 
     return result;
   }
 
-  // ---------- build category node ----------
   Widget _buildCategoryNode(
     BuildContext context,
     WidgetRef ref,
-    CategoryNode node,
+    LocalizedCategoryNode node,
   ) {
     final categoryCheckboxesState = ref.watch(categoriesSelectionProvider);
 
     if (!node.isLeaf) {
-      final allDescendantLeaves = _collectLeafValues(node);
-
-      final checkedChildren = allDescendantLeaves
-          .where(categoryCheckboxesState.isSelected)
-          .length;
-
       final leftPadding = node.hasParents ? 10.0 : 0.0;
 
       return ExpansionTile(
+        key: PageStorageKey<String>(
+          'category-${node.id}-${expandAll ? 'expanded' : 'collapsed'}',
+        ),
         tilePadding: EdgeInsets.only(left: leftPadding, right: 15),
         childrenPadding: EdgeInsets.zero,
         visualDensity: VisualDensity.compact,
         initiallyExpanded: expandAll,
-        leading: getIcon(node.slug ?? '', 28, null),
+        leading: getIcon(node.slug, 28, null),
         title: Row(
           children: [
             const SizedBox(width: 12),
@@ -364,18 +428,17 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                 style: const TextStyle(fontSize: 16),
               ),
             ),
-            
           ],
         ),
-        children: node.children
-            .map((child) => _buildCategoryNode(context, ref, child))
-            .toList(),
+        children: node.children.map((child) {
+          return _buildCategoryNode(context, ref, child);
+        }).toList(),
       );
     }
 
-    final categorySlug = node.slug;
+    final categorySlug = node.slug.trim();
 
-    if (categorySlug == null || categorySlug.isEmpty) {
+    if (categorySlug.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -388,7 +451,9 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
     final poiCountAsync = ref.watch(poiCountForCategoryProvider(categorySlug));
 
     final poiCount = poiCountAsync.asData?.value;
+
     final isCheckboxEnabled = poiCount != null && poiCount > 0;
+
     final disabledColor = Theme.of(context).disabledColor;
 
     return CheckboxListTile(
@@ -412,60 +477,48 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
         padding: const EdgeInsets.only(left: 4),
         child: Row(
           children: [
-            Text(
-              node.label,
-              style: TextStyle(color: isCheckboxEnabled ? null : disabledColor),
+            Expanded(
+              child: Text(
+                node.label,
+                style: TextStyle(
+                  color: isCheckboxEnabled ? null : disabledColor,
+                ),
+              ),
             ),
-            poiCountAsync.when(
-              data: (count) {
-                return Text(
-                  ' ($count)',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: count > 0 ? null : disabledColor,
-                  ),
-                );
-              },
-              loading: () {
-                return const Padding(
-                  padding: EdgeInsets.only(left: 6),
-                  child: SizedBox(
-                    width: 12,
-                    height: 12,
-                    child: CircularProgressIndicator(strokeWidth: 1.5),
-                  ),
-                );
-              },
-              error: (error, stackTrace) {
-                return Tooltip(
-                  message: error.toString(),
-                  child: Icon(
-                    Icons.error_outline,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                );
-              },
-            ),
+            if (isAdmin)
+              poiCountAsync.when(
+                data: (count) {
+                  return Text(
+                    ' ($count)',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: count > 0 ? null : disabledColor,
+                    ),
+                  );
+                },
+                loading: () {
+                  return const Padding(
+                    padding: EdgeInsets.only(left: 6),
+                    child: SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(strokeWidth: 1.5),
+                    ),
+                  );
+                },
+                error: (error, stackTrace) {
+                  return Tooltip(
+                    message: error.toString(),
+                    child: Icon(
+                      Icons.error_outline,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  );
+                },
+              ),
           ],
         ),
       ),
     );
-  }
-
-  List<String> _collectLeafValues(CategoryNode node) {
-    final result = <String>[];
-
-    void walk(CategoryNode n) {
-      if (n.isLeaf && n.slug != null) {
-        result.add(n.slug!);
-      } else {
-        for (final child in n.children) {
-          walk(child);
-        }
-      }
-    }
-
-    walk(node);
-    return result;
   }
 }

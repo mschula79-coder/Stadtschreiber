@@ -58,6 +58,8 @@ class _ArticleEditModalState extends ConsumerState<ArticleEditModal> {
     final url = _urlController.text.trim();
     final source = _sourceController.text.trim();
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
     DateTime? date;
     final dateText = _dateController.text.trim();
 
@@ -69,7 +71,11 @@ class _ArticleEditModalState extends ConsumerState<ArticleEditModal> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            getText("msgArticleEditError", languageCode: languageCode),
+            getText(
+              "msgArticleEditError",
+              languageCode: languageCode,
+              countryCode: countryCode,
+            ),
           ),
         ),
       );
@@ -85,8 +91,16 @@ class _ArticleEditModalState extends ConsumerState<ArticleEditModal> {
   @override
   Widget build(BuildContext context) {
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
     return AlertDialog(
-      title: Text(getText("editArticle", languageCode: languageCode)),
+      title: Text(
+        getText(
+          "editArticle",
+          languageCode: languageCode,
+          countryCode: countryCode,
+        ),
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -169,7 +183,11 @@ class _ArticleEditModalState extends ConsumerState<ArticleEditModal> {
                   });
                 },
                 child: Text(
-                  getText("deleteDate", languageCode: languageCode),
+                  getText(
+                    "deleteDate",
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
                   style: TextStyle(fontSize: 13),
                 ),
               ),
@@ -180,11 +198,23 @@ class _ArticleEditModalState extends ConsumerState<ArticleEditModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(getText("cancel", languageCode: languageCode)),
+          child: Text(
+            getText(
+              "cancel",
+              languageCode: languageCode,
+              countryCode: countryCode,
+            ),
+          ),
         ),
         ElevatedButton(
           onPressed: _save,
-          child: Text(getText("save", languageCode: languageCode)),
+          child: Text(
+            getText(
+              "save",
+              languageCode: languageCode,
+              countryCode: countryCode,
+            ),
+          ),
         ),
       ],
     );

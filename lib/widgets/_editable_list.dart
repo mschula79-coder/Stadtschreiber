@@ -26,6 +26,8 @@ class EditableList<T> extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
     return ListView(
       padding: const EdgeInsets.all(0),
       shrinkWrap: true,
@@ -36,7 +38,7 @@ class EditableList<T> extends ConsumerWidget {
             padding: const EdgeInsets.only(bottom: 12),
             child: ElevatedButton.icon(
               icon: const Icon(Icons.add),
-              label: Text(getText("add", languageCode: languageCode)),
+              label: Text(getText("add", languageCode: languageCode, countryCode: countryCode)),
               onPressed: () async {
                 await onAdd!();
               },
@@ -46,7 +48,7 @@ class EditableList<T> extends ConsumerWidget {
         if (items.isEmpty)
           Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
-            child: Text(getText('noEntries', languageCode: languageCode)),
+            child: Text(getText('noEntries', languageCode: languageCode, countryCode: countryCode)),
           )
         else
           ...items.map((item) {

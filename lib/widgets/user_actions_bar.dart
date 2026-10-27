@@ -23,106 +23,293 @@ class UserActionsBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appUser = ref.watch(supabaseUserStateProvider);
+    final appUser = ref.watch(
+      supabaseUserStateProvider,
+    );
 
     final isAdmin = appUser.isAdmin;
 
-    final isAdminViewEnabled = ref.watch(appStateProvider).isAdminViewEnabled;
-    final currentLocale = ref.watch(localeProvider);
+    final isAdminViewEnabled = ref.watch(
+      appStateProvider.select(
+        (state) => state.isAdminViewEnabled,
+      ),
+    );
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 8,
+      ),
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(32),
-        boxShadow: const [BoxShadow(blurRadius: 8, color: Colors.black26)],
+        boxShadow: const [
+          BoxShadow(
+            blurRadius: 8,
+            color: Colors.black26,
+          ),
+        ],
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Logout
           FloatingActionButton(
-            heroTag: "Logout",
+            heroTag: 'Logout',
             mini: true,
-            child: const Icon(Icons.logout),
             onPressed: () async {
               onClose();
+
               await Supabase.instance.client.auth.signOut();
-              if (context.mounted) {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/login',
-                  (_) => false,
-                );
+
+              if (!context.mounted) {
+                return;
               }
-            },
-          ),
 
-          // Spracheinstellung
-          FloatingActionButton(
-            heroTag: "Sprache",
-            mini: true,
-            child: getIcon(currentLocale.languageCode, 24, null),
-            onPressed: () {
-              onClose();
-              showModalBottomSheet(
-                context: context,
-                builder: (_) => const _LocaleBar(),
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/login',
+                (_) => false,
               );
             },
+            child: const Icon(Icons.logout),
           ),
-
-          // Einstellungen Modal öffnen
+          const SizedBox(width: 4),
+          const _LanguageMenuButton(),
+          const SizedBox(width: 4),
           FloatingActionButton(
-            heroTag: "Einstellungen",
+            heroTag: 'Einstellungen',
             mini: true,
+            onPressed: () {
+              onClose();
+
+              showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                builder: (sheetContext) {
+                  return const _SettingsSheet();
+                },
+              );
+            },
             child: const Icon(Icons.settings),
-            onPressed: () {
-              onClose();
-              showModalBottomSheet(
-                context: context,
-                builder: (_) => const _SettingsSheet(),
-              );
-            },
           ),
-
-          // Admin UI (nur wenn admin)
-          if (isAdmin)
+          if (isAdmin) ...[
+            const SizedBox(width: 4),
             FloatingActionButton(
-              heroTag: "Admin UI",
+              heroTag: 'Admin UI',
               mini: true,
-              child: isAdminViewEnabled
-                  ? const Icon(Icons.admin_panel_settings)
-                  : const Icon(Icons.admin_panel_settings_outlined),
               onPressed: () {
                 ref
                     .read(appStateProvider.notifier)
-                    .setAdminViewEnabled(!isAdminViewEnabled);
+                    .setAdminViewEnabled(
+                      !isAdminViewEnabled,
+                    );
               },
+              child: Icon(
+                isAdminViewEnabled
+                    ? Icons.admin_panel_settings
+                    : Icons.admin_panel_settings_outlined,
+              ),
             ),
-
-          //change style
+          ],
+          const SizedBox(width: 4),
           FloatingActionButton(
-            heroTag: "changeStyle",
-            onPressed: onChangeStyle,
+            heroTag: 'changeStyle',
             mini: true,
-            child: const Icon(Icons.color_lens_outlined),
+            onPressed: onChangeStyle,
+            child: const Icon(
+              Icons.color_lens_outlined,
+            ),
           ),
-          if (isAdmin)
+          if (isAdmin) ...[
+            const SizedBox(width: 4),
             FloatingActionButton(
-              heroTag: "OSM_import",
+              heroTag: 'OSM_import',
+              mini: true,
               onPressed: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const OsmPoiImportScreen()),
+                  MaterialPageRoute<void>(
+                    builder: (_) {
+                      return const OsmPoiImportScreen();
+                    },
+                  ),
                 );
               },
-              mini: true,
               child: const Icon(Icons.cloud_upload),
             ),
-
-          const SizedBox(height: 8),
+          ],
         ],
       ),
     );
+  }
+}
+
+class _LanguageMenuButton extends ConsumerWidget {
+  const _LanguageMenuButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentLocale = ref.watch(localeProvider);
+
+    return Builder(
+      builder: (buttonContext) {
+        return FloatingActionButton(
+          heroTag: 'Sprache',
+          mini: true,
+          onPressed: () async {
+            final buttonRenderBox =
+                buttonContext.findRenderObject()
+                    as RenderBox?;
+
+            final overlayRenderBox = Overlay.of(
+              buttonContext,
+              rootOverlay: true,
+            ).context.findRenderObject() as RenderBox?;
+
+            if (buttonRenderBox == null ||
+                overlayRenderBox == null) {
+              return;
+            }
+
+            final buttonPosition =
+                buttonRenderBox.localToGlobal(
+              Offset.zero,
+              ancestor: overlayRenderBox,
+            );
+
+            final buttonSize = buttonRenderBox.size;
+            final overlaySize = overlayRenderBox.size;
+
+            const menuItemHeight = 48.0;
+            const menuVerticalPadding = 16.0;
+            const menuMargin = 8.0;
+
+            final menuHeight =
+                supportedLocales.length *
+                    menuItemHeight +
+                menuVerticalPadding;
+
+            final preferredTop =
+                buttonPosition.dy -
+                menuHeight -
+                menuMargin;
+
+            final maximumTop =
+                overlaySize.height -
+                menuHeight -
+                menuMargin;
+
+            final menuTop = preferredTop.clamp(
+              menuMargin,
+              maximumTop < menuMargin
+                  ? menuMargin
+                  : maximumTop,
+            );
+
+            final selectedLocale =
+                await showMenu<Locale>(
+              context: buttonContext,
+              useRootNavigator: true,
+              initialValue: currentLocale,
+              position: RelativeRect.fromLTRB(
+                buttonPosition.dx,
+                menuTop,
+                overlaySize.width -
+                    buttonPosition.dx -
+                    buttonSize.width,
+                overlaySize.height -
+                    buttonPosition.dy,
+              ),
+              elevation: 8,
+              shape: RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(16),
+              ),
+              constraints: const BoxConstraints(
+                minWidth: 180,
+                maxWidth: 220,
+              ),
+              items: supportedLocales.map((locale) {
+                final isSelected =
+                    locale.languageCode ==
+                        currentLocale.languageCode &&
+                    locale.countryCode ==
+                        currentLocale.countryCode;
+
+                return PopupMenuItem<Locale>(
+                  value: locale,
+                  height: menuItemHeight,
+                  child: Row(
+                    children: [
+                      getIcon(
+                        _localeIconCode(locale),
+                        24,
+                        null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _localeName(locale),
+                        ),
+                      ),
+                      if (isSelected)
+                        Icon(
+                          Icons.check,
+                          size: 20,
+                          color: Theme.of(
+                            buttonContext,
+                          ).colorScheme.primary,
+                        ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            );
+
+            if (selectedLocale == null ||
+                selectedLocale == currentLocale) {
+              return;
+            }
+
+            ref
+                .read(localeProvider.notifier)
+                .state = selectedLocale;
+          },
+          child: getIcon(
+            _localeIconCode(currentLocale),
+            24,
+            null,
+          ),
+        );
+      },
+    );
+  }
+
+  static String _localeIconCode(Locale locale) {
+    if (locale.languageCode == 'de' &&
+        locale.countryCode == 'CH') {
+      return 'CH';
+    }
+
+    return locale.countryCode ??
+        locale.languageCode;
+  }
+
+  static String _localeName(Locale locale) {
+    if (locale.languageCode == 'de' &&
+        locale.countryCode == 'CH') {
+      return 'Baseldeutsch';
+    }
+
+    switch (locale.languageCode) {
+      case 'de':
+        return 'Deutsch';
+      case 'en':
+        return 'English';
+      case 'fr':
+        return 'Français';
+      default:
+        return locale.toLanguageTag();
+    }
   }
 }
 
@@ -131,265 +318,443 @@ class _SettingsSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final languageCode = ref.watch(localeProvider).languageCode;
-    final userAuth = Supabase.instance.client.auth.currentUser;
-    final user = ref.watch(supabaseUserStateProvider);
-    String role = '';
+    final locale = ref.watch(localeProvider);
+    final languageCode = locale.languageCode;
+    final countryCode = locale.countryCode;
 
-    if (userAuth == null) return SizedBox.shrink();
+    final userAuth =
+        Supabase.instance.client.auth.currentUser;
 
-    if (user.isAdmin) {
-      role = "Admin";
-    } else if (user.isEditor) {
-      role = "Admin";
-    } else {
-      role = "Benutzer";
+    final user = ref.watch(
+      supabaseUserStateProvider,
+    );
+
+    if (userAuth == null) {
+      return const SizedBox.shrink();
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            getText('user', languageCode: languageCode),
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 8),
+    final role = user.isAdmin
+        ? 'Admin'
+        : user.isEditor
+        ? 'Editor'
+        : getText(
+            'user',
+            languageCode: languageCode,
+            countryCode: countryCode,
+          );
 
-          Text(
-            "${getText('username', languageCode: languageCode)}: ${user.username}",
-          ),
-
-          const SizedBox(height: 8),
-
-          Text(
-            "${getText('email', languageCode: languageCode)}: ${userAuth.email}",
-          ),
-
-          const SizedBox(height: 8),
-
-          Text("${getText('role', languageCode: languageCode)}: $role"),
-
-          const SizedBox(height: 8),
-
-          ElevatedButton.icon(
-            onPressed: () async {
-              final updatedProfile = await showDialog<List<String>>(
-                context: context,
-                barrierDismissible: false,
-                builder: (_) => UserEditModal(
-                  email: userAuth.email!,
-                  username: user.username,
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          MediaQuery.viewInsetsOf(context).bottom +
+              24,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              Text(
+                getText(
+                  'user',
+                  languageCode: languageCode,
+                  countryCode: countryCode,
                 ),
-              );
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${getText('username', languageCode: languageCode, countryCode: countryCode)}: ${user.username}',
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${getText('email', languageCode: languageCode, countryCode: countryCode)}: ${userAuth.email ?? ''}',
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${getText('role', languageCode: languageCode, countryCode: countryCode)}: $role',
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final email = userAuth.email;
 
-              if (!context.mounted) return;
-              if (updatedProfile == null) return;
+                  if (email == null) {
+                    return;
+                  }
 
-              final newName = updatedProfile[0];
-              final newEmail = updatedProfile[1];
+                  final updatedProfile =
+                      await showDialog<List<String>>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) {
+                      return UserEditModal(
+                        email: email,
+                        username: user.username,
+                      );
+                    },
+                  );
 
-              final repo = ref.read(userRepositoryProvider);
+                  if (!context.mounted ||
+                      updatedProfile == null ||
+                      updatedProfile.length < 2) {
+                    return;
+                  }
 
-              bool changed = false;
+                  final newName =
+                      updatedProfile[0].trim();
 
-              // Username ändern
-              if (newName != user.username) {
-                await repo.updateUsername(newName);
-                changed = true;
-              }
+                  final newEmail =
+                      updatedProfile[1].trim();
 
-              // E-Mail ändern
-              if (newEmail != userAuth.email) {
-                await repo.updateEmail(newEmail);
-                changed = true;
+                  final repository = ref.read(
+                    userRepositoryProvider,
+                  );
 
-                if (!context.mounted) return;
+                  var changed = false;
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      getText('confirmEmail', languageCode: languageCode),
-                    ),
+                  if (newName.isNotEmpty &&
+                      newName != user.username) {
+                    await repository.updateUsername(
+                      newName,
+                    );
+
+                    changed = true;
+                  }
+
+                  if (newEmail.isNotEmpty &&
+                      newEmail != email) {
+                    await repository.updateEmail(
+                      newEmail,
+                    );
+
+                    changed = true;
+
+                    if (!context.mounted) {
+                      return;
+                    }
+
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          getText(
+                            'confirmEmail',
+                            languageCode:
+                                languageCode,
+                            countryCode:
+                                countryCode,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (changed) {
+                    await ref
+                        .read(
+                          supabaseUserStateProvider
+                              .notifier,
+                        )
+                        .loadProfile(userAuth.id);
+                  }
+                },
+                icon: const Icon(Icons.person),
+                label: Text(
+                  getText(
+                    'editProfile',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
                   ),
-                );
-              }
+                ),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: () {
+                  showModalBottomSheet<void>(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (_) {
+                      return const _ChangePasswordSheet();
+                    },
+                  );
+                },
+                icon: const Icon(Icons.lock),
+                label: Text(
+                  getText(
+                    'changePassword',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final currentUser = Supabase
+                      .instance
+                      .client
+                      .auth
+                      .currentUser;
 
-              if (changed) {
-                await ref
-                    .read(supabaseUserStateProvider.notifier)
-                    .loadProfile(userAuth.id);
-              }
-            },
-            icon: const Icon(Icons.person),
-            label: Text(getText('editProfile', languageCode: languageCode)),
+                  if (currentUser == null) {
+                    return;
+                  }
+
+                  await Supabase
+                      .instance
+                      .client
+                      .functions
+                      .invoke(
+                        'delete-user',
+                        body: {
+                          'user_id': currentUser.id,
+                        },
+                      );
+
+                  await Supabase
+                      .instance
+                      .client
+                      .auth
+                      .signOut();
+
+                  if (!context.mounted) {
+                    return;
+                  }
+
+                  Navigator.pushReplacementNamed(
+                    context,
+                    '/login',
+                  );
+                },
+                icon: const Icon(
+                  Icons.delete_forever,
+                ),
+                label: Text(
+                  getText(
+                    'deleteUser',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
+                ),
+              ),
+            ],
           ),
-
-          const SizedBox(height: 12),
-
-          ElevatedButton.icon(
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                builder: (_) => const _ChangePasswordSheet(),
-              );
-            },
-            icon: const Icon(Icons.lock),
-            label: Text(getText('changePassword', languageCode: languageCode)),
-          ),
-
-          const SizedBox(height: 12),
-
-          ElevatedButton.icon(
-            onPressed: () async {
-              final userId = Supabase.instance.client.auth.currentUser!.id;
-
-              await Supabase.instance.client.functions.invoke(
-                'delete-user',
-                body: {'user_id': userId},
-              );
-
-              await Supabase.instance.client.auth.signOut();
-
-              if (context.mounted) {
-                Navigator.pushReplacementNamed(context, '/login');
-              }
-            },
-            icon: const Icon(Icons.delete_forever),
-            label: Text(getText('deleteUser', languageCode: languageCode)),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _ChangePasswordSheet extends ConsumerStatefulWidget {
+class _ChangePasswordSheet
+    extends ConsumerStatefulWidget {
   const _ChangePasswordSheet();
 
   @override
-  ConsumerState<_ChangePasswordSheet> createState() =>
-      _ChangePasswordSheetState();
+  ConsumerState<_ChangePasswordSheet>
+  createState() {
+    return _ChangePasswordSheetState();
+  }
 }
 
-class _ChangePasswordSheetState extends ConsumerState<_ChangePasswordSheet> {
-  final pass1 = TextEditingController();
-  final pass2 = TextEditingController();
+class _ChangePasswordSheetState
+    extends ConsumerState<_ChangePasswordSheet> {
+  final TextEditingController pass1 =
+      TextEditingController();
+
+  final TextEditingController pass2 =
+      TextEditingController();
+
   String? error;
   bool loading = false;
 
   @override
+  void dispose() {
+    pass1.dispose();
+    pass2.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final languageCode = ref.watch(localeProvider).languageCode;
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            getText('changePassword', languageCode: languageCode),
-            style: Theme.of(context).textTheme.titleLarge,
+    final locale = ref.watch(localeProvider);
+    final languageCode = locale.languageCode;
+    final countryCode = locale.countryCode;
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          MediaQuery.viewInsetsOf(context).bottom +
+              24,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                getText(
+                  'changePassword',
+                  languageCode: languageCode,
+                  countryCode: countryCode,
+                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: pass1,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: getText(
+                    'newPassword',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
+                  border:
+                      const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: pass2,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: getText(
+                    'confirm',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
+                  border:
+                      const OutlineInputBorder(),
+                ),
+              ),
+              if (error != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  error!,
+                  style: const TextStyle(
+                    color: Colors.red,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: loading
+                    ? null
+                    : _submitPasswordChange,
+                child: loading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child:
+                            CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        getText(
+                          'save',
+                          languageCode:
+                              languageCode,
+                          countryCode:
+                              countryCode,
+                        ),
+                      ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-
-          TextField(
-            controller: pass1,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: "Neues Passwort",
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          TextField(
-            controller: pass2,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: "Passwort wiederholen",
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          if (error != null)
-            Text(error!, style: const TextStyle(color: Colors.red)),
-
-          const SizedBox(height: 16),
-
-          ElevatedButton(
-            onPressed: loading
-                ? null
-                : () {
-                    // 1) Dialog sofort schließen
-                    Navigator.pop(context);
-
-                    // 2) Danach async ausführen
-                    _performPasswordChange(
-                      pass1.text.trim(),
-                      pass2.text.trim(),
-                    );
-                  },
-            child: loading
-                ? const CircularProgressIndicator()
-                : Text(getText('save', languageCode: languageCode)),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Future<void> _performPasswordChange(String p1, String p2) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final languageCode = ref.watch(localeProvider).languageCode;
-    if (p1 != p2) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            getText('passwordsDoNotMatch', languageCode: languageCode),
-          ),
-        ),
-      );
+  Future<void> _submitPasswordChange() async {
+    final firstPassword = pass1.text.trim();
+    final secondPassword = pass2.text.trim();
+
+    final locale = ref.read(localeProvider);
+    final languageCode = locale.languageCode;
+    final countryCode = locale.countryCode;
+
+    if (firstPassword != secondPassword) {
+      setState(() {
+        error = getText(
+          'passwordsDoNotMatch',
+          languageCode: languageCode,
+          countryCode: countryCode,
+        );
+      });
+
       return;
     }
 
+    if (firstPassword.isEmpty) {
+      setState(() {
+        error = getText(
+          'newPassword',
+          languageCode: languageCode,
+          countryCode: countryCode,
+        );
+      });
+
+      return;
+    }
+
+    setState(() {
+      loading = true;
+      error = null;
+    });
+
     try {
       await Supabase.instance.client.auth.updateUser(
-        UserAttributes(password: p1),
+        UserAttributes(
+          password: firstPassword,
+        ),
       );
 
-      messenger.showSnackBar(
-        SnackBar(content: Text(
-          getText('passwordChanged', languageCode: languageCode),
-          )),
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.of(context).pop();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            getText(
+              'passwordChanged',
+              languageCode: languageCode,
+              countryCode: countryCode,
+            ),
+          ),
+        ),
       );
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text("${getText('error', languageCode: languageCode)}: $e")));
+    } catch (exception) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        error =
+            '${getText('error', languageCode: languageCode, countryCode: countryCode)}: $exception';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
     }
-  }
-}
-
-class _LocaleBar extends ConsumerWidget {
-  const _LocaleBar();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: const [BoxShadow(blurRadius: 8, color: Colors.black26)],
-      ),
-      child: Column(
-        children: [
-          ...supportedLocales.map((locale) {
-            return Text(locale.languageCode);
-          }), // Logout
-        ],
-      ),
-    );
   }
 }

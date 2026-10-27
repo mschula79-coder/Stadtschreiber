@@ -19,9 +19,11 @@ class PoiUserRatingBuilder extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final stats = ref.watch(poiUserRatingsProvider(poiId));
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
     return stats.when(
       loading: () => const CircularProgressIndicator(),
-      error: (e, _) => Text("${getText('error', languageCode: languageCode)}: $e"),
+      error: (e, _) => Text("${getText('error', languageCode: languageCode, countryCode: countryCode)}: $e"),
       data: (map) => builder(map),
     );
   }

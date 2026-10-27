@@ -46,11 +46,13 @@ class _RatingCriteriaEditModalState extends ConsumerState<RatingCriteriaEditModa
   @override
   Widget build(BuildContext context) {
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
     return Consumer(
       builder: (context, ref, _) {
 
         return AlertDialog(
-          title: Text(getText("editRatingCriterion", languageCode: languageCode)),
+          title: Text(getText("editRatingCriterion", languageCode: languageCode, countryCode: countryCode)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -59,7 +61,7 @@ class _RatingCriteriaEditModalState extends ConsumerState<RatingCriteriaEditModa
                 TextField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    labelText: getText("enterName", languageCode: languageCode),
+                    labelText: getText("enterName", languageCode: languageCode, countryCode: countryCode),
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -82,9 +84,9 @@ class _RatingCriteriaEditModalState extends ConsumerState<RatingCriteriaEditModa
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(getText("cancel", languageCode: languageCode)),
+              child: Text(getText("cancel", languageCode: languageCode, countryCode: countryCode)),
             ),
-            ElevatedButton(onPressed: _save, child: Text(getText("save", languageCode: languageCode))),
+            ElevatedButton(onPressed: _save, child: Text(getText("save", languageCode: languageCode, countryCode: countryCode))),
           ],
         );
       },

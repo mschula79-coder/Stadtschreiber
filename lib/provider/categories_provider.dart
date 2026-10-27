@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/category.dart';
 import 'package:stadtschreiber/models/category_dto.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
-import 'package:stadtschreiber/state/categories_state.dart';
 import 'package:stadtschreiber/provider/category_repository_provider.dart';
+import 'package:stadtschreiber/state/categories_state.dart';
 
 final categoriesProvider =
     NotifierProvider<CategoriesNotifier, CategoriesStateData>(
@@ -11,46 +11,22 @@ final categoriesProvider =
       name: 'categoriesProvider',
     );
 
-final criteriaForCategoryProvider =
-    FutureProvider.family<List<RatingCriterionDTO>, String>((
-      ref,
-      categoryId,
-    ) async {
-      final repo = ref.read(categoriesRepositoryProvider);
-      return repo.criteriaForCategory(categoryId);
-    });
-
-final categoryIdBySlugProvider = Provider.family<String?, String>((ref, slug) {
-  final categories = ref.watch(categoriesProvider).categories;
-
-  String? search(List<CategoryNode> nodes) {
-    for (final node in nodes) {
-      if (node.slug == slug) return node.id;
-
-      final result = search(node.children);
-      if (result != null) return result;
-    }
-    return null;
-  }
-
-  return search(categories);
-});
-
 class CategoriesNotifier extends Notifier<CategoriesStateData> {
   @override
-  CategoriesStateData build() => CategoriesStateData.initial;
+  CategoriesStateData build() {
+    return CategoriesStateData.initial;
+  }
 
   Future<void> loadCategoryTree() async {
     final repo = ref.read(categoriesRepositoryProvider);
+
     final list = await repo.loadCategoryTree();
 
-    // Map bauen: slug → id
     final slugToId = <String, String>{};
 
     void collect(CategoryNode node) {
-      if (node.slug != null) {
-        slugToId[node.slug!] = node.id;
-      }
+      slugToId[node.slug] = node.id;
+
       for (final child in node.children) {
         collect(child);
       }
@@ -64,48 +40,46 @@ class CategoriesNotifier extends Notifier<CategoriesStateData> {
   }
 }
 
+final categoryIdBySlugProvider = Provider.family<String?, String>((ref, slug) {
+  return ref.watch(categoriesProvider.select((state) => state.slugToId[slug]));
+});
+
+final criteriaForCategoryProvider =
+    FutureProvider.family<List<RatingCriterionDTO>, String>((
+      ref,
+      categoryId,
+    ) async {
+      final repository = ref.read(categoriesRepositoryProvider);
+
+      return repository.criteriaForCategory(categoryId);
+    });
+
 final categorySlugsForCriterionProvider =
     FutureProvider.family<List<String>, String>((ref, criterionId) {
-      final repo = ref.read(categoriesRepositoryProvider);
-      return repo.categorySlugsForCriterion(criterionId);
+      final repository = ref.read(categoriesRepositoryProvider);
+
+      return repository.categorySlugsForCriterion(criterionId);
     });
 
 final categoriesListProvider = FutureProvider<List<CategoryDto>>((ref) {
-  final repo = ref.read(categoriesRepositoryProvider);
-  return repo.categoriesList();
+  final repository = ref.read(categoriesRepositoryProvider);
+
+  return repository.categoriesList();
 });
 
 final childrenProvider = FutureProvider.family<List<CategoryDto>, String>((
   ref,
   parentId,
 ) {
-  final repo = ref.read(categoriesRepositoryProvider);
-  return repo.childrenForParentId(parentId);
+  final repository = ref.read(categoriesRepositoryProvider);
+
+  return repository.childrenForParentId(parentId);
 });
 
-final globalCriteriaProvider = FutureProvider<List<RatingCriterionDTO>>((
-  ref,
-) async {
-  final repo = ref.watch(categoriesRepositoryProvider);
-  return repo.criteriaListGlobal();
-});
+final globalCriteriaProvider = FutureProvider<List<RatingCriterionDTO>>((ref) {
+  final repository = ref.read(categoriesRepositoryProvider);
 
-final categoryLabelBySlugProvider = Provider.family<String?, String>((
-  ref,
-  slug,
-) {
-  final categories = ref.watch(categoriesProvider).categories;
-
-  String? search(List<CategoryNode> nodes) {
-    for (final node in nodes) {
-      if (node.slug == slug) return node.label; // ⭐ label statt id
-      final result = search(node.children);
-      if (result != null) return result;
-    }
-    return null;
-  }
-
-  return search(categories);
+  return repository.criteriaListGlobal();
 });
 
 final poiCountForCategoryProvider = FutureProvider.autoDispose

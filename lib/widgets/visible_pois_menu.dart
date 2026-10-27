@@ -45,8 +45,7 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
       ),
       constraints: BoxConstraints(
         maxHeight:
-            MediaQuery.of(context).size.height * 0.75 -
-            MediaQuery.of(context).viewInsets.bottom,
+            MediaQuery.of(context).size.height
       ),
 
       // Menuinhalt

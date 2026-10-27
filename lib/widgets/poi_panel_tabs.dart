@@ -85,16 +85,16 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
         icon: Tooltip(message: "Ratings", child: Icon(Icons.star)),
       ),
 
-      const Tab(
+      /* const Tab(
         icon: Tooltip(
           message: "History",
           child: Iconify(Mdi.historic, size: 24),
         ),
-      ),
+      ), */
       const Tab(
         icon: Tooltip(
           message: "Stories and articles",
-          child: Iconify(Mdi.book_open_blank_variant, size: 24),
+          child: Iconify(Mdi.historic, size: 24),
         ),
       ),
     ];

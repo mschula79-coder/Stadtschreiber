@@ -41,6 +41,8 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
   Widget build(BuildContext context) {
     final userID = ref.watch(supabaseUserStateProvider).userid;
     final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
     final favoriteListsAsync = ref.watch(userFavoriteListsProvider(userID));
 
     return Theme(
@@ -78,7 +80,7 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  getText('favorites', languageCode: languageCode),
+                  getText('favorites', languageCode: languageCode, countryCode: countryCode),
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -93,7 +95,7 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
                     child: Text(
                       getText(
                         'noFavoritesListsAvailable',
-                        languageCode: languageCode,
+                        languageCode: languageCode, countryCode: countryCode,
                       ),
                       style: TextStyle(
                         fontSize: 14,
@@ -159,7 +161,7 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
                                             if (poi == null) {
                                               return Padding(
                                                 padding: EdgeInsets.zero,
-                                                child: Text(getText('poiNotFound', languageCode: languageCode)
+                                                child: Text(getText('poiNotFound', languageCode: languageCode, countryCode: countryCode)
                                                   ,
                                                 ),
                                               );
