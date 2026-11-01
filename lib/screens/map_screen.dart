@@ -15,6 +15,7 @@ import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/map_controller_provider.dart';
 import 'package:stadtschreiber/provider/poi_drag_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
+import 'package:stadtschreiber/provider/poi_search_center_provider.dart';
 import 'package:stadtschreiber/provider/poi_selection_provider.dart';
 import 'package:stadtschreiber/provider/poi_service_provider.dart';
 import 'package:stadtschreiber/provider/pois_for_categories_provider.dart';
@@ -177,14 +178,15 @@ class MapScreenState extends ConsumerState<MapScreen> {
               onMapCreated: (controller) async {
                 mapController = controller;
 
-                if (_lastVisiblePois.isNotEmpty) {
-                  /* final newPositions = calculatePoiMarkerPositions(
-                    visiblePois: _lastVisiblePois,
-                    controller: controller,
-                  );
+                final camera = controller.camera;
+
+                if (camera != null) {
                   ref
-                      .read(poiMarkerPositionsProvider.notifier)
-                      .setPositions(newPositions); */
+                      .read(poiSearchCenterProvider.notifier)
+                      .setCenter(
+                        lat: camera.center.lat,
+                        lon: camera.center.lon,
+                      );
                 }
               },
 
@@ -346,9 +348,12 @@ class MapScreenState extends ConsumerState<MapScreen> {
                       ref
                           .read(cameraProvider.notifier)
                           .update(cam.center.lat, cam.center.lon, cam.zoom);
-                    } // ------------------------------------------------------------
-                    // 1. Dragging-Updates (wie bisher)
-                    // ------------------------------------------------------------
+
+                      ref
+                          .read(poiSearchCenterProvider.notifier)
+                          .setCenter(lat: cam.center.lat, lon: cam.center.lon);
+                    }
+
                     if (isDraggingPointMode) {
                       final poi = ref
                           .read(dragPoiProvider.notifier)
@@ -626,7 +631,8 @@ class MapScreenState extends ConsumerState<MapScreen> {
           return;
         }
 
-        final cats = ref.watch(categoriesSelectionProvider).selectedValues;
+        final cats = ref.read(categoriesSelectionProvider).selectedSlugs;
+        
         final hasDistricts = cats.any((c) => c == 'districts');
 
         if (hasDistricts) {
@@ -689,16 +695,14 @@ class MapScreenState extends ConsumerState<MapScreen> {
   void _registerCategorySelectionListener() {
     _catPoisSub = ref.listenManual<AsyncValue<List<PointOfInterest>>>(
       poisForCategoriesProvider,
-      (prev, next) {
+      (previous, next) {
         next.whenData((pois) {
-          // ⭐ Alle POIs der Kategorie automatisch selektieren
-          ref
-              .read(poiSelectionProvider.notifier)
-              .setAll(
-                pois.map((p) => p).toList(), // falls du IDs speicherst
-              );
+          ref.read(poiSelectionProvider.notifier).setAll(pois);
+
+          ref.read(visiblePoisProvider.notifier).replaceAll(pois);
         });
       },
+      fireImmediately: true,
     );
   }
 
@@ -934,7 +938,7 @@ NEWPOI
       distanceMapCentertoScreenCenter =
           (screenTop - mapScreenBottom) / 2 - (screenTop - screenBottom) / 2;
     } else {
-      distanceMapCentertoScreenCenter = 0; 
+      distanceMapCentertoScreenCenter = 0;
     }
     try {
       await mapController!.animateCamera(

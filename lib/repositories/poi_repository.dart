@@ -386,4 +386,29 @@ class PoiRepository {
     if (result == null) return null;
     return PointOfInterest.fromSupabase(result);
   }
+
+  Future<List<PointOfInterest>> loadPoisWithinRadius({
+    required double lat,
+    required double lon,
+    required double radiusKm,
+    required List<String> categorySlugs,
+  }) async {
+    if (categorySlugs.isEmpty) {
+      return const <PointOfInterest>[];
+    }
+
+    final response = await Supabase.instance.client.rpc(
+      'search_pois_by_radius',
+      params: {
+        'p_lat': lat,
+        'p_lon': lon,
+        'p_radius_meters': radiusKm * 1000,
+        'p_category_slugs': categorySlugs,
+      },
+    );
+
+    return response
+        .map<PointOfInterest>((row) => PointOfInterest.fromSupabase(row))
+        .toList();
+  }
 }

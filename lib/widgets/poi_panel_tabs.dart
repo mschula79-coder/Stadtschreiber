@@ -7,6 +7,7 @@ import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/services/debug_service.dart';
 import 'package:stadtschreiber/widgets/poi_panel_tabs_articles.dart';
 import 'package:stadtschreiber/widgets/poi_panel_tabs_gallery.dart';
+// ignore: unused_import
 import 'package:stadtschreiber/widgets/poi_panel_tabs_history.dart';
 import 'package:stadtschreiber/widgets/poi_panel_tabs_info.dart';
 import 'package:stadtschreiber/widgets/poi_panel_tabs_ratings.dart';
@@ -82,6 +83,12 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
         ),
       ),
       const Tab(
+        icon: Tooltip(
+          message: "Stories and articles",
+          child: Iconify(Mdi.historic, size: 24),
+        ),
+      ),
+      const Tab(
         icon: Tooltip(message: "Ratings", child: Icon(Icons.star)),
       ),
 
@@ -91,20 +98,14 @@ class _PoiPanelTabsState extends ConsumerState<PoiPanelTabs> {
           child: Iconify(Mdi.historic, size: 24),
         ),
       ), */
-      const Tab(
-        icon: Tooltip(
-          message: "Stories and articles",
-          child: Iconify(Mdi.historic, size: 24),
-        ),
-      ),
     ];
 
     final pages = [
       PoiPanelInfoTab(),
       PoiPanelGalleryTab(),
-      PoiPanelRatingsTab(),
-      PoiPanelHistoryTab(),
       PoiPanelArticlesTab(),
+      PoiPanelRatingsTab(),
+      /*       PoiPanelHistoryTab(),*/
     ];
     int initialIndex;
     if (selectedPoi.images.isEmpty) {

@@ -8,7 +8,7 @@ class CategoriesSelectionNotifier extends Notifier<CategoriesSelectionState> {
   CategoriesSelectionState build() => CategoriesSelectionState.initial;
 
   void setSelected(String value, bool selected) {
-    final updated = [...state.selectedValues];
+    final updated = [...state.selectedSlugs];
 
     if (selected) {
       if (!updated.contains(value)) updated.add(value);
@@ -18,11 +18,11 @@ class CategoriesSelectionNotifier extends Notifier<CategoriesSelectionState> {
 
     DebugService.log("CategoriesSelectionNotifier.setSelected: $value = $selected");
 
-    state = state.copyWith(selectedValues: updated);
+    state = state.copyWith(selectedSlugs: updated);
   }
 
   void setMany(Map<String, bool> updates) {
-    final updated = [...state.selectedValues];
+    final updated = [...state.selectedSlugs];
 
     updates.forEach((value, selected) {
       if (selected) {
@@ -34,12 +34,12 @@ class CategoriesSelectionNotifier extends Notifier<CategoriesSelectionState> {
 
     DebugService.log("CategoriesSelectionNotifier.setMany: $updates");
 
-    state = state.copyWith(selectedValues: updated);
+    state = state.copyWith(selectedSlugs: updated);
   }
 
   void clear() {
     DebugService.log("CategoriesSelectionNotifier.clear");
-    state = state.copyWith(selectedValues: []);
+    state = state.copyWith(selectedSlugs: []);
   }
 }
 
@@ -50,5 +50,5 @@ final categoriesSelectionProvider =
     );
 
 final selectedCategoriesProvider = Provider<List<String>>((ref) {
-  return ref.watch(categoriesSelectionProvider).selectedValues;
+  return ref.watch(categoriesSelectionProvider).selectedSlugs;
 });

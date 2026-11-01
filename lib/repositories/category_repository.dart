@@ -279,22 +279,6 @@ class CategoryRepository {
     );
   }
 
-  Future<int> poiCountForCategory(String categorySlug) async {
-    final supabase = Supabase.instance.client;
-    final normalizedSlug = categorySlug.trim();
-
-    if (normalizedSlug.isEmpty) {
-      return 0;
-    }
-
-    final count = await supabase.from('pois').count(CountOption.exact).contains(
-      'categories',
-      [normalizedSlug],
-    );
-
-    return count;
-  }
-
   Future<List<RatingCriterionDTO>> criteriaForCategory(
     String categoryId,
   ) async {
@@ -404,4 +388,37 @@ class CategoryRepository {
         .delete()
         .eq('id', criterion.id);
   }
+
+  Future<int> poiCountForCategory({
+  required String categorySlug,
+  required double lat,
+  required double lon,
+  required double radiusKm,
+}) async {
+  final normalizedSlug = categorySlug.trim();
+
+  if (normalizedSlug.isEmpty) {
+    return 0;
+  }
+
+  final response = await Supabase.instance.client.rpc(
+    'count_pois_for_category_by_radius',
+    params: {
+      'p_category_slug': normalizedSlug,
+      'p_lat': lat,
+      'p_lon': lon,
+      'p_radius_meters': radiusKm * 1000,
+    },
+  );
+
+  if (response is int) {
+    return response;
+  }
+
+  if (response is num) {
+    return response.toInt();
+  }
+
+  return int.tryParse(response.toString()) ?? 0;
+}
 }

@@ -8,6 +8,7 @@ import 'package:stadtschreiber/provider/categories_menu_provider.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
 import 'package:stadtschreiber/provider/category_repository_provider.dart';
 import 'package:stadtschreiber/provider/locale_provider.dart';
+import 'package:stadtschreiber/provider/search_radius_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
 import 'package:stadtschreiber/utils/category_localization_utils.dart';
@@ -50,6 +51,11 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
   }
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
 
@@ -65,6 +71,8 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
     final mode = ref.watch(
       visiblePoisMenuStateProvider.select((state) => state.poiSelectionMode),
     );
+
+    final searchRadiusKm = ref.watch(searchRadiusKmProvider);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _lastMode == mode) {
@@ -92,11 +100,18 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
     return Theme(
       data: Theme.of(context).copyWith(
         listTileTheme: const ListTileThemeData(contentPadding: EdgeInsets.zero),
+        dividerColor: Colors.transparent,
+        dividerTheme: const DividerThemeData(
+          color: Colors.transparent,
+          space: 0,
+          thickness: 0,
+        ),
       ),
       child: ListTileTheme(
         contentPadding: EdgeInsets.zero,
         horizontalTitleGap: 0,
         minLeadingWidth: 0,
+
         child: ExpansionTile(
           tilePadding: const EdgeInsets.only(left: 0, right: 15),
           childrenPadding: const EdgeInsets.fromLTRB(4, 4, 0, 0),
@@ -195,8 +210,69 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
               ),
             ),
             const SizedBox(height: 8),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.radar, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      getText(
+                        'searchRadius',
+                        languageCode: languageCode,
+                        countryCode: countryCode,
+                      ),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 110,
+                    child: DropdownButtonFormField<double>(
+                      initialValue: searchRadiusKm,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        border: OutlineInputBorder(),
+                      ),
+                      items: _searchRadiusOptions.map((radiusKm) {
+                        final label = radiusKm < 1
+                            ? '${(radiusKm * 1000).round()} m'
+                            : '${radiusKm.toInt()} km';
+
+                        return DropdownMenuItem<double>(
+                          value: radiusKm,
+                          child: Text(label),
+                        );
+                      }).toList(),
+                      onChanged: (radiusKm) {
+                        if (radiusKm == null) {
+                          return;
+                        }
+
+                        ref
+                            .read(searchRadiusKmProvider.notifier)
+                            .setRadius(radiusKm);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
             ...filteredCategories.map(
-              (node) => _buildCategoryNode(context, ref, node),
+              (node) => _buildCategoryNode(context, ref, node, depth: 0),
             ),
             if (isAdmin)
               ElevatedButton.icon(
@@ -401,48 +477,20 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
   Widget _buildCategoryNode(
     BuildContext context,
     WidgetRef ref,
-    LocalizedCategoryNode node,
-  ) {
-    final categoryCheckboxesState = ref.watch(categoriesSelectionProvider);
-
-    if (!node.isLeaf) {
-      final leftPadding = node.hasParents ? 10.0 : 0.0;
-
-      return ExpansionTile(
-        key: PageStorageKey<String>(
-          'category-${node.id}-${expandAll ? 'expanded' : 'collapsed'}',
-        ),
-        tilePadding: EdgeInsets.only(left: leftPadding, right: 15),
-        childrenPadding: EdgeInsets.zero,
-        visualDensity: VisualDensity.compact,
-        initiallyExpanded: expandAll,
-        leading: getIcon(node.slug, 28, null),
-        title: Row(
-          children: [
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                node.label,
-                softWrap: true,
-                maxLines: null,
-                style: const TextStyle(fontSize: 16),
-              ),
-            ),
-          ],
-        ),
-        children: node.children.map((child) {
-          return _buildCategoryNode(context, ref, child);
-        }).toList(),
-      );
-    }
-
+    LocalizedCategoryNode node, {
+    required int depth,
+  }) {
     final categorySlug = node.slug.trim();
 
     if (categorySlug.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    final isChecked = categoryCheckboxesState.isSelected(categorySlug);
+    final isSelected = ref.watch(
+      categoriesSelectionProvider.select(
+        (state) => state.isSelected(categorySlug),
+      ),
+    );
 
     final isAdmin = ref.watch(
       supabaseUserStateProvider.select((state) => state.isAdmin),
@@ -452,73 +500,124 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
 
     final poiCount = poiCountAsync.asData?.value;
 
-    final isCheckboxEnabled = poiCount != null && poiCount > 0;
+    final isSelectable = isSelected || (poiCount != null && poiCount > 0);
 
     final disabledColor = Theme.of(context).disabledColor;
+    final leftPadding = depth * 10.0;
+
+    void setSelected(bool selected) {
+      ref
+          .read(categoriesSelectionProvider.notifier)
+          .setSelected(categorySlug, selected);
+    }
+
+    Widget buildCount() {
+      if (!isAdmin) {
+        return const SizedBox.shrink();
+      }
+
+      return poiCountAsync.when(
+        data: (count) {
+          return Text(
+            '($count)',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: count > 0 ? null : disabledColor,
+            ),
+          );
+        },
+        loading: () {
+          return const SizedBox(
+            width: 12,
+            height: 12,
+            child: CircularProgressIndicator(strokeWidth: 1.5),
+          );
+        },
+        error: (error, stackTrace) {
+          return Tooltip(
+            message: error.toString(),
+            child: Icon(
+              Icons.error_outline,
+              size: 16,
+              color: Theme.of(context).colorScheme.error,
+            ),
+          );
+        },
+      );
+    }
+
+    Widget buildTitle({required double iconSize}) {
+      return Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            node.label,
+            style: TextStyle(
+              fontSize: 16,
+              color: isSelectable ? null : disabledColor,
+            ),
+          ),
+          Opacity(
+            opacity: isSelectable ? 1 : 0.38,
+            child: getIcon(categorySlug, iconSize, null),
+          ),
+          buildCount(),
+        ],
+      );
+    }
+
+    if (node.children.isNotEmpty) {
+      return ExpansionTile(
+        key: PageStorageKey<String>(
+          'category-${node.id}-${expandAll ? 'expanded' : 'collapsed'}',
+        ),
+        tilePadding: EdgeInsets.only(left: leftPadding, right: 15),
+        childrenPadding: EdgeInsets.zero,
+        visualDensity: VisualDensity.compact,
+        initiallyExpanded: expandAll,
+        controlAffinity: ListTileControlAffinity.trailing,
+        leading: Checkbox(
+          value: isSelected,
+          onChanged: isSelectable
+              ? (value) {
+                  setSelected(value ?? false);
+                }
+              : null,
+        ),
+        title: buildTitle(iconSize: 28),
+        children: node.children.map((child) {
+          return _buildCategoryNode(context, ref, child, depth: depth + 1);
+        }).toList(),
+      );
+    }
 
     return CheckboxListTile(
-      contentPadding: const EdgeInsets.only(top: 0, left: 4, right: 15),
-      value: isChecked,
+      contentPadding: EdgeInsets.only(left: leftPadding, right: 15),
+      value: isSelected,
       tileColor: Colors.white,
       visualDensity: VisualDensity.compact,
       controlAffinity: ListTileControlAffinity.leading,
-      onChanged: isCheckboxEnabled
-          ? (checked) {
-              ref
-                  .read(categoriesSelectionProvider.notifier)
-                  .setSelected(categorySlug, checked ?? false);
+      onChanged: isSelectable
+          ? (value) {
+              setSelected(value ?? false);
             }
           : null,
-      secondary: Opacity(
-        opacity: isCheckboxEnabled ? 1 : 0.38,
-        child: getIcon(categorySlug, 24, null),
-      ),
-      title: Padding(
-        padding: const EdgeInsets.only(left: 4),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                node.label,
-                style: TextStyle(
-                  color: isCheckboxEnabled ? null : disabledColor,
-                ),
-              ),
-            ),
-            if (isAdmin)
-              poiCountAsync.when(
-                data: (count) {
-                  return Text(
-                    ' ($count)',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: count > 0 ? null : disabledColor,
-                    ),
-                  );
-                },
-                loading: () {
-                  return const Padding(
-                    padding: EdgeInsets.only(left: 6),
-                    child: SizedBox(
-                      width: 12,
-                      height: 12,
-                      child: CircularProgressIndicator(strokeWidth: 1.5),
-                    ),
-                  );
-                },
-                error: (error, stackTrace) {
-                  return Tooltip(
-                    message: error.toString(),
-                    child: Icon(
-                      Icons.error_outline,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  );
-                },
-              ),
-          ],
-        ),
-      ),
+      title: buildTitle(iconSize: 24),
     );
   }
+
+  static const List<double> _searchRadiusOptions = [
+    0.5,
+    1,
+    2,
+    3,
+    5,
+    10,
+    20,
+    30,
+  ];
 }
+
+// TODO count leafs
+// Fix einrückungen

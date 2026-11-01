@@ -3,6 +3,8 @@ import 'package:stadtschreiber/models/category.dart';
 import 'package:stadtschreiber/models/category_dto.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:stadtschreiber/provider/category_repository_provider.dart';
+import 'package:stadtschreiber/provider/poi_search_center_provider.dart';
+import 'package:stadtschreiber/provider/search_radius_provider.dart';
 import 'package:stadtschreiber/state/categories_state.dart';
 
 final categoriesProvider =
@@ -82,15 +84,37 @@ final globalCriteriaProvider = FutureProvider<List<RatingCriterionDTO>>((ref) {
   return repository.criteriaListGlobal();
 });
 
-final poiCountForCategoryProvider = FutureProvider.autoDispose
-    .family<int, String>((ref, categorySlug) async {
-      final normalizedSlug = categorySlug.trim();
+final poiCountForCategoryProvider =
+    FutureProvider.autoDispose.family<int, String>(
+  (ref, categorySlug) async {
+    final normalizedSlug = categorySlug.trim();
 
-      if (normalizedSlug.isEmpty) {
-        return 0;
-      }
+    if (normalizedSlug.isEmpty) {
+      return 0;
+    }
 
-      final repository = ref.read(categoriesRepositoryProvider);
+    final searchCenter = ref.watch(
+      poiSearchCenterProvider,
+    );
 
-      return repository.poiCountForCategory(normalizedSlug);
-    });
+    if (searchCenter == null) {
+      return 0;
+    }
+
+    final radiusKm = ref.watch(
+      searchRadiusKmProvider,
+    );
+
+    final repository = ref.read(
+      categoriesRepositoryProvider,
+    );
+
+    return repository.poiCountForCategory(
+      categorySlug: normalizedSlug,
+      lat: searchCenter.lat,
+      lon: searchCenter.lon,
+      radiusKm: radiusKm,
+    );
+  },
+);
+

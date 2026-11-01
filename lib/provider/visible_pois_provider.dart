@@ -17,6 +17,10 @@ class VisiblePoisNotifier extends Notifier<List<PointOfInterest>> {
     state = pois;
   }
 
+  void replaceAll(Iterable<PointOfInterest> pois) {
+    state = List<PointOfInterest>.unmodifiable(pois);
+  }
+
   void addPois(List<PointOfInterest> pois) {
     final existingIds = state.map((p) => p.id).toSet();
 
@@ -27,7 +31,7 @@ class VisiblePoisNotifier extends Notifier<List<PointOfInterest>> {
 
   void replacePoi(PointOfInterest poi) {
     removePois([poi.id]);
-    
+
     state = [...state, poi];
   }
 

@@ -2,37 +2,40 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/provider/categories_menu_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
-import 'package:stadtschreiber/provider/selected_poi_provider.dart';
+import 'package:stadtschreiber/provider/poi_search_center_provider.dart';
+import 'package:stadtschreiber/provider/search_radius_provider.dart';
 
-final poisForCategoriesProvider = FutureProvider<List<PointOfInterest>>((
-  ref,
-) async {
-  final repo = ref.watch(poiRepositoryProvider);
+final poisForCategoriesProvider =
+    FutureProvider.autoDispose<List<PointOfInterest>>(
+  (ref) async {
+    final selectedSlugs = ref.watch(
+      categoriesSelectionProvider.select(
+        (state) => state.selectedSlugs,
+      ),
+    );
 
-  final selectedCategories = ref
-      .watch(categoriesSelectionProvider)
-      .selectedValues;
-  /*   final searchSelection = ref.watch(searchSelectionProvider);
- */
-  final selectedPoi = ref.watch(selectedPoiProvider);
+    final radiusKm = ref.watch(
+      searchRadiusKmProvider,
+    );
 
-  // 1) Suchauswahl hat Vorrang
-  /*  if (searchSelection.isNotEmpty) {
-    return searchSelection;
-  } */
+    final searchCenter = ref.watch(
+      poiSearchCenterProvider,
+    );
 
-  // ⭐ 3) Deine bestehende Kategorien‑Logik
-  final catPois = await repo.loadPoisforSelectedCategories(selectedCategories);
+    if (selectedSlugs.isEmpty ||
+        searchCenter == null) {
+      return const <PointOfInterest>[];
+    }
 
-  if (selectedPoi == null) return catPois;
+    final repository = ref.read(
+      poiRepositoryProvider,
+    );
 
-  final index = catPois.indexWhere((p) => p.id == selectedPoi.id);
-
-  if (index == -1) {
-    return [...catPois, selectedPoi];
-  }
-
-  final updated = [...catPois];
-  updated[index] = selectedPoi;
-  return updated;
-});
+    return repository.loadPoisWithinRadius(
+      lat: searchCenter.lat,
+      lon: searchCenter.lon,
+      radiusKm: radiusKm,
+      categorySlugs: selectedSlugs,
+    );
+  },
+);

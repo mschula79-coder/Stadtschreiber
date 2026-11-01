@@ -217,6 +217,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                       min: 0.5,
                       max: 20,
                       divisions: null,
+                      // Adress search  
                       value: _searchRadiusKm,
                       label: _formatRadius(_searchRadiusKm),
                       onChanged: (value) {
