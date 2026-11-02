@@ -84,7 +84,7 @@ final globalCriteriaProvider = FutureProvider<List<RatingCriterionDTO>>((ref) {
   return repository.criteriaListGlobal();
 });
 
-final poiCountForCategoryProvider =
+/* final poiCountForCategoryProvider =
     FutureProvider.autoDispose.family<int, String>(
   (ref, categorySlug) async {
     final normalizedSlug = categorySlug.trim();
@@ -116,5 +116,5 @@ final poiCountForCategoryProvider =
       radiusKm: radiusKm,
     );
   },
-);
+); */
 

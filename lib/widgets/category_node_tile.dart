@@ -91,7 +91,6 @@ class PoiCategoryNodeTile extends ConsumerWidget {
                 );
           }
         }
-        ref.invalidate(poiCountForCategoryProvider(slug));
       },
     );
   }

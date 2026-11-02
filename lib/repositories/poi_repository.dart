@@ -1,26 +1,26 @@
+import 'package:maplibre/maplibre.dart';
 import 'package:stadtschreiber/models/address.dart';
+import 'package:stadtschreiber/models/article_entry.dart';
 import 'package:stadtschreiber/models/history_entry.dart';
 import 'package:stadtschreiber/models/image_entry.dart';
+import 'package:stadtschreiber/models/poi.dart';
+import 'package:stadtschreiber/models/poi_feature_node.dart';
 import 'package:stadtschreiber/models/poi_metadata.dart';
 import 'package:stadtschreiber/services/debug_service.dart';
-import 'package:stadtschreiber/utils/debouncer.dart';
+import 'package:stadtschreiber/utils/osm_utils.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:maplibre/maplibre.dart';
-
-import '../models/poi.dart';
-import '../models/article_entry.dart';
-import '../utils/osm_utils.dart';
 
 class PoiRepository {
-  final supabase = Supabase.instance.client;
-  // ignore: unused_field
-  final Debouncer _debouncer = Debouncer(Duration(milliseconds: 500));
+  final SupabaseClient supabase = Supabase.instance.client;
+
   int _lastRequestId = 0;
 
   Future<List<PointOfInterest>> loadPoisforSelectedCategories(
     List<String> selectedCategories,
   ) async {
-    if (selectedCategories.isEmpty) return [];
+    if (selectedCategories.isEmpty) {
+      return const <PointOfInterest>[];
+    }
 
     final response = await supabase
         .from('pois')
@@ -31,8 +31,8 @@ class PoiRepository {
         .order('name');
 
     return response
-        .map<PointOfInterest>((row) => PointOfInterest.fromSupabase(row))
-        .toList();
+        .map<PointOfInterest>(PointOfInterest.fromSupabase)
+        .toList(growable: false);
   }
 
   Future<List<PointOfInterest>> loadTopNPois({
@@ -40,27 +40,26 @@ class PoiRepository {
     required String criterionId,
     required double limit,
   }) async {
-    final supabase = Supabase.instance.client;
-
-    // 1) Bayesian-Daten laden
     final rows = await supabase
         .from('poi_ratings_bayesian')
         .select()
         .eq('criterion_id', criterionId);
 
-    if (rows.isEmpty) return [];
+    if (rows.isEmpty) {
+      return const <PointOfInterest>[];
+    }
 
-    // 2) Kategorie-Slug holen
     final data = await supabase
         .from('categories')
         .select('slug')
         .eq('id', categoryId)
         .single();
 
-    final String categoryName = data['slug'] as String;
+    final categoryName = data['slug'] as String;
 
-    // 3) POIs laden
-    final poiIds = rows.map((r) => r['poi_id'] as String).toList();
+    final poiIds = rows
+        .map((row) => row['poi_id'] as String)
+        .toList(growable: false);
 
     final poisRaw = await supabase
         .from('pois')
@@ -68,34 +67,35 @@ class PoiRepository {
         .inFilter('id', poiIds);
 
     final pois = poisRaw
-        .map<PointOfInterest>((row) => PointOfInterest.fromSupabase(row))
+        .map<PointOfInterest>(PointOfInterest.fromSupabase)
         .toList();
 
-    // 4) Kategorie filtern
-    final filtered = pois
-        .where((p) => p.categories?.contains(categoryName) ?? false)
-        .toList();
+    final filtered = pois.where((poi) {
+      return poi.categories?.contains(categoryName) ?? false;
+    }).toList();
 
-    // 5) Bayesian Score berechnen
     double bayesScore(Map<String, dynamic> row) {
-      final R = (row['avg_rating'] as num).toDouble();
-      final v = (row['rating_count'] as num).toDouble();
-      final C = (row['global_avg'] as num).toDouble();
-      final m = (row['m'] as num).toDouble();
+      final averageRating = (row['avg_rating'] as num).toDouble();
 
-      return (v / (v + m)) * R + (m / (v + m)) * C;
+      final ratingCount = (row['rating_count'] as num).toDouble();
+
+      final globalAverage = (row['global_avg'] as num).toDouble();
+
+      final minimumCount = (row['m'] as num).toDouble();
+
+      return (ratingCount / (ratingCount + minimumCount)) * averageRating +
+          (minimumCount / (ratingCount + minimumCount)) * globalAverage;
     }
 
-    // 6) Sortieren nach Bayesian Score
-    filtered.sort((a, b) {
-      final rowA = rows.firstWhere((r) => r['poi_id'] == a.id);
-      final rowB = rows.firstWhere((r) => r['poi_id'] == b.id);
+    filtered.sort((first, second) {
+      final firstRow = rows.firstWhere((row) => row['poi_id'] == first.id);
 
-      return bayesScore(rowB).compareTo(bayesScore(rowA));
+      final secondRow = rows.firstWhere((row) => row['poi_id'] == second.id);
+
+      return bayesScore(secondRow).compareTo(bayesScore(firstRow));
     });
 
-    // 7) Limit anwenden
-    return filtered.take(limit.toInt()).toList();
+    return filtered.take(limit.toInt()).toList(growable: false);
   }
 
   Future<PointOfInterest> saveOSMPoiToSupabase(PointOfInterest poi) async {
@@ -103,12 +103,14 @@ class PoiRepository {
     poi.id = '-1';
 
     final map = poi.toMap();
+
     map.remove('id');
 
     final result = await supabase.from('pois').insert(map).select().single();
 
     poi.id = result['id'] as String;
-    DebugService.log('neuer POI gespeichert: $result');
+
+    DebugService.log('Neuer POI gespeichert: $result');
 
     return poi;
   }
@@ -132,8 +134,7 @@ class PoiRepository {
     required String category,
     required bool enabled,
   }) async {
-    // IMMER neue Liste erzeugen
-    final newCategories = <String>[...(poi.categories ?? [])];
+    final newCategories = <String>[...?poi.categories];
 
     if (enabled) {
       if (!newCategories.contains(category)) {
@@ -143,13 +144,11 @@ class PoiRepository {
       newCategories.remove(category);
     }
 
-    // Supabase speichern
     await supabase
         .from('pois')
         .update({'categories': newCategories})
         .eq('id', poi.id);
 
-    // neues POI-Objekt zurückgeben
     return poi.copyWith(categories: newCategories);
   }
 
@@ -165,39 +164,56 @@ class PoiRepository {
     String? description,
     List<ImageEntry>? images,
   }) async {
-    final supabase = Supabase.instance.client;
+    final updateData = <String, dynamic>{};
 
-    // Dynamische Update-Map
-    final Map<String, dynamic> updateData = {};
+    if (name != null) {
+      updateData['name'] = name;
+    }
 
-    if (name != null) updateData['name'] = name;
-    if (history != null) updateData['history'] = history;
+    if (history != null) {
+      updateData['history'] = history;
+    }
 
     if (clearFeaturedImage) {
-      updateData['featured_image_url'] = null; // explizit löschen
+      updateData['featured_image_url'] = null;
     } else if (featuredImageUrl != null) {
-      updateData['featured_image_url'] = featuredImageUrl; // neuen Wert setzen
+      updateData['featured_image_url'] = featuredImageUrl;
     }
 
     if (articles != null) {
-      updateData['articles'] = articles.map((e) => e.toJson()).toList();
-    }
-    if (historyEntries != null) {
-      updateData['history'] = historyEntries.map((e) => e.toJson()).toList();
-    }
-    if (metadata != null) updateData['metadata'] = metadata.toJson();
-    if (description != null) updateData['description'] = description;
-    if (images != null) {
-      updateData['images'] = images.map((e) => e.toJson()).toList();
+      updateData['articles'] = articles
+          .map((article) => article.toJson())
+          .toList(growable: false);
     }
 
-    if (updateData.isEmpty) return; // nichts zu tun
+    if (historyEntries != null) {
+      updateData['history'] = historyEntries
+          .map((entry) => entry.toJson())
+          .toList(growable: false);
+    }
+
+    if (metadata != null) {
+      updateData['metadata'] = metadata.toJson();
+    }
+
+    if (description != null) {
+      updateData['description'] = description;
+    }
+
+    if (images != null) {
+      updateData['images'] = images
+          .map((image) => image.toJson())
+          .toList(growable: false);
+    }
+
+    if (updateData.isEmpty) {
+      return;
+    }
 
     await supabase.from('pois').update(updateData).eq('id', id);
   }
 
   Future<void> updatePoiGeomInSupabase(PointOfInterest poi) async {
-    final supabase = Supabase.instance.client;
     await supabase
         .from('pois')
         .update({
@@ -208,7 +224,7 @@ class PoiRepository {
         .eq('id', poi.id);
 
     DebugService.log(
-      'updatePoiGeomInSupabase name: $poi.name geom_area: $poi.geomArea label_location: $poi.location',
+      'updatePoiGeomInSupabase name: ${poi.name} geom_area: ${poi.geomArea} label_location: ${poi.location}',
     );
   }
 
@@ -219,7 +235,10 @@ class PoiRepository {
         .eq('id', id)
         .maybeSingle();
 
-    if (result == null) return null;
+    if (result == null) {
+      return null;
+    }
+
     return PointOfInterest.fromSupabase(result);
   }
 
@@ -228,46 +247,57 @@ class PoiRepository {
     double lat,
     double lon,
   ) async {
-    if (query.trim().isEmpty) return [];
-    final debounceDuration = Duration(milliseconds: 500);
+    if (query.trim().isEmpty) {
+      return const <PointOfInterest>[];
+    }
+
+    const debounceDuration = Duration(milliseconds: 500);
+
     final currentRequestId = ++_lastRequestId;
-    await Future.delayed(debounceDuration);
-    if (currentRequestId != _lastRequestId) return [];
+
+    await Future<void>.delayed(debounceDuration);
+
+    if (currentRequestId != _lastRequestId) {
+      return const <PointOfInterest>[];
+    }
+
     final safeQuery = query.trim();
 
     if (safeQuery.startsWith('osm')) {
       final overpassPois = await searchPoisOverpass(safeQuery, lat, lon);
-      if (currentRequestId != _lastRequestId) return [];
+
+      if (currentRequestId != _lastRequestId) {
+        return const <PointOfInterest>[];
+      }
+
       return overpassPois;
     }
+
     List<Map<String, dynamic>> response;
 
     if (safeQuery.startsWith('tag')) {
       final cleanedQuery = safeQuery.substring('tag'.length).trim();
+
       response = await supabase
           .from('pois')
-          .select('*') // ⭐ alle Felder
-          .ilike('osm_value', '%$cleanedQuery%') // ⭐ Suche
-          .order('name'); // ⭐ Sortierung
+          .select('*')
+          .ilike('osm_value', '%$cleanedQuery%')
+          .order('name');
     } else {
       response = await supabase
           .from('pois')
-          .select('*') // ⭐ alle Felder
-          .ilike('name', '%$query%') // ⭐ Suche
-          .order('name'); // ⭐ Sortierung
+          .select('*')
+          .ilike('name', '%$safeQuery%')
+          .order('name');
     }
 
-    /*     final response = await supabase.rpc(
-      'pois_search_with_distance_and_address',
-      params: {'q': safeQuery, 'lat_input': lat, 'lon_input': lon},
-    );
- */
-    if (currentRequestId != _lastRequestId) return [];
-    final pois = (response as List)
-        .map<PointOfInterest>((row) => PointOfInterest.fromSupabase(row))
-        .toList();
+    if (currentRequestId != _lastRequestId) {
+      return const <PointOfInterest>[];
+    }
 
-    return pois;
+    return response
+        .map<PointOfInterest>(PointOfInterest.fromSupabase)
+        .toList(growable: false);
   }
 
   Future<void> updatePoiAddressInSupabase(String id, Address address) async {
@@ -289,65 +319,86 @@ class PoiRepository {
     double lat,
     double lon,
   ) async {
-    if (query.startsWith('osm tag')) {
-      final cleanedQuery = query.substring('osm tag'.length).trim();
+    final normalizedQuery = query.trim();
+
+    if (normalizedQuery.startsWith('osm tag')) {
+      final cleanedQuery = normalizedQuery.substring('osm tag'.length).trim();
+
+      if (cleanedQuery.isEmpty) {
+        return const <PointOfInterest>[];
+      }
+
       final osmResult = await searchNearbyOverpassTag(
         lat: lat,
         lon: lon,
         cleanedQuery: cleanedQuery,
       );
-      final List<PointOfInterest> pois = osmResult.map<PointOfInterest>((row) {
-        return PointOfInterest.fromOSM(row);
-      }).toList();
-      return pois;
+
+      return (osmResult as Iterable<dynamic>)
+          .map<PointOfInterest>(
+            (row) =>
+                PointOfInterest.fromOSM(Map<String, dynamic>.from(row as Map)),
+          )
+          .toList(growable: false);
     }
 
-    if (query.startsWith('osmn') && query.length >= 8) {
-      final cleanedQuery = query.substring('osmn'.length).trim();
+    if (normalizedQuery.startsWith('osmn')) {
+      final cleanedQuery = normalizedQuery.substring('osmn'.length).trim();
+
+      if (cleanedQuery.isEmpty) {
+        return const <PointOfInterest>[];
+      }
+
       final osmResult = await searchNearbyOverpassName(
         lat: lat,
         lon: lon,
         searchTerm: cleanedQuery,
       );
-      final List<PointOfInterest> pois = osmResult.map<PointOfInterest>((row) {
-        return PointOfInterest.fromOSM(row);
-      }).toList();
-      return pois;
+
+      return (osmResult as Iterable<dynamic>)
+          .map<PointOfInterest>(
+            (row) =>
+                PointOfInterest.fromOSM(Map<String, dynamic>.from(row as Map)),
+          )
+          .toList(growable: false);
     }
 
-    if (query.startsWith('osmb') && query.length >= 8) {
-      final cleanedQuery = query.substring('osmb'.length).trim();
-      if (cleanedQuery.length >= 3) {
-        final osmResult = await searchNearbyStreetBuildings(
-          searchTerm: cleanedQuery,
-          lat: lat,
-          lon: lon,
-        );
-        final List<PointOfInterest> pois = osmResult.map<PointOfInterest>((
-          row,
-        ) {
-          return PointOfInterest.fromOSM(row);
-        }).toList();
-        return pois;
-      } else {
-        return [];
+    if (normalizedQuery.startsWith('osmb')) {
+      final cleanedQuery = normalizedQuery.substring('osmb'.length).trim();
+
+      if (cleanedQuery.length < 3) {
+        return const <PointOfInterest>[];
       }
-    } else {
-      final response = await supabase.rpc(
-        'pois_search_with_distance_and_address',
-        params: {'q': query, 'lat_input': lat, 'lon_input': lon},
+
+      final osmResult = await searchNearbyStreetBuildings(
+        searchTerm: cleanedQuery,
+        lat: lat,
+        lon: lon,
       );
-      final List<PointOfInterest> pois = response
-          .map<PointOfInterest>((row) => PointOfInterest.fromSupabase(row))
-          .toList();
-      return pois;
+
+      return (osmResult as Iterable<dynamic>)
+          .map<PointOfInterest>(
+            (row) =>
+                PointOfInterest.fromOSM(Map<String, dynamic>.from(row as Map)),
+          )
+          .toList(growable: false);
     }
+
+    final response = await supabase.rpc(
+      'pois_search_with_distance_and_address',
+      params: {'q': normalizedQuery, 'lat_input': lat, 'lon_input': lon},
+    );
+
+    return (response as Iterable<dynamic>)
+        .map<PointOfInterest>(
+          (row) => PointOfInterest.fromSupabase(
+            Map<String, dynamic>.from(row as Map),
+          ),
+        )
+        .toList(growable: false);
   }
 
-  // Combine with newOSMPoi, combine with check duplicate?
   Future<PointOfInterest> newPoi(Geographic location) async {
-    final supabase = Supabase.instance.client;
-
     final result = await supabase
         .from('pois')
         .insert({
@@ -358,24 +409,24 @@ class PoiRepository {
         })
         .select()
         .single();
-    final newId = result['id'];
+
+    final newId = result['id'] as String;
 
     return PointOfInterest(
       id: newId,
       name: 'newPOI',
       location: location,
-      categories: [],
-      articles: [],
-      historyEntries: [],
+      categories: const [],
+      articles: const [],
+      historyEntries: const [],
       metadata: PoiMetadata(),
       geometryType: 'point',
       newPoi: true,
-      images: [],
-      featuredImageUrl: "",
+      images: const [],
+      featuredImageUrl: '',
     );
   }
 
-  /// Check if a POI with the given OSM ID already exists in the database and load it if it does.
   Future<PointOfInterest?> loadPoiByOSMId(int osmId) async {
     final result = await supabase
         .from('pois')
@@ -383,7 +434,10 @@ class PoiRepository {
         .eq('osm_id', osmId)
         .maybeSingle();
 
-    if (result == null) return null;
+    if (result == null) {
+      return null;
+    }
+
     return PointOfInterest.fromSupabase(result);
   }
 
@@ -391,24 +445,358 @@ class PoiRepository {
     required double lat,
     required double lon,
     required double radiusKm,
-    required List<String> categorySlugs,
+    required Set<String> categorySlugs,
+    required Set<String> featureSlugs,
   }) async {
     if (categorySlugs.isEmpty) {
       return const <PointOfInterest>[];
     }
 
-    final response = await Supabase.instance.client.rpc(
+    final normalizedCategorySlugs = categorySlugs
+        .map((slug) => slug.trim())
+        .where((slug) => slug.isNotEmpty)
+        .toSet();
+
+    final normalizedFeatureSlugs = featureSlugs
+        .map((slug) => slug.trim())
+        .where((slug) => slug.isNotEmpty)
+        .toSet();
+
+    if (normalizedCategorySlugs.isEmpty) {
+      return const <PointOfInterest>[];
+    }
+
+    final response = await supabase.rpc(
       'search_pois_by_radius',
       params: {
         'p_lat': lat,
         'p_lon': lon,
         'p_radius_meters': radiusKm * 1000,
-        'p_category_slugs': categorySlugs,
+        'p_category_slugs': normalizedCategorySlugs.toList(),
+        'p_feature_slugs': normalizedFeatureSlugs.toList(),
       },
     );
 
-    return response
-        .map<PointOfInterest>((row) => PointOfInterest.fromSupabase(row))
-        .toList();
+    return (response as List)
+        .map<PointOfInterest>(
+          (row) => PointOfInterest.fromSupabase(
+            Map<String, dynamic>.from(row as Map),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  Future<List<PoiFeatureNode>> loadFeaturesForPoi({
+    required String poiId,
+    required String languageCode,
+    required String? countryCode,
+  }) async {
+    final normalizedPoiId = poiId.trim();
+
+    if (normalizedPoiId.isEmpty) {
+      return const <PoiFeatureNode>[];
+    }
+
+    final response = await supabase.rpc(
+      'features_for_poi',
+      params: {'p_poi_id': normalizedPoiId},
+    );
+
+    final rows = List<Map<String, dynamic>>.from(
+      (response as List).map((row) => Map<String, dynamic>.from(row as Map)),
+    );
+
+    final nodes = rows
+        .map((row) {
+          final featureLabels = Map<String, dynamic>.from(
+            row['labels'] as Map? ?? const {},
+          );
+
+          final sourceCategoryLabels = Map<String, dynamic>.from(
+            row['source_category_labels'] as Map? ?? const {},
+          );
+
+          final featureLabel = _localizedValue(
+            labels: featureLabels,
+            languageCode: languageCode,
+            countryCode: countryCode,
+            fallback:
+                row['name']?.toString().trim() ??
+                row['slug']?.toString().trim() ??
+                '',
+          );
+
+          final sourceCategoryLabel = _localizedValue(
+            labels: sourceCategoryLabels,
+            languageCode: languageCode,
+            countryCode: countryCode,
+            fallback:
+                row['source_category_name']?.toString().trim() ??
+                row['source_category_slug']?.toString().trim() ??
+                '',
+          );
+
+          final slug = row['slug']?.toString().trim() ?? '';
+
+          return PoiFeatureNode(
+            id: row['id']?.toString() ?? '',
+            slug: slug,
+            label: featureLabel,
+            definition: row['definition']?.toString().trim(),
+            parentSlug: row['parent_slug']?.toString().trim(),
+            rootFeatureSlug:
+                row['root_feature_slug']?.toString().trim() ?? slug,
+            sourceCategoryId:
+                row['source_category_id']?.toString().trim() ?? '',
+            sourceCategorySlug:
+                row['source_category_slug']?.toString().trim() ?? '',
+            sourceCategoryLabel: sourceCategoryLabel,
+            sortOrder: (row['sort_order'] as num?)?.toInt() ?? 0,
+            isSelected: row['is_selected'] == true,
+            children: const [],
+          );
+        })
+        .where((node) {
+          return node.slug.isNotEmpty;
+        })
+        .toList(growable: false);
+
+    return _buildPoiFeatureTree(nodes);
+  }
+
+  String _localizedValue({
+    required Map<String, dynamic> labels,
+    required String languageCode,
+    required String? countryCode,
+    required String fallback,
+  }) {
+    final normalizedLanguageCode = languageCode.trim().toLowerCase();
+
+    final normalizedCountryCode = countryCode?.trim().toUpperCase();
+
+    final localeKey =
+        normalizedCountryCode == null || normalizedCountryCode.isEmpty
+        ? normalizedLanguageCode
+        : '$normalizedLanguageCode-$normalizedCountryCode';
+
+    final languageFallbackKey = switch (normalizedLanguageCode) {
+      'de' => 'de-DE',
+      'fr' => 'fr-FR',
+      'en' => 'en-US',
+      _ => 'de-DE',
+    };
+
+    final candidates = <String?>[
+      labels[localeKey]?.toString(),
+      labels[languageFallbackKey]?.toString(),
+      labels['de-DE']?.toString(),
+      labels['de-CH']?.toString(),
+      labels['en-US']?.toString(),
+      labels['fr-FR']?.toString(),
+      fallback,
+    ];
+
+    for (final candidate in candidates) {
+      final normalizedCandidate = candidate?.trim();
+
+      if (normalizedCandidate != null && normalizedCandidate.isNotEmpty) {
+        return normalizedCandidate;
+      }
+    }
+
+    return '';
+  }
+
+  List<PoiFeatureNode> _buildPoiFeatureTree(List<PoiFeatureNode> nodes) {
+    final nodesByKey = <String, PoiFeatureNode>{};
+
+    for (final node in nodes) {
+      nodesByKey[_featureNodeKey(node)] = node;
+    }
+
+    final childrenByParentKey = <String, List<PoiFeatureNode>>{};
+
+    final roots = <PoiFeatureNode>[];
+
+    for (final node in nodes) {
+      final parentSlug = node.parentSlug?.trim();
+
+      if (parentSlug == null || parentSlug.isEmpty) {
+        roots.add(node);
+        continue;
+      }
+
+      final parentKey = _featureNodeKeyForValues(
+        sourceCategorySlug: node.sourceCategorySlug,
+        rootFeatureSlug: node.rootFeatureSlug,
+        featureSlug: parentSlug,
+      );
+
+      if (!nodesByKey.containsKey(parentKey)) {
+        roots.add(node);
+        continue;
+      }
+
+      childrenByParentKey
+          .putIfAbsent(parentKey, () => <PoiFeatureNode>[])
+          .add(node);
+    }
+
+    PoiFeatureNode buildNode(PoiFeatureNode node) {
+      final nodeKey = _featureNodeKey(node);
+
+      final children = List<PoiFeatureNode>.from(
+        childrenByParentKey[nodeKey] ?? const <PoiFeatureNode>[],
+      );
+
+      children.sort(_compareFeatureNodes);
+
+      return node.copyWith(
+        children: children.map(buildNode).toList(growable: false),
+      );
+    }
+
+    roots.sort(_compareFeatureNodes);
+
+    return roots.map(buildNode).toList(growable: false);
+  }
+
+  String _featureNodeKey(PoiFeatureNode node) {
+    return _featureNodeKeyForValues(
+      sourceCategorySlug: node.sourceCategorySlug,
+      rootFeatureSlug: node.rootFeatureSlug,
+      featureSlug: node.slug,
+    );
+  }
+
+  String _featureNodeKeyForValues({
+    required String sourceCategorySlug,
+    required String rootFeatureSlug,
+    required String featureSlug,
+  }) {
+    return '$sourceCategorySlug::$rootFeatureSlug::$featureSlug';
+  }
+
+  int _compareFeatureNodes(PoiFeatureNode first, PoiFeatureNode second) {
+    final firstCategory = _normalizeSortLabel(first.sourceCategoryLabel);
+
+    final secondCategory = _normalizeSortLabel(second.sourceCategoryLabel);
+
+    final categoryComparison = firstCategory.compareTo(secondCategory);
+
+    if (categoryComparison != 0) {
+      return categoryComparison;
+    }
+
+    final firstLabel = _normalizeSortLabel(first.label);
+
+    final secondLabel = _normalizeSortLabel(second.label);
+
+    final labelComparison = firstLabel.compareTo(secondLabel);
+
+    if (labelComparison != 0) {
+      return labelComparison;
+    }
+
+    return first.slug.compareTo(second.slug);
+  }
+
+  String _normalizeSortLabel(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll('ä', 'ae')
+        .replaceAll('ö', 'oe')
+        .replaceAll('ü', 'ue')
+        .replaceAll('ß', 'ss')
+        .replaceAll('à', 'a')
+        .replaceAll('á', 'a')
+        .replaceAll('â', 'a')
+        .replaceAll('ã', 'a')
+        .replaceAll('å', 'a')
+        .replaceAll('æ', 'ae')
+        .replaceAll('ç', 'c')
+        .replaceAll('è', 'e')
+        .replaceAll('é', 'e')
+        .replaceAll('ê', 'e')
+        .replaceAll('ë', 'e')
+        .replaceAll('ì', 'i')
+        .replaceAll('í', 'i')
+        .replaceAll('î', 'i')
+        .replaceAll('ï', 'i')
+        .replaceAll('ñ', 'n')
+        .replaceAll('ò', 'o')
+        .replaceAll('ó', 'o')
+        .replaceAll('ô', 'o')
+        .replaceAll('õ', 'o')
+        .replaceAll('œ', 'oe')
+        .replaceAll('ù', 'u')
+        .replaceAll('ú', 'u')
+        .replaceAll('û', 'u')
+        .replaceAll('ÿ', 'y');
+  }
+
+  Future<void> replacePoiFeatures({
+    required String poiId,
+    required Set<String> featureSlugs,
+  }) async {
+    final normalizedPoiId = poiId.trim();
+
+    if (normalizedPoiId.isEmpty) {
+      throw ArgumentError.value(poiId, 'poiId');
+    }
+
+    final normalizedFeatureSlugs = featureSlugs
+        .map((slug) => slug.trim())
+        .where((slug) => slug.isNotEmpty)
+        .toSet();
+
+    await supabase.rpc(
+      'replace_poi_features',
+      params: {
+        'p_poi_id': normalizedPoiId,
+        'p_feature_slugs': normalizedFeatureSlugs.toList(),
+      },
+    );
+  }
+
+  Future<Map<String, int>> loadPoiCountsByCategory({
+    required double lat,
+    required double lon,
+    required double radiusKm,
+    required Set<String> featureSlugs,
+  }) async {
+    final normalizedFeatureSlugs = featureSlugs
+        .map((slug) => slug.trim())
+        .where((slug) => slug.isNotEmpty)
+        .toSet();
+
+    final response = await supabase.rpc(
+      'poi_counts_by_category',
+      params: {
+        'p_lat': lat,
+        'p_lon': lon,
+        'p_radius_meters': radiusKm * 1000,
+        'p_feature_slugs': normalizedFeatureSlugs.toList(),
+      },
+    );
+
+    if (response is! List) {
+      throw const FormatException(
+        'Die POI-Counts haben keine Liste zurückgegeben.',
+      );
+    }
+
+    final rows = response
+        .map<Map<String, dynamic>>(
+          (row) => Map<String, dynamic>.from(row as Map),
+        )
+        .toList(growable: false);
+
+    return <String, int>{
+      for (final row in rows)
+        row['category_slug'].toString():
+            (row['poi_count'] as num?)?.toInt() ?? 0,
+    };
   }
 }

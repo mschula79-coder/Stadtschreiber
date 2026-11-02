@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
-import 'package:iconify_flutter/icons/game_icons.dart';
-import 'package:iconify_flutter/icons/maki.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:stadtschreiber/models/address.dart';
 import 'package:stadtschreiber/models/poi.dart';
+import 'package:stadtschreiber/models/poi_feature_node.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/poi_drag_provider.dart';
@@ -18,9 +17,12 @@ import 'package:stadtschreiber/utils/language_utils.dart';
 import 'package:stadtschreiber/utils/url_utils.dart';
 import 'package:stadtschreiber/widgets/_editable_list.dart';
 import 'package:stadtschreiber/widgets/modal_address_edit.dart';
-import 'package:stadtschreiber/widgets/modal_bool_features_editor.dart';
 import 'package:stadtschreiber/widgets/modal_poi_categories_edit.dart';
 import 'package:stadtschreiber/widgets/modal_string_features_editor.dart';
+import 'package:stadtschreiber/provider/poi_features_provider.dart';
+import 'package:stadtschreiber/provider/pois_for_categories_provider.dart';
+import 'package:stadtschreiber/provider/radius_filtered_pois_provider.dart';
+import 'package:stadtschreiber/widgets/modal_poi_features_edit.dart';
 
 class PoiPanelInfoTab extends ConsumerWidget {
   const PoiPanelInfoTab({super.key});
@@ -37,6 +39,8 @@ class PoiPanelInfoTab extends ConsumerWidget {
         ref.watch(appStateProvider).isPoiEditMode && isEditor;
 
     if (selectedPoi == null) return SizedBox.shrink();
+
+    final poiFeaturesAsync = ref.watch(poiFeaturesProvider(selectedPoi.id));
     final location = selectedPoi.location;
     final pts = selectedPoi.getPoints();
     final pointsList = pts == null
@@ -59,7 +63,11 @@ class PoiPanelInfoTab extends ConsumerWidget {
             children: [
               InputDecorator(
                 decoration: InputDecoration(
-                  labelText: getText("name", languageCode: languageCode, countryCode: countryCode),
+                  labelText: getText(
+                    "name",
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
                   alignLabelWithHint: true,
                   isDense: true,
                   floatingLabelBehavior: FloatingLabelBehavior.always,
@@ -82,7 +90,8 @@ class PoiPanelInfoTab extends ConsumerWidget {
                             context,
                             fieldName: getText(
                               'name',
-                              languageCode: languageCode, countryCode: countryCode,
+                              languageCode: languageCode,
+                              countryCode: countryCode,
                             ),
                             initialValue: selectedPoi.name,
                             maxLines: 1,
@@ -112,7 +121,11 @@ class PoiPanelInfoTab extends ConsumerWidget {
             children: [
               InputDecorator(
                 decoration: InputDecoration(
-                  labelText: getText("description", languageCode: languageCode, countryCode: countryCode),
+                  labelText: getText(
+                    "description",
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
                   alignLabelWithHint: true,
                   floatingLabelBehavior: FloatingLabelBehavior.always,
                   isDense: true,
@@ -137,7 +150,8 @@ class PoiPanelInfoTab extends ConsumerWidget {
                         context,
                         fieldName: getText(
                           'description',
-                          languageCode: languageCode, countryCode: countryCode,
+                          languageCode: languageCode,
+                          countryCode: countryCode,
                         ),
                         initialValue: selectedPoi.description ?? '',
                         maxLines: 10,
@@ -166,7 +180,11 @@ class PoiPanelInfoTab extends ConsumerWidget {
             children: [
               InputDecorator(
                 decoration: InputDecoration(
-                  labelText: getText('address', languageCode: languageCode, countryCode: countryCode),
+                  labelText: getText(
+                    'address',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
                   alignLabelWithHint: true,
                   contentPadding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
                 ),
@@ -217,7 +235,11 @@ class PoiPanelInfoTab extends ConsumerWidget {
             children: [
               InputDecorator(
                 decoration: InputDecoration(
-                  labelText: getText('links', languageCode: languageCode, countryCode: countryCode),
+                  labelText: getText(
+                    'links',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
                   alignLabelWithHint: true,
                   contentPadding: isEditModeEnabled
                       ? const EdgeInsets.fromLTRB(0, 8, 35, 5)
@@ -313,7 +335,8 @@ class PoiPanelInfoTab extends ConsumerWidget {
                         builder: (_) => StringFeaturesEditorDialog(
                           dialogTitle: getText(
                             'editLinks',
-                            languageCode: languageCode, countryCode: countryCode,
+                            languageCode: languageCode,
+                            countryCode: countryCode,
                           ),
                           initialValues: selectedPoi.metadata.getLinks(),
                         ),
@@ -342,51 +365,68 @@ class PoiPanelInfoTab extends ConsumerWidget {
             children: [
               InputDecorator(
                 decoration: InputDecoration(
-                  labelText: getText('features', languageCode: languageCode, countryCode: countryCode),
+                  labelText: getText(
+                    'features',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
                   alignLabelWithHint: true,
                   contentPadding: isEditModeEnabled
                       ? const EdgeInsets.fromLTRB(0, 8, 35, 5)
                       : const EdgeInsets.fromLTRB(0, 8, 0, 5),
                 ),
-                child: Row(
-                  children: [
-                    SizedBox(height: 20, width: 0),
-                    selectedPoi.metadata.notBBQAllowed()
-                        ? Row(
-                            children: [
-                              Iconify(Mdi.fire_off, size: 24),
-                              const SizedBox(width: 10),
-                            ],
+                child: poiFeaturesAsync.when(
+                  data: (featureTree) {
+                    final selectedFeatures = _collectSelectedLeafFeatures(
+                      featureTree,
+                    );
+
+                    if (selectedFeatures.isEmpty) {
+                      return const SizedBox(height: 20);
+                    }
+
+                    return Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: selectedFeatures
+                          .map(
+                            (feature) => Chip(
+                              avatar: const Icon(Icons.check, size: 16),
+                              label: Text(feature.label),
+                            ),
                           )
-                        : const SizedBox.shrink(),
-                    selectedPoi.metadata.isWheelchairAccessible()
-                        ? Row(
-                            children: [
-                              Iconify(Mdi.wheelchair_accessibility, size: 24),
-                              const SizedBox(width: 10),
-                            ],
-                          )
-                        : const SizedBox.shrink(),
-                    selectedPoi.metadata.hasBenches()
-                        ? Row(
-                            children: [
-                              Iconify(GameIcons.park_bench, size: 24),
-                              const SizedBox(width: 10),
-                            ],
-                          )
-                        : const SizedBox.shrink(),
-                    selectedPoi.metadata.hasPicnicTables()
-                        ? Row(
-                            children: [
-                              Iconify(Maki.picnic_site, size: 24),
-                              const SizedBox(width: 10),
-                            ],
-                          )
-                        : const SizedBox.shrink(),
-                  ],
+                          .toList(growable: false),
+                    );
+                  },
+                  loading: () {
+                    return const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    );
+                  },
+                  error: (error, stackTrace) {
+                    return Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 18,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            error.toString(),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
-              // Edit features
               if (isEditModeEnabled)
                 Positioned(
                   right: 0,
@@ -394,26 +434,46 @@ class PoiPanelInfoTab extends ConsumerWidget {
                   child: IconButton(
                     icon: const Icon(Icons.edit),
                     onPressed: () async {
-                      final newFeatures = await showDialog<Map<String, bool>>(
-                        context: context,
-                        builder: (_) => BoolFeaturesEditorDialog(
-                          dialogTitle: getText(
-                            'editFeatures',
-                            languageCode: languageCode, countryCode: countryCode,
-                          ),
-                          initialFeatures: selectedPoi.metadata.getFeatures(),
-                        ),
+                      final featureTree = await ref.read(
+                        poiFeaturesProvider(selectedPoi.id).future,
                       );
-                      final newPoi = selectedPoi.copyWith();
-                      newPoi.metadata.setFeatures(newFeatures!);
-                      ref
-                          .read(poiRepositoryProvider)
-                          .updatePoiDataInSupabase(
-                            id: selectedPoi.id,
-                            metadata: newPoi.metadata,
+
+                      if (!context.mounted) {
+                        return;
+                      }
+
+                      final selectedFeatureSlugs =
+                          await showDialog<Set<String>>(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (dialogContext) {
+                              return PoiFeaturesEditDialog(
+                                dialogTitle: getText(
+                                  'editFeatures',
+                                  languageCode: languageCode,
+                                  countryCode: countryCode,
+                                ),
+                                featureTree: featureTree,
+                              );
+                            },
                           );
-                      ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
-                      //ref.invalidate(visiblePoisProvider);
+
+                      if (selectedFeatureSlugs == null) {
+                        return;
+                      }
+
+                      await ref
+                          .read(poiRepositoryProvider)
+                          .replacePoiFeatures(
+                            poiId: selectedPoi.id,
+                            featureSlugs: selectedFeatureSlugs,
+                          );
+
+                      ref.invalidate(poiFeaturesProvider(selectedPoi.id));
+
+                      ref.invalidate(radiusFilteredPoisProvider);
+
+                      ref.invalidate(poisForCategoriesProvider);
                     },
                   ),
                 ),
@@ -426,11 +486,13 @@ class PoiPanelInfoTab extends ConsumerWidget {
             ElevatedButton.icon(
               icon: const Icon(Icons.category_outlined),
               label: Text(
-                getText('editCategories', languageCode: languageCode, countryCode: countryCode),
+                getText(
+                  'editCategories',
+                  languageCode: languageCode,
+                  countryCode: countryCode,
+                ),
               ),
               onPressed: () async {
-                
-
                 await showPoiCategoriesEditModal(context, pois: [selectedPoi]);
               },
             ),
@@ -439,7 +501,11 @@ class PoiPanelInfoTab extends ConsumerWidget {
           if (isEditModeEnabled) ...[
             // Standort und Geometrie
             Text(
-              getText('locationAndGeometrie', languageCode: languageCode, countryCode: countryCode),
+              getText(
+                'locationAndGeometrie',
+                languageCode: languageCode,
+                countryCode: countryCode,
+              ),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 15),
@@ -469,7 +535,11 @@ class PoiPanelInfoTab extends ConsumerWidget {
             SwitchListTile(
               tileColor: Colors.white,
               title: Text(
-                getText('editGeometryPoints', languageCode: languageCode, countryCode: countryCode),
+                getText(
+                  'editGeometryPoints',
+                  languageCode: languageCode,
+                  countryCode: countryCode,
+                ),
               ),
               contentPadding: const EdgeInsets.only(left: 0, right: 0),
               value: appState.isPoiGeomEditMode,
@@ -489,7 +559,8 @@ class PoiPanelInfoTab extends ConsumerWidget {
             Text(
               getText(
                 'editGeometryPointsInstruction',
-                languageCode: languageCode, countryCode: countryCode,
+                languageCode: languageCode,
+                countryCode: countryCode,
               ),
             ),
 
@@ -516,13 +587,17 @@ class PoiPanelInfoTab extends ConsumerWidget {
     WidgetRef ref,
   ) {
     final languageCode = ref.watch(localeProvider).languageCode;
-        final countryCode = ref.watch(localeProvider).countryCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          getText('geometryType', languageCode: languageCode, countryCode: countryCode),
+          getText(
+            'geometryType',
+            languageCode: languageCode,
+            countryCode: countryCode,
+          ),
           style: TextStyle(fontSize: 16),
         ),
         const SizedBox(height: 8),
@@ -545,26 +620,48 @@ class PoiPanelInfoTab extends ConsumerWidget {
               ListTile(
                 tileColor: Colors.white,
 
-                title: Text(getText('point', languageCode: languageCode, countryCode: countryCode)),
+                title: Text(
+                  getText(
+                    'point',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
+                ),
                 leading: Radio<String>(toggleable: true, value: 'point'),
               ),
               ListTile(
                 tileColor: Colors.white,
 
-                title: Text(getText('line', languageCode: languageCode, countryCode: countryCode)),
+                title: Text(
+                  getText(
+                    'line',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
+                ),
                 leading: Radio<String>(toggleable: true, value: 'linestring'),
               ),
               ListTile(
                 tileColor: Colors.white,
 
-                title: Text(getText('polygone', languageCode: languageCode, countryCode: countryCode)),
+                title: Text(
+                  getText(
+                    'polygone',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
+                ),
                 leading: Radio<String>(toggleable: true, value: 'polygon'),
               ),
               ListTile(
                 tileColor: Colors.white,
 
                 title: Text(
-                  getText('multipolygone', languageCode: languageCode, countryCode: countryCode),
+                  getText(
+                    'multipolygone',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
                 ),
                 leading: Radio<String>(toggleable: true, value: 'multipolygon'),
               ),
@@ -573,5 +670,52 @@ class PoiPanelInfoTab extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  List<PoiFeatureNode> collectSelectedLeaves(List<PoiFeatureNode> nodes) {
+    final result = <PoiFeatureNode>[];
+
+    void collect(List<PoiFeatureNode> currentNodes) {
+      for (final node in currentNodes) {
+        if (node.isLeaf) {
+          if (node.isSelected) {
+            result.add(node);
+          }
+        } else {
+          collect(node.children);
+        }
+      }
+    }
+
+    collect(nodes);
+
+    return result;
+  }
+
+  List<PoiFeatureNode> _collectSelectedLeafFeatures(
+    List<PoiFeatureNode> nodes,
+  ) {
+    final selectedFeatures = <PoiFeatureNode>[];
+
+    void collect(List<PoiFeatureNode> currentNodes) {
+      for (final node in currentNodes) {
+        if (node.isLeaf) {
+          if (node.isSelected) {
+            selectedFeatures.add(node);
+          }
+        } else {
+          collect(node.children);
+        }
+      }
+    }
+
+    collect(nodes);
+
+    selectedFeatures.sort(
+      (first, second) =>
+          first.label.toLowerCase().compareTo(second.label.toLowerCase()),
+    );
+
+    return selectedFeatures;
   }
 }

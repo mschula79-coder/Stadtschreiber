@@ -16,11 +16,7 @@ int germanCompare(String a, String b) {
   return normalize(a).compareTo(normalize(b));
 }
 
-String getText(
-  String textCode, {
-  String? languageCode,
-  String? countryCode,
-}) {
+String getText(String textCode, {String? languageCode, String? countryCode}) {
   final AppLocalizations localization;
 
   if (languageCode == 'de' && countryCode == 'CH') {
@@ -56,7 +52,7 @@ String getText(
       return localization.cancel;
     case 'categories':
       return "Kategorien";
-    
+
     case 'changePassword':
       return localization.changePassword;
     case 'checkEmail':
@@ -113,6 +109,10 @@ String getText(
       return localization.filterCategories;
     case 'finishDragMode':
       return localization.finishDragMode;
+    // TODO translate this string
+    case 'filterFeatures':
+      return 'Features filtern';
+
     case 'finishEditMode':
       return localization.finishEditMode;
     case 'geometryType':

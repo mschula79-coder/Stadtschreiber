@@ -45,7 +45,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     final languageCode = ref.watch(localeProvider).languageCode;
     final countryCode = ref.watch(localeProvider).countryCode;
-    
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -93,7 +92,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 0),
                           Text(
-                            getText('slogan', languageCode: languageCode, countryCode: countryCode),
+                            getText(
+                              'slogan',
+                              languageCode: languageCode,
+                              countryCode: countryCode,
+                            ),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 28,
@@ -101,7 +104,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                           ),
                           const SizedBox(height: 30),
-/* 
+                          /* 
                           TextButton(
                             style: TextButton.styleFrom(
                               backgroundColor: Theme.of(
@@ -132,6 +135,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                           ), */
 
+                          Text(
+                            getText(
+                              'underConstruction',
+                              languageCode: languageCode,
+                              countryCode: countryCode,
+                            ),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.normal,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+
                           const SizedBox(height: 20),
                           TextField(
                             controller: emailController,
@@ -144,7 +161,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             decoration: InputDecoration(
                               labelText: getText(
                                 'email',
-                                languageCode: languageCode, countryCode: countryCode,
+                                languageCode: languageCode,
+                                countryCode: countryCode,
                               ),
                               border: const OutlineInputBorder(),
                             ),
@@ -163,7 +181,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             decoration: InputDecoration(
                               labelText: getText(
                                 'password',
-                                languageCode: languageCode, countryCode: countryCode,
+                                languageCode: languageCode,
+                                countryCode: countryCode,
                               ),
                               border: const OutlineInputBorder(),
                             ),
@@ -183,12 +202,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               child: Text(
                                 getText(
                                   'passwordForgotten',
-                                  languageCode: languageCode, countryCode: countryCode,
+                                  languageCode: languageCode,
+                                  countryCode: countryCode,
                                 ),
                               ),
                             ),
                           ),
-                          SizedBox(height: 5,),
+                          SizedBox(height: 5),
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Wrap(
@@ -196,13 +216,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               spacing: 12,
                               runSpacing: 12,
                               children: [
+                                SizedBox(width: 4),
+
                                 buildLanguageDropdown(context, ref),
                                 ElevatedButton(
                                   onPressed: loading ? null : _login,
                                   child: Text(
                                     getText(
                                       'login',
-                                      languageCode: languageCode, countryCode: countryCode,
+                                      languageCode: languageCode,
+                                      countryCode: countryCode,
                                     ),
                                   ),
                                 ),
@@ -230,7 +253,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   child: Text(
                                     getText(
                                       'register',
-                                      languageCode: languageCode, countryCode: countryCode,
+                                      languageCode: languageCode,
+                                      countryCode: countryCode,
                                     ),
                                   ),
                                 ),
@@ -240,7 +264,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           if (checkEmail) ...[
                             const SizedBox(height: 16),
                             Text(
-                              getText('checkEmail', languageCode: languageCode, countryCode: countryCode),
+                              getText(
+                                'checkEmail',
+                                languageCode: languageCode,
+                                countryCode: countryCode,
+                              ),
                               textAlign: TextAlign.center,
                               style: const TextStyle(color: Colors.red),
                             ),
@@ -248,18 +276,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                           SizedBox(height: 40),
 
-                          Text(
-                            getText(
-                              'underConstruction',
-                              languageCode: languageCode, countryCode: countryCode,
-                            ),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.normal,
-                            ),
-                          ),
-                          SizedBox(height: 8),
                           TextButton(
                             style: TextButton.styleFrom(
                               backgroundColor: Theme.of(
@@ -286,12 +302,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               );
                             },
                             child: Text(
-                              getText('joinus1', languageCode: languageCode, countryCode: countryCode),
+                              getText(
+                                'joinus1',
+                                languageCode: languageCode,
+                                countryCode: countryCode,
+                              ),
                             ),
                           ),
                           SizedBox(height: 8),
                           Text(
-                            getText('joinus2', languageCode: languageCode, countryCode: countryCode),
+                            getText(
+                              'joinus2',
+                              languageCode: languageCode,
+                              countryCode: countryCode,
+                            ),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 16,

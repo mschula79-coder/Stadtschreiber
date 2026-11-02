@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/category_node_localized.dart';
+import 'package:stadtschreiber/models/localized_feature_node.dart';
 import 'package:stadtschreiber/models/poi_selection_modes.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:stadtschreiber/provider/categories_localized_provider.dart';
@@ -8,6 +9,7 @@ import 'package:stadtschreiber/provider/categories_menu_provider.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
 import 'package:stadtschreiber/provider/category_repository_provider.dart';
 import 'package:stadtschreiber/provider/locale_provider.dart';
+import 'package:stadtschreiber/provider/poi_counts_by_category_provider.dart';
 import 'package:stadtschreiber/provider/search_radius_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
@@ -19,6 +21,9 @@ import 'package:stadtschreiber/widgets/_icon_getter.dart';
 import 'package:stadtschreiber/widgets/modal_categories_list_edit.dart';
 import 'package:stadtschreiber/widgets/modal_rating_criteria_edit.dart';
 import 'package:uuid/uuid.dart';
+import 'package:stadtschreiber/provider/feature_filter_provider.dart';
+import 'package:stadtschreiber/provider/features_for_category_provider.dart';
+import 'package:stadtschreiber/widgets/modal_feature_filter.dart';
 
 class PoiCategorySelection extends ConsumerStatefulWidget {
   const PoiCategorySelection({super.key});
@@ -73,6 +78,14 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
     );
 
     final searchRadiusKm = ref.watch(searchRadiusKmProvider);
+
+    final poiCountsAsync = ref.watch(poiCountsByCategoryProvider);
+
+    final poiCounts = poiCountsAsync.asData?.value ?? const <String, int>{};
+
+    final poiCountsLoading = poiCountsAsync.isLoading;
+
+    final poiCountsError = poiCountsAsync.asError?.error;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _lastMode == mode) {
@@ -271,9 +284,45 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
 
             const SizedBox(height: 8),
 
+            
+
+            if (poiCountsError != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        poiCountsError.toString(),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             ...filteredCategories.map(
-              (node) => _buildCategoryNode(context, ref, node, depth: 0),
+              (node) => _buildCategoryNode(
+                context,
+                ref,
+                node,
+                depth: 0,
+                languageCode: languageCode,
+                countryCode: countryCode,
+                poiCounts: poiCounts,
+                poiCountsLoading: poiCountsLoading,
+              ),
             ),
+
             if (isAdmin)
               ElevatedButton.icon(
                 icon: const Icon(Icons.edit),
@@ -479,6 +528,10 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
     WidgetRef ref,
     LocalizedCategoryNode node, {
     required int depth,
+    required String languageCode,
+    required String? countryCode,
+    required Map<String, int> poiCounts,
+    required bool poiCountsLoading,
   }) {
     final categorySlug = node.slug.trim();
 
@@ -496,13 +549,14 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
       supabaseUserStateProvider.select((state) => state.isAdmin),
     );
 
-    final poiCountAsync = ref.watch(poiCountForCategoryProvider(categorySlug));
+    final poiCount = poiCounts[categorySlug];
 
-    final poiCount = poiCountAsync.asData?.value;
+    final hasLoadedCount = poiCount != null;
 
-    final isSelectable = isSelected || (poiCount != null && poiCount > 0);
+    final isSelectable = isSelected || !hasLoadedCount || poiCount > 0;
 
     final disabledColor = Theme.of(context).disabledColor;
+
     final leftPadding = depth * 10.0;
 
     void setSelected(bool selected) {
@@ -516,32 +570,15 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
         return const SizedBox.shrink();
       }
 
-      return poiCountAsync.when(
-        data: (count) {
-          return Text(
-            '($count)',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: count > 0 ? null : disabledColor,
-            ),
-          );
-        },
-        loading: () {
-          return const SizedBox(
-            width: 12,
-            height: 12,
-            child: CircularProgressIndicator(strokeWidth: 1.5),
-          );
-        },
-        error: (error, stackTrace) {
-          return Tooltip(
-            message: error.toString(),
-            child: Icon(
-              Icons.error_outline,
-              size: 16,
-              color: Theme.of(context).colorScheme.error,
-            ),
-          );
-        },
+      if (poiCount == null) {
+        return const SizedBox.shrink();
+      }
+
+      return Text(
+        '($poiCount)',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: poiCount > 0 ? null : disabledColor,
+        ),
       );
     }
 
@@ -567,6 +604,61 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
       );
     }
 
+    Widget buildFeatureButton() {
+      final featuresAsync = ref.watch(
+        featuresForCategoryProvider(categorySlug),
+      );
+
+      return featuresAsync.when(
+        data: (features) {
+          if (features.isEmpty) {
+            return const SizedBox.shrink();
+          }
+
+          final selectedFeatureSlugs = ref.watch(featureFilterProvider);
+
+          final selectedCount = selectedFeatureSlugs.length;
+
+          return Padding(
+            padding: EdgeInsets.only(
+              left: leftPadding + 48,
+              right: 15,
+              bottom: 6,
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.tune, size: 18),
+                label: Text(
+                  selectedCount == 0
+                      ? getText(
+                          'filterFeatures',
+                          languageCode: languageCode,
+                          countryCode: countryCode,
+                        )
+                      : '${getText('filterFeatures', languageCode: languageCode, countryCode: countryCode)} ($selectedCount)',
+                ),
+                onPressed: () {
+                  _openFeatureFilterDialog(
+                    context: context,
+                    categorySlug: categorySlug,
+                    categoryLabel: node.label,
+                    features: features,
+                  );
+                },
+              ),
+            ),
+          );
+        },
+        loading: () {
+          return const SizedBox.shrink();
+        },
+        error: (error, stackTrace) {
+          return const SizedBox.shrink();
+        },
+      );
+    }
+
     if (node.children.isNotEmpty) {
       return ExpansionTile(
         key: PageStorageKey<String>(
@@ -586,24 +678,42 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
               : null,
         ),
         title: buildTitle(iconSize: 28),
-        children: node.children.map((child) {
-          return _buildCategoryNode(context, ref, child, depth: depth + 1);
-        }).toList(),
+        children: [
+          buildFeatureButton(),
+          ...node.children.map((child) {
+            return _buildCategoryNode(
+              context,
+              ref,
+              child,
+              depth: depth + 1,
+              languageCode: languageCode,
+              countryCode: countryCode,
+              poiCounts: poiCounts,
+              poiCountsLoading: poiCountsLoading,
+            );
+          }),
+        ],
       );
     }
 
-    return CheckboxListTile(
-      contentPadding: EdgeInsets.only(left: leftPadding, right: 15),
-      value: isSelected,
-      tileColor: Colors.white,
-      visualDensity: VisualDensity.compact,
-      controlAffinity: ListTileControlAffinity.leading,
-      onChanged: isSelectable
-          ? (value) {
-              setSelected(value ?? false);
-            }
-          : null,
-      title: buildTitle(iconSize: 24),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CheckboxListTile(
+          contentPadding: EdgeInsets.only(left: leftPadding, right: 15),
+          value: isSelected,
+          tileColor: Colors.white,
+          visualDensity: VisualDensity.compact,
+          controlAffinity: ListTileControlAffinity.leading,
+          onChanged: isSelectable
+              ? (value) {
+                  setSelected(value ?? false);
+                }
+              : null,
+          title: buildTitle(iconSize: 24),
+        ),
+        buildFeatureButton(),
+      ],
     );
   }
 
@@ -617,6 +727,59 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
     20,
     30,
   ];
+
+  Future<void> _openFeatureFilterDialog({
+    required BuildContext context,
+    required String categorySlug,
+    required String categoryLabel,
+    required List<LocalizedFeatureNode> features,
+  }) async {
+    final selectedFeatureSlugs = ref.read(featureFilterProvider);
+
+    final availableLeafSlugs = <String>{};
+
+    void collectLeafSlugs(List<LocalizedFeatureNode> nodes) {
+      for (final node in nodes) {
+        if (node.children.isEmpty) {
+          availableLeafSlugs.add(node.slug);
+        } else {
+          collectLeafSlugs(node.children);
+        }
+      }
+    }
+
+    collectLeafSlugs(features);
+
+    final applicableSelection = selectedFeatureSlugs
+        .where(availableLeafSlugs.contains)
+        .toSet();
+
+    final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
+    final result = await showDialog<Set<String>>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return FeatureFilterDialog(
+          dialogTitle: getText(
+            'filterFeatures',
+            languageCode: languageCode,
+            countryCode: countryCode,
+          ),
+          categoryLabel: categoryLabel,
+          features: features,
+          initiallySelectedSlugs: applicableSelection,
+        );
+      },
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    ref.read(featureFilterProvider.notifier).replaceAll(result);
+  }
 }
 
 // TODO count leafs

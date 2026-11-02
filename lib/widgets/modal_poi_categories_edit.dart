@@ -4,7 +4,6 @@ import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:stadtschreiber/models/category_node_localized.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/provider/categories_localized_provider.dart';
-import 'package:stadtschreiber/provider/categories_provider.dart';
 import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/poi_selection_provider.dart';
@@ -343,12 +342,6 @@ class _PoiCategoriesEditModalState
             )
             .setAll(updatedPois);
       }
-
-      ref.invalidate(
-        poiCountForCategoryProvider(
-          categorySlug,
-        ),
-      );
     } finally {
       if (mounted) {
         setState(() {

@@ -4,6 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/category.dart';
 import '../models/category_dto.dart';
 
+import 'package:stadtschreiber/models/localized_feature_node.dart';
+import 'package:stadtschreiber/utils/feature_tree_utils.dart';
+
 class CategoryRepository {
   Future<List<CategoryNode>> loadCategoryTree() async {
     final supabase = Supabase.instance.client;
@@ -390,35 +393,68 @@ class CategoryRepository {
   }
 
   Future<int> poiCountForCategory({
-  required String categorySlug,
-  required double lat,
-  required double lon,
-  required double radiusKm,
-}) async {
-  final normalizedSlug = categorySlug.trim();
+    required String categorySlug,
+    required double lat,
+    required double lon,
+    required double radiusKm,
+  }) async {
+    final normalizedSlug = categorySlug.trim();
 
-  if (normalizedSlug.isEmpty) {
-    return 0;
+    if (normalizedSlug.isEmpty) {
+      return 0;
+    }
+
+    final response = await Supabase.instance.client.rpc(
+      'count_pois_for_category_by_radius',
+      params: {
+        'p_category_slug': normalizedSlug,
+        'p_lat': lat,
+        'p_lon': lon,
+        'p_radius_meters': radiusKm * 1000,
+      },
+    );
+
+    if (response is int) {
+      return response;
+    }
+
+    if (response is num) {
+      return response.toInt();
+    }
+
+    return int.tryParse(response.toString()) ?? 0;
   }
 
-  final response = await Supabase.instance.client.rpc(
-    'count_pois_for_category_by_radius',
-    params: {
-      'p_category_slug': normalizedSlug,
-      'p_lat': lat,
-      'p_lon': lon,
-      'p_radius_meters': radiusKm * 1000,
-    },
-  );
+  Future<List<LocalizedFeatureNode>> loadFeaturesForCategory({
+    required String categorySlug,
+    required String languageCode,
+    String? countryCode,
+  }) async {
+    final normalizedSlug = categorySlug.trim();
 
-  if (response is int) {
-    return response;
+    if (normalizedSlug.isEmpty) {
+      return const <LocalizedFeatureNode>[];
+    }
+
+    final response = await Supabase.instance.client.rpc(
+      'features_for_category',
+      params: {'p_category_slug': normalizedSlug},
+    );
+
+    final rows = List<Map<String, dynamic>>.from(
+      (response as List).map((row) => Map<String, dynamic>.from(row as Map)),
+    );
+
+    final features = rows
+        .map(
+          (row) => LocalizedFeatureNode.fromJson(
+            row,
+            languageCode: languageCode,
+            countryCode: countryCode,
+          ),
+        )
+        .toList(growable: false);
+
+    return FeatureTreeUtils.buildTree(features);
   }
-
-  if (response is num) {
-    return response.toInt();
-  }
-
-  return int.tryParse(response.toString()) ?? 0;
-}
 }

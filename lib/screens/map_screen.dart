@@ -13,6 +13,7 @@ import 'package:stadtschreiber/provider/categories_menu_provider.dart';
 import 'package:stadtschreiber/provider/categories_provider.dart';
 import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/map_controller_provider.dart';
+import 'package:stadtschreiber/provider/poi_counts_by_category_provider.dart';
 import 'package:stadtschreiber/provider/poi_drag_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/poi_search_center_provider.dart';
@@ -48,7 +49,6 @@ class MapScreen extends ConsumerStatefulWidget {
 class MapScreenState extends ConsumerState<MapScreen> {
   maplibre.MapController? mapController;
   bool _isChangingStyle = false;
-  List<PointOfInterest> _lastVisiblePois = const [];
 
   late ProviderSubscription<List<PointOfInterest>> _visiblePoisSub;
 
@@ -120,6 +120,8 @@ class MapScreenState extends ConsumerState<MapScreen> {
         hasSelectedPoi && !isPoiGeomEditMode && !isDraggingPoi;
 
     final bool showPoiList = ref.watch(appStateProvider).isPoiListVisible;
+
+    ref.watch(poiCountsByCategoryProvider);
 
     CameraState camera;
     if (isDraggingPoi) {
@@ -623,8 +625,6 @@ class MapScreenState extends ConsumerState<MapScreen> {
         // next IST bereits die Liste der sichtbaren POIs
         final pois = next;
 
-        _lastVisiblePois = pois;
-
         final controller = mapController;
         if (controller == null) {
           // Controller kommt später → wir holen das nach, sobald er gesetzt ist
@@ -632,7 +632,7 @@ class MapScreenState extends ConsumerState<MapScreen> {
         }
 
         final cats = ref.read(categoriesSelectionProvider).selectedSlugs;
-        
+
         final hasDistricts = cats.any((c) => c == 'districts');
 
         if (hasDistricts) {
