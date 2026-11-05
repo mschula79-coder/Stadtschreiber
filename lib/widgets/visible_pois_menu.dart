@@ -44,8 +44,7 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
         borderRadius: BorderRadius.circular(12),
       ),
       constraints: BoxConstraints(
-        maxHeight:
-            MediaQuery.of(context).size.height
+        maxHeight: MediaQuery.of(context).size.height,
       ),
 
       // Menuinhalt
@@ -109,6 +108,17 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
               children: [
                 Row(
                   children: [
+                    Icon(Icons.visibility, color: Colors.black54, size: 24),
+                    const SizedBox(width: 2),
+                    Text(
+                      "${pois.length}",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.normal,
+                        fontSize: 8,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+
                     IconButton(
                       visualDensity: VisualDensity.compact,
 
@@ -122,18 +132,6 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
                         ref.read(visiblePoisProvider.notifier).clear();
                       },
                     ),
-                    
-                    const SizedBox(width: 4),
-
-                    Icon(Icons.visibility, color: Colors.black54, size: 24),
-                    const SizedBox(width: 8),
-                    Text(
-                      "${pois.length}",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.normal,
-                        fontSize: 8,
-                      ),
-                    ),
                   ],
                 ),
 
@@ -142,30 +140,32 @@ class _VisiblePoisMenuState extends ConsumerState<VisiblePoisMenu> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(
-                        padding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                        icon: const Iconify(
-                          Mdi.eye_add_outline,
-                          color: Colors.black87,
-                          size: 24,
+                      if (selectedPoiCount > 0)
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact,
+                          icon: const Iconify(
+                            Mdi.eye_add_outline,
+                            color: Colors.black87,
+                            size: 24,
+                          ),
+                          onPressed: () {
+                            final selectedPois = ref.read(poiSelectionProvider);
+                            ref
+                                .read(visiblePoisProvider.notifier)
+                                .addPois(selectedPois);
+                          },
                         ),
-                        onPressed: () {
-                          final selectedPois = ref.read(poiSelectionProvider);
-                          ref
-                              .read(visiblePoisProvider.notifier)
-                              .addPois(selectedPois);
-                        },
-                      ),
                       SizedBox(width: 0),
-                      Text(
-                        "$selectedPoiCount",
+                      if (selectedPoiCount > 0)
+                        Text(
+                          "$selectedPoiCount",
 
-                        style: const TextStyle(
-                          fontWeight: FontWeight.normal,
-                          fontSize: 8,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.normal,
+                            fontSize: 8,
+                          ),
                         ),
-                      ),
 
                       const SizedBox(width: 0),
 

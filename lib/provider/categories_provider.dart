@@ -3,8 +3,6 @@ import 'package:stadtschreiber/models/category.dart';
 import 'package:stadtschreiber/models/category_dto.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:stadtschreiber/provider/category_repository_provider.dart';
-import 'package:stadtschreiber/provider/poi_search_center_provider.dart';
-import 'package:stadtschreiber/provider/search_radius_provider.dart';
 import 'package:stadtschreiber/state/categories_state.dart';
 
 final categoriesProvider =

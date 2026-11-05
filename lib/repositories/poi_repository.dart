@@ -95,6 +95,10 @@ class PoiRepository {
       return bayesScore(secondRow).compareTo(bayesScore(firstRow));
     });
 
+    if (limit.isInfinite) {
+      return List<PointOfInterest>.unmodifiable(filtered);
+    }
+
     return filtered.take(limit.toInt()).toList(growable: false);
   }
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:iconify_flutter/iconify_flutter.dart';
+import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
@@ -97,14 +99,19 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
                               visualDensity: VisualDensity.compact,
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
-                              icon: Icon(Icons.star, color: Colors.amber),
+                              icon: 
+                              Iconify(
+                                  Mdi.bookmark,
+                                  color: Colors.amber,
+                                  size: 24,
+                                ),
                               onPressed: () {
                                 /*                               setState(() => panelHeight = 460);
  */
                                 showDialog(
                                   context: context,
                                   builder: (_) => PoiFavoriteEditModal(
-                                    poi: widget.selectedPoi,
+                                    pois: [widget.selectedPoi],
                                   ),
                                 );
                               },
@@ -113,15 +120,15 @@ class _PoiPanelState extends ConsumerState<PoiPanel> {
                               visualDensity: VisualDensity.compact,
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
-                              icon: Icon(
-                                Icons.star_border,
+                              icon: Iconify(
+                                Mdi.bookmark_outline,
                                 color: Colors.grey.shade400,
                               ),
                               onPressed: () {
                                 showDialog(
                                   context: context,
                                   builder: (_) => PoiFavoriteEditModal(
-                                    poi: widget.selectedPoi,
+                                    pois: [widget.selectedPoi],
                                   ),
                                 );
                               },

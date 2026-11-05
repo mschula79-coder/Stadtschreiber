@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:stadtschreiber/layout/app_breakpoints.dart';
 import 'package:stadtschreiber/models/poi.dart';
+import 'package:stadtschreiber/models/poi_selection_modes.dart';
 import 'package:stadtschreiber/provider/address_lookup_queue_provider.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
 import 'package:stadtschreiber/provider/categories_menu_provider.dart';
@@ -17,12 +18,12 @@ import 'package:stadtschreiber/provider/poi_counts_by_category_provider.dart';
 import 'package:stadtschreiber/provider/poi_drag_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/poi_search_center_provider.dart';
-import 'package:stadtschreiber/provider/poi_selection_provider.dart';
 import 'package:stadtschreiber/provider/poi_service_provider.dart';
 import 'package:stadtschreiber/provider/pois_for_categories_provider.dart';
 import 'package:stadtschreiber/provider/search_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/user_favorites_provider.dart';
+import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_provider.dart';
 import 'package:stadtschreiber/provider/camera_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
@@ -696,9 +697,13 @@ class MapScreenState extends ConsumerState<MapScreen> {
     _catPoisSub = ref.listenManual<AsyncValue<List<PointOfInterest>>>(
       poisForCategoriesProvider,
       (previous, next) {
-        next.whenData((pois) {
-          ref.read(poiSelectionProvider.notifier).setAll(pois);
+        final mode = ref.read(visiblePoisMenuStateProvider).poiSelectionMode;
 
+        if (mode != PoiSelectionMode.categories) {
+          return;
+        }
+
+        next.whenData((pois) {
           ref.read(visiblePoisProvider.notifier).replaceAll(pois);
         });
       },

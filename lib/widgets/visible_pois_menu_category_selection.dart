@@ -781,6 +781,3 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
     ref.read(featureFilterProvider.notifier).replaceAll(result);
   }
 }
-
-// TODO count leafs
-// Fix einrückungen

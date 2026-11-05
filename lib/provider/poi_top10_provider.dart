@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:stadtschreiber/models/category.dart';
+import 'package:stadtschreiber/models/category_node_localized.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/models/rating_criterion.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 
 class Top10State {
   final double listLength;
-  final CategoryNode? category;
+  final LocalizedCategoryNode? category;
   final RatingCriterionDTO? criterion;
 
   const Top10State({
@@ -14,47 +14,76 @@ class Top10State {
     this.category,
     this.criterion,
   });
+}
 
-  Top10State copyWith({
-    double? listLength,
-    CategoryNode? category,
+final top10StateProvider =
+    NotifierProvider<Top10StateNotifier, Top10State>(
+      Top10StateNotifier.new,
+    );
+
+class Top10StateNotifier extends Notifier<Top10State> {
+  @override
+  Top10State build() {
+    return const Top10State(
+      listLength: 10,
+    );
+  }
+
+  void setListLength(double listLength) {
+    state = Top10State(
+      listLength: listLength,
+      category: state.category,
+      criterion: state.criterion,
+    );
+  }
+
+  void setCategory(
+    LocalizedCategoryNode? category,
+  ) {
+    state = Top10State(
+      listLength: state.listLength,
+      category: category,
+      criterion: null,
+    );
+  }
+
+  void setCriterion(
     RatingCriterionDTO? criterion,
-  }) {
-    return Top10State(
-      listLength: listLength ?? this.listLength,
-      category: category ?? this.category,
-      criterion: criterion ?? this.criterion,
+  ) {
+    state = Top10State(
+      listLength: state.listLength,
+      category: state.category,
+      criterion: criterion,
+    );
+  }
+
+  void clear() {
+    state = const Top10State(
+      listLength: 10,
     );
   }
 }
 
-final top10StateProvider =
-    NotifierProvider<Top10StateNotifier, Top10State>(() {
-  return Top10StateNotifier();
-});
+final top10PoisProvider =
+    FutureProvider<List<PointOfInterest>>((ref) async {
+      final repository = ref.read(
+        poiRepositoryProvider,
+      );
 
-class Top10StateNotifier extends Notifier<Top10State> {
-  @override
-  Top10State build() => const Top10State(listLength: 10);
+      final state = ref.watch(
+        top10StateProvider,
+      );
 
-  void setListLength(double n) => state = state.copyWith(listLength: n);
-  void setCategory(CategoryNode? c) => state = state.copyWith(category: c);
-  void setCriterion(RatingCriterionDTO? c) => state = state.copyWith(criterion: c);
-}
+      final category = state.category;
+      final criterion = state.criterion;
 
+      if (category == null || criterion == null) {
+        return const <PointOfInterest>[];
+      }
 
-final top10PoisProvider = FutureProvider<List<PointOfInterest>>((ref) async {
-  final repo = ref.watch(poiRepositoryProvider);
-
-  final state = ref.watch(top10StateProvider);
-
-  if (state.category == null || state.criterion == null) {
-    return [];
-  }
-
-  return repo.loadTopNPois(
-    categoryId: state.category!.id,
-    criterionId: state.criterion!.id,
-    limit: state.listLength,
-  );
-});
+      return repository.loadTopNPois(
+        categoryId: category.id,
+        criterionId: criterion.id,
+        limit: state.listLength,
+      );
+    });

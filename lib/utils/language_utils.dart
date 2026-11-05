@@ -42,6 +42,8 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
   switch (textCode) {
     case 'add':
       return localization.add;
+    case 'addToList':
+      return "zu Liste hinzufügen";
     case 'address':
       return localization.address;
     case 'apply':
@@ -63,6 +65,10 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
       return localization.comments;
     case 'confirmDeletionOfPoint':
       return localization.confirmDeletionOfPoint;
+    case 'confirmDeletionOfList1':
+      return 'Möchtest du die Liste';
+    case 'confirmDeletionOfList2':
+      return 'wirklich löschen?';
     case 'confirmEmail':
       return localization.confirmEmail;
     case 'criterion':
@@ -71,8 +77,12 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
       return localization.deleteDate;
     case 'deleteUser':
       return localization.deleteUser;
+    case 'deleteList':
+      return 'Liste löschen';
     case 'description':
       return localization.description;
+    case 'done':
+      return "Fertig";
     case 'editArticle':
       return localization.editArticle;
     case 'editCategories':
@@ -183,6 +193,9 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
       return localization.processLink;
     case 'register':
       return localization.register;
+    case 'removeSelection':
+      return 'Auswahl entfernen';
+
     case 'results':
       return localization.results;
     case 'role':

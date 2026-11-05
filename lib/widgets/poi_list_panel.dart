@@ -5,6 +5,7 @@ import 'package:iconify_flutter/icons/mdi.dart';
 // ignore: unused_import
 import 'package:stadtschreiber/l10n/app_localizations.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
 /* import 'package:stadtschreiber/provider/locale_provider.dart';
  */
 import 'package:stadtschreiber/provider/poi_selection_provider.dart';
@@ -12,7 +13,9 @@ import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_provider.dart';
 import 'package:stadtschreiber/theme/app_layout.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
 import 'package:stadtschreiber/widgets/modal_poi_categories_edit.dart';
+import 'package:stadtschreiber/widgets/modal_poi_favorite_edit.dart';
 /* import 'package:stadtschreiber/utils/language_utils.dart';
  */
 import 'package:stadtschreiber/widgets/poi_list_item.dart';
@@ -34,11 +37,6 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
 
   @override
   Widget build(BuildContext context) {
-    /*     final width = MediaQuery.of(context).size.width; */
-    /*     final horizontalPadding = width < 600 ? 24.0 : width * 0.3;*/
-    /*     final visiblePoisAsync = ref.watch(visiblePoisProvider);
- */
-
     final isAdmin = ref.watch(supabaseUserStateProvider).isAdmin;
 
     final visiblePois = ref.watch(sortedVisiblePoisProvider);
@@ -71,7 +69,7 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Padding(
-                      padding: EdgeInsets.only(left: 16),
+                      padding: EdgeInsets.only(left: 16, top:12),
                       child: Icon(
                         Icons.visibility,
                         color: Colors.black54,
@@ -90,9 +88,8 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
                         ),
                       ),
                     ),
-
                     Padding(
-                      padding: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.only(right: 8, top: 10),
                       child: IconButton(
                         visualDensity: VisualDensity.compact,
                         padding: EdgeInsets.zero,
@@ -129,6 +126,9 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
                     ref
                         .read(selectedPoiProvider.notifier)
                         .setPoi(visiblePois[index]);
+                    ref
+                        .read(appStateProvider.notifier)
+                        .setPoiListVisible(false);
                   },
                 );
               },
@@ -142,11 +142,12 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
               IconButton(
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
-                icon: Iconify(
-                  Mdi.checkbox_multiple_marked_outline,
-                  color: Colors.black87,
-                  size: 24,
+                tooltip: getText(
+                  'selectAll',
+                  languageCode: ref.watch(localeProvider).languageCode,
+                  countryCode: ref.watch(localeProvider).countryCode,
                 ),
+                icon: Iconify(Mdi.check_all, color: Colors.black87, size: 26),
                 onPressed: () {
                   ref.read(poiSelectionProvider.notifier).setAll(visiblePois);
                 },
@@ -158,25 +159,68 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
                 icon: const Iconify(
-                  Mdi.checkbox_multiple_blank_outline,
+                  Mdi.checkbox_blank_outline,
                   color: Colors.black87,
-                  size: 24,
+                  size: 20,
+                ),
+                tooltip: getText(
+                  'removeSelection',
+                  languageCode: ref.watch(localeProvider).languageCode,
+                  countryCode: ref.watch(localeProvider).countryCode,
                 ),
                 onPressed: () {
                   ref.read(poiSelectionProvider.notifier).clear();
                 },
               ),
               SizedBox(width: 5),
+              IconButton(
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                tooltip: getText(
+                  'addToList',
+                  languageCode: ref.watch(localeProvider).languageCode,
+                  countryCode: ref.watch(localeProvider).countryCode,
+                ),
+                icon: const Iconify(
+                  Mdi.bookmark_outline,
+                  color: Colors.black87,
+                  size: 22,
+                ),
+                onPressed: () async {
+                  final selectedPois = ref.read(poiSelectionProvider);
+
+                  if (selectedPois.isEmpty) {
+                    return;
+                  }
+
+                  await showDialog<void>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (dialogContext) {
+                      return PoiFavoriteEditModal(pois: selectedPois);
+                    },
+                  );
+                },
+              ),
               isAdmin
                   ? Row(
                       children: [
+                        SizedBox(width: 5),
+
                         IconButton(
                           padding: EdgeInsets.zero,
                           visualDensity: VisualDensity.compact,
+                          tooltip: getText(
+                            'editCategories',
+                            languageCode: ref
+                                .watch(localeProvider)
+                                .languageCode,
+                            countryCode: ref.watch(localeProvider).countryCode,
+                          ),
                           icon: const Iconify(
                             Mdi.shape_plus,
                             color: Colors.black87,
-                            size: 24,
+                            size: 20,
                           ),
                           onPressed: () async {
                             final selectedPois = ref.read(poiSelectionProvider);
@@ -191,22 +235,11 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
                             );
                           },
                         ),
-                        SizedBox(width: 5),
                       ],
                     )
                   : SizedBox.shrink(),
-              IconButton(
-                padding: EdgeInsets.zero,
-                visualDensity: VisualDensity.compact,
-                icon: const Iconify(
-                  Mdi.playlist_add,
-                  color: Colors.black87,
-                  size: 24,
-                ),
-                onPressed: () {
-                  // TODO List add
-                },
-              ),
+
+              SizedBox(width: 20),
             ],
           ),
           SizedBox(height: 10),

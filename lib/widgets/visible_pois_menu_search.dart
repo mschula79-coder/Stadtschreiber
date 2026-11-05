@@ -266,14 +266,6 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                     return distanceMeters <= radiusMeters;
                   }).toList();
 
-                  // TODO Check ob benötigt
-                  /* WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) {
-                      ref
-                          .read(searchSelectionProvider.notifier)
-                          .setAll(foundPois);
-                    }
-                  }); */
                   if (filteredPois.isEmpty) {
                     return Padding(
                       padding: EdgeInsetsGeometry.fromLTRB(5, 15, 0, 0),
@@ -311,7 +303,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                                 padding: EdgeInsets.zero,
                                 visualDensity: VisualDensity.compact,
                                 icon: Iconify(
-                                  Mdi.checkbox_multiple_marked_outline,
+                                  Mdi.check_all,
                                   color: Colors.black87,
                                   size: 24,
                                 ),
@@ -326,7 +318,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                                 padding: EdgeInsets.zero,
                                 visualDensity: VisualDensity.compact,
                                 icon: const Iconify(
-                                  Mdi.checkbox_multiple_blank_outline,
+                                  Mdi.checkbox_blank_outline,
                                   color: Colors.black87,
                                   size: 24,
                                 ),

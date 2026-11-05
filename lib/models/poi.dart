@@ -49,68 +49,122 @@ class PointOfInterest {
   });
 
   factory PointOfInterest.fromSupabase(Map<String, dynamic> row) {
-    return PointOfInterest(
-      id: row['id'],
-      name: row['name'] ?? '',
-      location: Geographic(lon: row['lon'], lat: row['lat']),
-      categories: List<String>.from(row['categories'] ?? const []),
-      featuredImageUrl: row['featured_image_url'] is String
-          ? row['featured_image_url']
-          : '',
+    final id = row['id']?.toString();
 
-      historyEntries:
-          (row['history'] as List<dynamic>)
-              .map((e) => HistoryEntry.fromJson(e))
+    if (id == null || id.isEmpty) {
+      throw const FormatException('Der POI besitzt keine gültige ID.');
+    }
+
+    final latitude = row['lat'] as num?;
+    final longitude = row['lon'] as num?;
+
+    if (latitude == null || longitude == null) {
+      throw FormatException('Der POI $id besitzt keine gültigen Koordinaten.');
+    }
+
+    final historyRaw = row['history'];
+    final articlesRaw = row['articles'];
+    final metadataRaw = row['metadata'];
+    final imagesRaw = row['images'];
+    final geomAreaRaw = row['geom_area'];
+
+    final historyEntries = historyRaw is List
+        ? historyRaw
+              .whereType<Map>()
+              .map(
+                (entry) =>
+                    HistoryEntry.fromJson(Map<String, dynamic>.from(entry)),
+              )
               .toList()
-            ..sort((a, b) => a.start.compareTo(b.start)),
+        : <HistoryEntry>[];
 
-      articles: row['articles'] == null
-          ? []
-          : (row['articles'] as List<dynamic>)
-                .map((e) => ArticleEntry.fromJson(e))
-                .toList(),
+    historyEntries.sort((first, second) {
+      return first.start.compareTo(second.start);
+    });
 
+    final articles = articlesRaw is List
+        ? articlesRaw
+              .whereType<Map>()
+              .map(
+                (entry) =>
+                    ArticleEntry.fromJson(Map<String, dynamic>.from(entry)),
+              )
+              .toList()
+        : <ArticleEntry>[];
+
+    final metadata = metadataRaw is Map
+        ? Map<String, dynamic>.from(metadataRaw)
+        : <String, dynamic>{};
+
+    final linksRaw = metadata['links'];
+    final featuresRaw = metadata['features'];
+    final attributesRaw = metadata['attributes'];
+    final tagsRaw = metadata['tags'];
+
+    final geomArea = geomAreaRaw is Map
+        ? Map<String, dynamic>.from(geomAreaRaw)
+        : null;
+
+    final images = imagesRaw is List
+        ? imagesRaw
+              .whereType<Map>()
+              .map(
+                (entry) =>
+                    ImageEntry.fromJson(Map<String, dynamic>.from(entry)),
+              )
+              .toList()
+        : <ImageEntry>[];
+
+    final distanceRaw = row['distance'];
+
+    final distance = distanceRaw is num
+        ? distanceRaw.toDouble()
+        : double.tryParse(distanceRaw?.toString() ?? '') ?? 0.0;
+
+    final osmIdRaw = row['osm_id'];
+
+    return PointOfInterest(
+      id: id,
+      name: row['name']?.toString() ?? '',
+      location: Geographic(lon: longitude.toDouble(), lat: latitude.toDouble()),
+      categories: List<String>.from(
+        row['categories'] as List? ?? const <dynamic>[],
+      ),
+      featuredImageUrl: row['featured_image_url']?.toString() ?? '',
+      historyEntries: historyEntries,
+      articles: articles,
       metadata: PoiMetadata(
-        links: row['metadata']['links'] != null
-            ? Map<String, String>.from(row['metadata']['links'])
+        links: linksRaw is Map ? Map<String, String>.from(linksRaw) : null,
+        features: featuresRaw is Map
+            ? Map<String, bool>.from(featuresRaw)
             : null,
-        features: row['metadata']['features'] != null
-            ? Map<String, bool>.from(row['metadata']['features'])
+        attributes: attributesRaw is Map
+            ? Map<String, dynamic>.from(attributesRaw)
             : null,
-        attributes: row['metadata']['attributes'] != null
-            ? Map<String, dynamic>.from(row['metadata']['attributes'])
-            : null,
-        tags: row['metadata']['tags'] != null
-            ? List<String>.from(row['metadata']['tags'])
-            : null,
+        tags: tagsRaw is List ? List<String>.from(tagsRaw) : null,
       ),
-      distance: (() {
-        final raw = row['distance'];
-        return (raw is num)
-            ? raw.toDouble()
-            : double.tryParse(raw.toString()) ?? 0.0;
-      })(),
+      distance: distance,
       address: Address(
-        street: row['street'] as String?,
-        houseNumber: row['house_number'] as String?,
-        postcode: row['postcode'] as String?,
-        city: row['city'] as String?,
-        district: row['district'] as String?,
-        country: row['country'] as String?,
+        street: row['street']?.toString(),
+        houseNumber: row['house_number']?.toString(),
+        postcode: row['postcode']?.toString(),
+        city: row['city']?.toString(),
+        district: row['district']?.toString(),
+        country: row['country']?.toString(),
       ),
-      description: row['description'] as String?,
-      geomArea: row['geom_area'] as Map<String, dynamic>?,
+      description: row['description']?.toString(),
+      geomArea: geomArea,
       geometryType:
-          (row['geom_area']?['type'] as String?)?.toLowerCase() ?? 'point',
-      osmId: row['osm_id'] as int?,
-      osmKey: row['osm_key'] as String?,
-      osmValue: row['osm_value'] as String?,
+          row['geom_type']?.toString().toLowerCase() ??
+          geomArea?['type']?.toString().toLowerCase() ??
+          'point',
+      osmId: osmIdRaw is num
+          ? osmIdRaw.toInt()
+          : int.tryParse(osmIdRaw?.toString() ?? ''),
+      osmKey: row['osm_key']?.toString(),
+      osmValue: row['osm_value']?.toString(),
       newPoi: false,
-      images: row['images'] == null
-          ? []
-          : (row['images'] as List<dynamic>)
-                .map((e) => ImageEntry.fromJson(e))
-                .toList(),
+      images: images,
     );
   }
 

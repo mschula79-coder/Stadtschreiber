@@ -6,12 +6,12 @@ import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/models/poi_selection_modes.dart';
 import 'package:stadtschreiber/provider/locale_provider.dart';
-import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/poi_selection_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/user_favorite_lists_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
 import 'package:stadtschreiber/utils/language_utils.dart';
+import 'package:stadtschreiber/widgets/modal_confirm_box.dart';
 import 'package:stadtschreiber/widgets/modal_poi_list_categories_filter.dart';
 import 'package:stadtschreiber/widgets/poi_list_item.dart';
 
@@ -28,22 +28,39 @@ class PoiFavoritesList extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<PoiFavoritesList> createState() => _PoiFavoritesListState();
+  ConsumerState<PoiFavoritesList> createState() {
+    return _PoiFavoritesListState();
+  }
 }
 
 class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
-  final Map<Object, List<PointOfInterest>> favPoisByList = {};
-  final Map<Object, Set<String>> selectedCategoriesByList = {};
-  final Map<Object, GlobalKey> tileKeys = {};
-  final Map<Object, ExpansibleController> tileControllers = {};
+  final Map<Object, List<PointOfInterest>> favPoisByList =
+      <Object, List<PointOfInterest>>{};
+
+  final Map<Object, Set<String>> selectedCategoriesByList =
+      <Object, Set<String>>{};
+
+  final Map<Object, GlobalKey> tileKeys = <Object, GlobalKey>{};
+
+  final Map<Object, ExpansibleController> tileControllers =
+      <Object, ExpansibleController>{};
+
+  final Set<Object> expandedListIds = <Object>{};
+
+  final Set<Object> deletingListIds = <Object>{};
 
   @override
   Widget build(BuildContext context) {
-    final userID = ref.watch(supabaseUserStateProvider).userid;
-    final languageCode = ref.watch(localeProvider).languageCode;
-    final countryCode = ref.watch(localeProvider).countryCode;
+    final userId = ref.watch(supabaseUserStateProvider).userid;
 
-    final favoriteListsAsync = ref.watch(userFavoriteListsProvider(userID));
+    final locale = ref.watch(localeProvider);
+
+    final languageCode = locale.languageCode;
+    final countryCode = locale.countryCode;
+
+    final favoriteListsAsync = ref.watch(
+      userFavoriteListHeadersProvider(userId),
+    );
 
     return Theme(
       data: Theme.of(context).copyWith(
@@ -66,7 +83,7 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
           onExpansionChanged: (expanded) {
             ref
                 .read(visiblePoisMenuStateProvider.notifier)
-                .setTileExpanded("favorites", expanded);
+                .setTileExpanded('favorites', expanded);
 
             if (expanded) {
               ref
@@ -76,26 +93,34 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
           },
           title: Row(
             children: [
-              Icon(Icons.star, color: Colors.grey.shade600),
+              Iconify(Mdi.bookmark, color: Colors.grey.shade600),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  getText('favorites', languageCode: languageCode, countryCode: countryCode),
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  getText(
+                    'favorites',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
           children: [
             favoriteListsAsync.when(
-              data: (listOfFavoriteLists) {
-                if (listOfFavoriteLists.isEmpty) {
+              data: (favoriteLists) {
+                if (favoriteLists.isEmpty) {
                   return Padding(
                     padding: EdgeInsets.zero,
                     child: Text(
                       getText(
                         'noFavoritesListsAvailable',
-                        languageCode: languageCode, countryCode: countryCode,
+                        languageCode: languageCode,
+                        countryCode: countryCode,
                       ),
                       style: TextStyle(
                         fontSize: 14,
@@ -107,204 +132,112 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: List.generate(listOfFavoriteLists.length, (index) {
-                    final (listDTO, favoritesInThisList) =
-                        listOfFavoriteLists[index];
+                  children: favoriteLists
+                      .map((listDto) {
+                        final Object listId = listDto.id;
 
-                    final Object listID = listDTO.id;
-                    final tileKey = _getTileKey(listID);
-                    final tileController = _getTileController(listID);
+                        final tileKey = _getTileKey(listId);
 
-                    return StatefulBuilder(
-                      builder: (context, setTileState) {
-                        final selectedCategories =
-                            selectedCategoriesByList[listID] ?? <String>{};
+                        final tileController = _getTileController(listId);
 
-                        final isFilterActive = selectedCategories.isNotEmpty;
+                        final isExpanded = expandedListIds.contains(listId);
 
-                        return Container(
-                          key: tileKey,
-                          child: ExpansionTile(
-                            key: ValueKey("favorites_$listID"),
-                            controller: tileController,
-                            maintainState: true,
-                            tilePadding: const EdgeInsets.only(
-                              left: 0,
-                              right: 15,
-                            ),
-                            childrenPadding: EdgeInsets.zero,
-                            collapsedShape: const Border(),
-                            shape: const Border(),
-                            expandedCrossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            expandedAlignment: Alignment.topLeft,
-                            title: Text(
-                              listDTO.name,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ...favoritesInThisList.map((favorite) {
-                                    return Consumer(
-                                      builder: (context, ref, child) {
-                                        final poiAsync = ref.watch(
-                                          poiByIdProvider(favorite.poiID),
-                                        );
+                        final isDeleting = deletingListIds.contains(listId);
 
-                                        return poiAsync.when(
-                                          data: (poi) {
-                                            if (poi == null) {
-                                              return Padding(
-                                                padding: EdgeInsets.zero,
-                                                child: Text(getText('poiNotFound', languageCode: languageCode, countryCode: countryCode)
-                                                  ,
-                                                ),
-                                              );
-                                            }
+                        return StatefulBuilder(
+                          builder: (context, setTileState) {
+                            final selectedCategories =
+                                selectedCategoriesByList[listId] ?? <String>{};
 
-                                            _cachePoi(listID: listID, poi: poi);
+                            final isFilterActive =
+                                selectedCategories.isNotEmpty;
 
-                                            final matchesFilter =
-                                                _matchesCategoryFilter(
-                                                  poi: poi,
-                                                  selectedCategories:
-                                                      selectedCategories,
-                                                );
-
-                                            if (!matchesFilter) {
-                                              return const SizedBox.shrink();
-                                            }
-
-                                            return PoiListItem(
-                                              selectEnabled: true,
-                                              poi: poi,
-                                              paddingLeft: 0,
-                                              onTap: () {
-                                                widget.onSelect(poi);
-                                                widget.onClose();
-                                              },
-                                            );
-                                          },
-                                          loading: () {
-                                            return const Padding(
-                                              padding: EdgeInsets.all(8),
-                                              child: Center(
-                                                child:
-                                                    CircularProgressIndicator(),
-                                              ),
-                                            );
-                                          },
-                                          error: (error, stackTrace) {
-                                            return Padding(
-                                              padding: const EdgeInsets.all(8),
-                                              child: Text("Fehler: $error"),
-                                            );
-                                          },
-                                        );
-                                      },
-                                    );
-                                  }),
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 0,
-                                      right: 15,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        IconButton(
-                                          tooltip: "Sichtbare POIs auswählen",
-                                          padding: EdgeInsets.zero,
-                                          visualDensity: VisualDensity.compact,
-                                          icon: const Iconify(
-                                            Mdi.check_all,
-                                            color: Colors.black87,
-                                            size: 24,
-                                          ),
-                                          onPressed: () {
-                                            final filteredPois =
-                                                _getFilteredCachedPois(listID);
-
-                                            ref
-                                                .read(
-                                                  poiSelectionProvider.notifier,
-                                                )
-                                                .setAll(filteredPois);
-                                          },
+                            return Container(
+                              key: tileKey,
+                              child: ExpansionTile(
+                                key: ValueKey<String>('favorites_$listId'),
+                                controller: tileController,
+                                enabled: !isDeleting,
+                                maintainState: false,
+                                leading: isDeleting
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
                                         ),
-                                        IconButton(
-                                          tooltip: "Auswahl aufheben",
-                                          padding: EdgeInsets.zero,
-                                          visualDensity: VisualDensity.compact,
-                                          icon: const Iconify(
-                                            Mdi.selection_remove,
-                                            color: Colors.black87,
-                                            size: 24,
-                                          ),
-                                          onPressed: () {
-                                            ref
-                                                .read(
-                                                  poiSelectionProvider.notifier,
-                                                )
-                                                .clear();
-                                          },
-                                        ),
-                                        IconButton(
-                                          tooltip: "Nach Kategorien filtern",
-                                          padding: EdgeInsets.zero,
-                                          visualDensity: VisualDensity.compact,
-                                          icon: Icon(
-                                            isFilterActive
-                                                ? Icons.filter_alt
-                                                : Icons.filter_alt_outlined,
-                                            color: Colors.black87,
-                                            size: 24,
-                                          ),
-                                          onPressed: () async {
-                                            await _openCategoryFilter(
-                                              context: context,
-                                              listID: listID,
-                                              setTileState: setTileState,
-                                            );
-                                            ref.invalidate(
-                                              poiSelectionProvider,
-                                            );
-                                          },
-                                        ),
-                                      ],
-                                    ),
+                                      )
+                                    : const Iconify(
+                                        Mdi.playlist_check,
+                                        color: Colors.black87,
+                                        size: 18,
+                                      ),
+                                tilePadding: const EdgeInsets.only(
+                                  left: 5,
+                                  right: 15,
+                                ),
+                                childrenPadding: const EdgeInsets.only(left: 6),
+                                collapsedShape: const Border(),
+                                shape: const Border(),
+                                expandedCrossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                expandedAlignment: Alignment.topLeft,
+                                title: Text(
+                                  '  ${listDto.name}',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.normal,
                                   ),
-                                  const SizedBox(height: 15),
-                                ],
+                                ),
+                                children: isExpanded
+                                    ? <Widget>[
+                                        _buildFavoriteListContent(
+                                          context: context,
+                                          listId: listId,
+                                          listName: listDto.name,
+                                          userId: userId,
+                                          languageCode: languageCode,
+                                          countryCode: countryCode,
+                                          selectedCategories:
+                                              selectedCategories,
+                                          isFilterActive: isFilterActive,
+                                          setTileState: setTileState,
+                                        ),
+                                      ]
+                                    : const <Widget>[],
+                                onExpansionChanged: (expanded) {
+                                  setState(() {
+                                    if (expanded) {
+                                      expandedListIds.add(listId);
+                                    } else {
+                                      expandedListIds.remove(listId);
+                                    }
+                                  });
+
+                                  if (expanded) {
+                                    _scrollToTile(tileKey);
+                                  }
+                                },
                               ),
-                            ],
-                            onExpansionChanged: (expanded) {
-                              if (expanded) {
-                                _scrollToTile(tileKey);
-                              }
-                            },
-                          ),
+                            );
+                          },
                         );
-                      },
-                    );
-                  }),
+                      })
+                      .toList(growable: false),
                 );
               },
               loading: () {
                 return const Padding(
                   padding: EdgeInsets.all(16),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 );
               },
               error: (error, stackTrace) {
                 return Padding(
                   padding: const EdgeInsets.all(8),
-                  child: Text("Fehler: $error"),
+                  child: Text('Fehler: $error'),
                 );
               },
             ),
@@ -312,6 +245,214 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
         ),
       ),
     );
+  }
+
+  Widget _buildFavoriteListContent({
+    required BuildContext context,
+    required Object listId,
+    required String listName,
+    required String userId,
+    required String languageCode,
+    required String? countryCode,
+    required Set<String> selectedCategories,
+    required bool isFilterActive,
+    required StateSetter setTileState,
+  }) {
+    final poisAsync = ref.watch(favoritePoisForListProvider(listId.toString()));
+
+    return poisAsync.when(
+      loading: () {
+        return const Padding(
+          padding: EdgeInsets.all(16),
+          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        );
+      },
+      error: (error, stackTrace) {
+        return Padding(
+          padding: const EdgeInsets.all(8),
+          child: Text('Fehler: $error'),
+        );
+      },
+      data: (poisInThisList) {
+        favPoisByList[listId] = poisInThisList;
+
+        final filteredPois = poisInThisList
+            .where(
+              (poi) => _matchesCategoryFilter(
+                poi: poi,
+                selectedCategories: selectedCategories,
+              ),
+            )
+            .toList(growable: false);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (filteredPois.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(8),
+                child: Text('Keine passenden POIs vorhanden.'),
+              )
+            else
+              ...filteredPois.map(
+                (poi) => PoiListItem(
+                  selectEnabled: true,
+                  poi: poi,
+                  paddingLeft: 0,
+                  onTap: () {
+                    widget.onSelect(poi);
+                    widget.onClose();
+                  },
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.only(left: 0, right: 15),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    tooltip: 'Sichtbare POIs auswählen',
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    icon: const Iconify(
+                      Mdi.check_all,
+                      color: Colors.black87,
+                      size: 24,
+                    ),
+                    onPressed: filteredPois.isEmpty
+                        ? null
+                        : () {
+                            ref
+                                .read(poiSelectionProvider.notifier)
+                                .setAll(filteredPois);
+                          },
+                  ),
+                  IconButton(
+                    tooltip: 'Auswahl aufheben',
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    icon: const Iconify(
+                      Mdi.checkbox_blank_outline,
+                      color: Colors.black87,
+                      size: 24,
+                    ),
+                    onPressed: () {
+                      ref.read(poiSelectionProvider.notifier).clear();
+                    },
+                  ),
+                  IconButton(
+                    tooltip: 'Nach Kategorien filtern',
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    icon: Icon(
+                      isFilterActive
+                          ? Icons.filter_alt
+                          : Icons.filter_alt_outlined,
+                      color: Colors.black87,
+                      size: 24,
+                    ),
+                    onPressed: () async {
+                      await _openCategoryFilter(
+                        context: context,
+                        listId: listId,
+                        setTileState: setTileState,
+                      );
+                    },
+                  ),
+                  IconButton(
+                    tooltip: getText(
+                      'deleteList',
+                      languageCode: languageCode,
+                      countryCode: countryCode,
+                    ),
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    icon: const Iconify(
+                      Mdi.trash_can_outline,
+                      color: Colors.black87,
+                      size: 24,
+                    ),
+                    onPressed: () async {
+                      await _deleteFavoriteList(
+                        context: context,
+                        listId: listId,
+                        listName: listName,
+                        userId: userId,
+                        languageCode: languageCode,
+                        countryCode: countryCode,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 15),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteFavoriteList({
+    required BuildContext context,
+    required Object listId,
+    required String listName,
+    required String userId,
+    required String languageCode,
+    required String? countryCode,
+  }) async {
+    if (deletingListIds.contains(listId)) {
+      return;
+    }
+
+    final confirmed = await confirmBox(
+      context,
+      '${getText('confirmDeletionOfList1', languageCode: languageCode, countryCode: countryCode)}, $listName ${getText('confirmDeletionOfList2', languageCode: languageCode, countryCode: countryCode)}',
+      getText(
+        'deleteList',
+        languageCode: languageCode,
+        countryCode: countryCode,
+      ),
+    );
+
+    if (!confirmed || !context.mounted) {
+      return;
+    }
+
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    setState(() {
+      deletingListIds.add(listId);
+    });
+
+    try {
+      await ref.read(deleteFavoriteListProvider)(
+        listId: listId.toString(),
+        userId: userId,
+      );
+
+      expandedListIds.remove(listId);
+      favPoisByList.remove(listId);
+      selectedCategoriesByList.remove(listId);
+
+      ref.invalidate(favoritePoisForListProvider(listId.toString()));
+
+      ref.invalidate(userFavoriteListHeadersProvider(userId));
+
+      ref.read(poiSelectionProvider.notifier).clear();
+    } catch (error) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Die Liste konnte nicht gelöscht werden: $error'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          deletingListIds.remove(listId);
+        });
+      }
+    }
   }
 
   @override
@@ -377,18 +518,8 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
     return poiCategories.any(selectedCategories.contains);
   }
 
-  void _cachePoi({required Object listID, required PointOfInterest poi}) {
-    final currentPois = favPoisByList[listID] ?? [];
-
-    if (currentPois.any((currentPoi) => currentPoi.id == poi.id)) {
-      return;
-    }
-
-    favPoisByList[listID] = [...currentPois, poi];
-  }
-
-  Set<String> _getAvailableCategories(Object listID) {
-    final pois = favPoisByList[listID] ?? [];
+  Set<String> _getAvailableCategories(Object listId) {
+    final pois = favPoisByList[listId] ?? const <PointOfInterest>[];
 
     return pois
         .expand((poi) => poi.categories ?? const <String>[])
@@ -397,30 +528,15 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
         .toSet();
   }
 
-  List<PointOfInterest> _getFilteredCachedPois(Object listID) {
-    final pois = favPoisByList[listID] ?? [];
-
-    final selectedCategories = selectedCategoriesByList[listID] ?? <String>{};
-
-    return pois
-        .where((poi) {
-          return _matchesCategoryFilter(
-            poi: poi,
-            selectedCategories: selectedCategories,
-          );
-        })
-        .toList(growable: false);
-  }
-
   Future<void> _openCategoryFilter({
     required BuildContext context,
-    required Object listID,
+    required Object listId,
     required StateSetter setTileState,
   }) async {
-    final availableCategories = _getAvailableCategories(listID);
+    final availableCategories = _getAvailableCategories(listId);
 
     final currentSelection = Set<String>.from(
-      selectedCategoriesByList[listID] ?? <String>{},
+      selectedCategoriesByList[listId] ?? <String>{},
     );
 
     final result = await showDialog<Set<String>>(
@@ -433,24 +549,24 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
       },
     );
 
-    if (!mounted || result == null) {
+    if (!context.mounted || result == null) {
       return;
     }
 
     setTileState(() {
       if (result.isEmpty) {
-        selectedCategoriesByList.remove(listID);
+        selectedCategoriesByList.remove(listId);
       } else {
-        selectedCategoriesByList[listID] = Set<String>.from(result);
+        selectedCategoriesByList[listId] = Set<String>.from(result);
       }
     });
   }
 
-  GlobalKey _getTileKey(Object listID) {
-    return tileKeys.putIfAbsent(listID, GlobalKey.new);
+  GlobalKey _getTileKey(Object listId) {
+    return tileKeys.putIfAbsent(listId, GlobalKey.new);
   }
 
-  ExpansibleController _getTileController(Object listID) {
-    return tileControllers.putIfAbsent(listID, ExpansibleController.new);
+  ExpansibleController _getTileController(Object listId) {
+    return tileControllers.putIfAbsent(listId, ExpansibleController.new);
   }
 }
