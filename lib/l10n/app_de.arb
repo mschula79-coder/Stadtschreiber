@@ -1,8 +1,15 @@
 {
   "@@locale": "de",
-
+  "confirmDeletionOfList1": "Möchtest du die Liste",
+  "confirmDeletionOfList2": "wirklich löschen?",
+  "deleteList": "Liste löschen",
+  "done": "Fertig",
+  "filterFeatures": "Eigenschaften filtern",
+  "removeSelection": "Auswahl entfernen",
+  "searchRadius": "Umkreis um die Kartenmitte",
   "add": "Hinzufügen",
   "address": "Adresse",
+  "addToList": "Zu Liste hinzufügen",
   "allRated": "Alle bewerteten Orte",
   "apply": "Übernehmen",
   "attention": "Achtung",

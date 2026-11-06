@@ -13,6 +13,7 @@ import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
 import 'package:stadtschreiber/utils/language_utils.dart';
 import 'package:stadtschreiber/widgets/modal_confirm_box.dart';
 import 'package:stadtschreiber/widgets/modal_poi_list_categories_filter.dart';
+import 'package:stadtschreiber/widgets/poi_list_action_row.dart';
 import 'package:stadtschreiber/widgets/poi_list_item.dart';
 
 class PoiFavoritesList extends ConsumerStatefulWidget {
@@ -294,97 +295,96 @@ class _PoiFavoritesListState extends ConsumerState<PoiFavoritesList> {
                 child: Text('Keine passenden POIs vorhanden.'),
               )
             else
-              ...filteredPois.map(
-                (poi) => PoiListItem(
-                  selectEnabled: true,
-                  poi: poi,
-                  paddingLeft: 0,
-                  onTap: () {
-                    widget.onSelect(poi);
-                    widget.onClose();
-                  },
+              PoiListActionRow(
+                isFilterActive: isFilterActive,
+                isDeleting: deletingListIds.contains(listId),
+                showDelete: true,
+                selectAllTooltip: 'Sichtbare POIs auswählen',
+                clearSelectionTooltip: 'Auswahl aufheben',
+                filterTooltip: 'Nach Kategorien filtern',
+                deleteTooltip: getText(
+                  'deleteList',
+                  languageCode: languageCode,
+                  countryCode: countryCode,
                 ),
+                onSelectAll: filteredPois.isEmpty
+                    ? null
+                    : () {
+                        ref
+                            .read(poiSelectionProvider.notifier)
+                            .setAll(filteredPois);
+                      },
+                onClearSelection: () {
+                  ref.read(poiSelectionProvider.notifier).clear();
+                },
+                onFilter: () async {
+                  await _openCategoryFilter(
+                    context: context,
+                    listId: listId,
+                    setTileState: setTileState,
+                  );
+                },
+                onDelete: () async {
+                  await _deleteFavoriteList(
+                    context: context,
+                    listId: listId,
+                    listName: listName,
+                    userId: userId,
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  );
+                },
               ),
-            Padding(
-              padding: const EdgeInsets.only(left: 0, right: 15),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    tooltip: 'Sichtbare POIs auswählen',
-                    padding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                    icon: const Iconify(
-                      Mdi.check_all,
-                      color: Colors.black87,
-                      size: 24,
-                    ),
-                    onPressed: filteredPois.isEmpty
-                        ? null
-                        : () {
-                            ref
-                                .read(poiSelectionProvider.notifier)
-                                .setAll(filteredPois);
-                          },
-                  ),
-                  IconButton(
-                    tooltip: 'Auswahl aufheben',
-                    padding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                    icon: const Iconify(
-                      Mdi.checkbox_blank_outline,
-                      color: Colors.black87,
-                      size: 24,
-                    ),
-                    onPressed: () {
-                      ref.read(poiSelectionProvider.notifier).clear();
-                    },
-                  ),
-                  IconButton(
-                    tooltip: 'Nach Kategorien filtern',
-                    padding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                    icon: Icon(
-                      isFilterActive
-                          ? Icons.filter_alt
-                          : Icons.filter_alt_outlined,
-                      color: Colors.black87,
-                      size: 24,
-                    ),
-                    onPressed: () async {
-                      await _openCategoryFilter(
-                        context: context,
-                        listId: listId,
-                        setTileState: setTileState,
-                      );
-                    },
-                  ),
-                  IconButton(
-                    tooltip: getText(
-                      'deleteList',
-                      languageCode: languageCode,
-                      countryCode: countryCode,
-                    ),
-                    padding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                    icon: const Iconify(
-                      Mdi.trash_can_outline,
-                      color: Colors.black87,
-                      size: 24,
-                    ),
-                    onPressed: () async {
-                      await _deleteFavoriteList(
-                        context: context,
-                        listId: listId,
-                        listName: listName,
-                        userId: userId,
-                        languageCode: languageCode,
-                        countryCode: countryCode,
-                      );
-                    },
-                  ),
-                ],
+            ...filteredPois.map(
+              (poi) => PoiListItem(
+                selectEnabled: true,
+                poi: poi,
+                paddingLeft: 0,
+                onTap: () {
+                  widget.onSelect(poi);
+                  widget.onClose();
+                },
               ),
+            ),
+            PoiListActionRow(
+              isFilterActive: isFilterActive,
+              isDeleting: deletingListIds.contains(listId),
+              showDelete: true,
+              selectAllTooltip: 'Sichtbare POIs auswählen',
+              clearSelectionTooltip: 'Auswahl aufheben',
+              filterTooltip: 'Nach Kategorien filtern',
+              deleteTooltip: getText(
+                'deleteList',
+                languageCode: languageCode,
+                countryCode: countryCode,
+              ),
+              onSelectAll: filteredPois.isEmpty
+                  ? null
+                  : () {
+                      ref
+                          .read(poiSelectionProvider.notifier)
+                          .setAll(filteredPois);
+                    },
+              onClearSelection: () {
+                ref.read(poiSelectionProvider.notifier).clear();
+              },
+              onFilter: () async {
+                await _openCategoryFilter(
+                  context: context,
+                  listId: listId,
+                  setTileState: setTileState,
+                );
+              },
+              onDelete: () async {
+                await _deleteFavoriteList(
+                  context: context,
+                  listId: listId,
+                  listName: listName,
+                  userId: userId,
+                  languageCode: languageCode,
+                  countryCode: countryCode,
+                );
+              },
             ),
             const SizedBox(height: 15),
           ],

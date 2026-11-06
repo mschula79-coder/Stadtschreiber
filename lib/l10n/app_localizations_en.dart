@@ -344,4 +344,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yes => 'Yes';
+
+  @override
+  String get addToList => 'Add to list';
+
+  @override
+  String get confirmDeletionOfList1 => 'Do you really want to delete the list';
+
+  @override
+  String get confirmDeletionOfList2 => '?';
+
+  @override
+  String get deleteList => 'Delete list';
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get filterFeatures => 'Filter features';
+
+  @override
+  String get removeSelection => 'Clear selection';
+
+  @override
+  String get searchRadius => 'Radius around map center';
 }

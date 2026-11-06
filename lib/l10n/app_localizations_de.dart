@@ -345,6 +345,30 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get yes => 'Ja';
+
+  @override
+  String get addToList => 'Zu Liste hinzufügen';
+
+  @override
+  String get confirmDeletionOfList1 => 'Möchtest du die Liste';
+
+  @override
+  String get confirmDeletionOfList2 => 'wirklich löschen?';
+
+  @override
+  String get deleteList => 'Liste löschen';
+
+  @override
+  String get done => 'Fertig';
+
+  @override
+  String get filterFeatures => 'Eigenschaften filtern';
+
+  @override
+  String get removeSelection => 'Auswahl entfernen';
+
+  @override
+  String get searchRadius => 'Umkreis um die Kartenmitte';
 }
 
 /// The translations for German, as used in Switzerland (`de_CH`).
@@ -687,4 +711,28 @@ class AppLocalizationsDeCh extends AppLocalizationsDe {
 
   @override
   String get yes => 'Joo';
+
+  @override
+  String get addToList => 'Zu ere Liste hinzuefüege';
+
+  @override
+  String get confirmDeletionOfList1 => 'Möchtsch d Liste';
+
+  @override
+  String get confirmDeletionOfList2 => 'würklich lösche?';
+
+  @override
+  String get deleteList => 'Liste lösche';
+
+  @override
+  String get done => 'Fertig';
+
+  @override
+  String get filterFeatures => 'Eigeschafte filtere';
+
+  @override
+  String get removeSelection => 'Uswahl ufhebe';
+
+  @override
+  String get searchRadius => 'Umchreis um d Charte-Mitti';
 }

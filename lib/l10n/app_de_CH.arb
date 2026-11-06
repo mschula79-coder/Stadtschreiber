@@ -110,5 +110,13 @@
   "user": "Benutzer",
   "userName": "Benutzername",
   "username": "Benutzername",
-  "yes": "Joo"
+  "yes": "Joo",
+  "addToList": "Zu ere Liste hinzuefüege",
+  "confirmDeletionOfList1": "Möchtsch d Liste",
+  "confirmDeletionOfList2": "würklich lösche?",
+  "deleteList": "Liste lösche",
+  "done": "Fertig",
+  "filterFeatures": "Eigeschafte filtere",
+  "removeSelection": "Uswahl ufhebe",
+  "searchRadius": "Umchreis um d Charte-Mitti"
 }

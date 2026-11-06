@@ -159,7 +159,7 @@ class _PoiListState extends ConsumerState<PoiListPanel> {
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
                 icon: const Iconify(
-                  Mdi.checkbox_blank_outline,
+                  Mdi.checkbox_blank_off_outline,
                   color: Colors.black87,
                   size: 20,
                 ),

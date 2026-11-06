@@ -43,7 +43,7 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
     case 'add':
       return localization.add;
     case 'addToList':
-      return "zu Liste hinzufügen";
+      return localization.addToList;
     case 'address':
       return localization.address;
     case 'apply':
@@ -53,7 +53,7 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
     case 'cancel':
       return localization.cancel;
     case 'categories':
-      return "Kategorien";
+      return localization.categories;
 
     case 'changePassword':
       return localization.changePassword;
@@ -66,9 +66,9 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
     case 'confirmDeletionOfPoint':
       return localization.confirmDeletionOfPoint;
     case 'confirmDeletionOfList1':
-      return 'Möchtest du die Liste';
+      return localization.confirmDeletionOfList1;
     case 'confirmDeletionOfList2':
-      return 'wirklich löschen?';
+      return localization.confirmDeletionOfList2;
     case 'confirmEmail':
       return localization.confirmEmail;
     case 'criterion':
@@ -78,11 +78,11 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
     case 'deleteUser':
       return localization.deleteUser;
     case 'deleteList':
-      return 'Liste löschen';
+      return localization.deleteList;
     case 'description':
       return localization.description;
     case 'done':
-      return "Fertig";
+      return localization.done;
     case 'editArticle':
       return localization.editArticle;
     case 'editCategories':
@@ -119,9 +119,8 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
       return localization.filterCategories;
     case 'finishDragMode':
       return localization.finishDragMode;
-    // TODO translate this string
     case 'filterFeatures':
-      return 'Features filtern';
+      return localization.filterFeatures;
 
     case 'finishEditMode':
       return localization.finishEditMode;
@@ -194,7 +193,7 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
     case 'register':
       return localization.register;
     case 'removeSelection':
-      return 'Auswahl entfernen';
+      return localization.removeSelection;
 
     case 'results':
       return localization.results;
@@ -205,7 +204,7 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
     case 'search':
       return localization.search;
     case 'searchRadius':
-      return "Umkreis um Kartenmitte";
+      return localization.searchRadius;
     case 'selectAll':
       return localization.selectAll;
     case 'selectCategory':

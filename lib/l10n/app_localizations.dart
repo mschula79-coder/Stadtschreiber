@@ -760,6 +760,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Yes'**
   String get yes;
+
+  /// No description provided for @addToList.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to list'**
+  String get addToList;
+
+  /// No description provided for @confirmDeletionOfList1.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you really want to delete the list'**
+  String get confirmDeletionOfList1;
+
+  /// No description provided for @confirmDeletionOfList2.
+  ///
+  /// In en, this message translates to:
+  /// **'?'**
+  String get confirmDeletionOfList2;
+
+  /// No description provided for @deleteList.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete list'**
+  String get deleteList;
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// No description provided for @filterFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter features'**
+  String get filterFeatures;
+
+  /// No description provided for @removeSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear selection'**
+  String get removeSelection;
+
+  /// No description provided for @searchRadius.
+  ///
+  /// In en, this message translates to:
+  /// **'Radius around map center'**
+  String get searchRadius;
 }
 
 class _AppLocalizationsDelegate

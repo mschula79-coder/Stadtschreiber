@@ -110,5 +110,13 @@
   "user": "Utilisateur",
   "userName": "Nom d’utilisateur",
   "username": "Nom d’utilisateur",
-  "yes": "Oui"
+  "yes": "Oui",
+  "addToList": "Ajouter à une liste",
+  "confirmDeletionOfList1": "Voulez-vous vraiment supprimer la liste",
+  "confirmDeletionOfList2": "?",
+  "deleteList": "Supprimer la liste",
+  "done": "Terminé",
+  "filterFeatures": "Filtrer les caractéristiques",
+  "removeSelection": "Effacer la sélection",
+  "searchRadius": "Rayon autour du centre de la carte"
 }

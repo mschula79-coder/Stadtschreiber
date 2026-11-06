@@ -110,5 +110,13 @@
   "user": "User",
   "userName": "Username",
   "username": "Username",
-  "yes": "Yes"
+  "yes": "Yes",
+  "addToList": "Add to list",
+  "confirmDeletionOfList1": "Do you really want to delete the list",
+  "confirmDeletionOfList2": "?",
+  "deleteList": "Delete list",
+  "done": "Done",
+  "filterFeatures": "Filter features",
+  "removeSelection": "Clear selection",
+  "searchRadius": "Radius around map center"
 }

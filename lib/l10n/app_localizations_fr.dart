@@ -348,4 +348,29 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get yes => 'Oui';
+
+  @override
+  String get addToList => 'Ajouter à une liste';
+
+  @override
+  String get confirmDeletionOfList1 =>
+      'Voulez-vous vraiment supprimer la liste';
+
+  @override
+  String get confirmDeletionOfList2 => '?';
+
+  @override
+  String get deleteList => 'Supprimer la liste';
+
+  @override
+  String get done => 'Terminé';
+
+  @override
+  String get filterFeatures => 'Filtrer les caractéristiques';
+
+  @override
+  String get removeSelection => 'Effacer la sélection';
+
+  @override
+  String get searchRadius => 'Rayon autour du centre de la carte';
 }
