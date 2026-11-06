@@ -62,7 +62,6 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
     final languageCode = ref.watch(localeProvider).languageCode;
     final countryCode = ref.watch(localeProvider).countryCode;
 
-
     final searchParams = (query: _searchQuery, searchActive: true);
 
     final searchResults = ref.watch(searchResultsProvider(searchParams));
@@ -92,13 +91,16 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
         contentPadding: EdgeInsets.zero,
         horizontalTitleGap: 0,
         minLeadingWidth: 0,
+        minVerticalPadding: 0,
         child: ExpansionTile(
+          key: const ValueKey('search_tile'),
           tilePadding: const EdgeInsets.only(left: 0, right: 15),
-          childrenPadding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
+          childrenPadding: EdgeInsets.zero,
           visualDensity: VisualDensity.compact,
           initiallyExpanded: false,
           controller: expansionController,
-
+          collapsedShape: const Border(),
+          shape: const Border(),
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           expandedAlignment: Alignment.topLeft,
           onExpansionChanged: (value) {
@@ -122,7 +124,11 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
 
               Expanded(
                 child: Text(
-                  getText('search', languageCode: languageCode, countryCode: countryCode),
+                  getText(
+                    'search',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -217,7 +223,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                       min: 0.5,
                       max: 20,
                       divisions: null,
-                      // Adress search  
+                      // Adress search
                       value: _searchRadiusKm,
                       label: _formatRadius(_searchRadiusKm),
                       onChanged: (value) {
@@ -270,7 +276,11 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                     return Padding(
                       padding: EdgeInsetsGeometry.fromLTRB(5, 15, 0, 0),
                       child: Text(
-                        getText('noPoiFound', languageCode: languageCode, countryCode: countryCode),
+                        getText(
+                          'noPoiFound',
+                          languageCode: languageCode,
+                          countryCode: countryCode,
+                        ),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -290,7 +300,8 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                                 child: Text(
                                   getText(
                                     'results',
-                                    languageCode: languageCode, countryCode: countryCode,
+                                    languageCode: languageCode,
+                                    countryCode: countryCode,
                                   ),
                                   style: TextStyle(
                                     fontSize: 18,

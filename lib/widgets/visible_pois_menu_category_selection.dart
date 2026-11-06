@@ -113,24 +113,21 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
     return Theme(
       data: Theme.of(context).copyWith(
         listTileTheme: const ListTileThemeData(contentPadding: EdgeInsets.zero),
-        dividerColor: Colors.transparent,
-        dividerTheme: const DividerThemeData(
-          color: Colors.transparent,
-          space: 0,
-          thickness: 0,
-        ),
       ),
       child: ListTileTheme(
         contentPadding: EdgeInsets.zero,
         horizontalTitleGap: 0,
         minLeadingWidth: 0,
-
+        minVerticalPadding: 0,
         child: ExpansionTile(
+          key: const ValueKey('categories_tile'),
           tilePadding: const EdgeInsets.only(left: 0, right: 15),
-          childrenPadding: const EdgeInsets.fromLTRB(4, 4, 0, 0),
+          childrenPadding: EdgeInsets.zero,
           visualDensity: VisualDensity.compact,
           initiallyExpanded: false,
           controller: expansionController,
+          collapsedShape: const Border(),
+          shape: const Border(),
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           expandedAlignment: Alignment.topLeft,
           onExpansionChanged: (value) {
@@ -283,8 +280,6 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
             ),
 
             const SizedBox(height: 8),
-
-            
 
             if (poiCountsError != null)
               Padding(

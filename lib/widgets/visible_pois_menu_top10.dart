@@ -62,6 +62,10 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
       }
     });
 
+    final hoverColor = Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: 0.08);
+
     return Theme(
       data: Theme.of(context).copyWith(
         listTileTheme: const ListTileThemeData(contentPadding: EdgeInsets.zero),
@@ -70,13 +74,16 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
         contentPadding: EdgeInsets.zero,
         horizontalTitleGap: 0,
         minLeadingWidth: 0,
+        minVerticalPadding: 0,
         child: ExpansionTile(
-          key: const ValueKey("top10_tile"), // ⭐ stabiler Key
+          key: const ValueKey('top10_tile'),
           tilePadding: const EdgeInsets.only(left: 0, right: 15),
           childrenPadding: EdgeInsets.zero,
           visualDensity: VisualDensity.compact,
           initiallyExpanded: false,
           controller: expansionController,
+          collapsedShape: const Border(),
+          shape: const Border(),
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           expandedAlignment: Alignment.topLeft,
 
@@ -455,7 +462,7 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
 
     return const <LocalizedCategoryNode>[];
   }
-// TODO Supabase photos migrieren
+  // TODO Supabase photos migrieren
 
   Widget buildListLengthDropdown(BuildContext context, WidgetRef ref) {
     final allRated = AppLocalizations.of(context)?.allRated ?? 'All rated';
