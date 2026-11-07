@@ -6,8 +6,8 @@ import 'package:stadtschreiber/main.dart' show supportedLocales;
 import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/utils/language_utils.dart';
 import 'package:stadtschreiber/widgets/_icon_getter.dart';
+import 'package:stadtschreiber/widgets/modal_about.dart';
 import 'package:stadtschreiber/widgets/modal_message_box.dart';
-import 'package:stadtschreiber/widgets/modal_photo_gallery.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -284,22 +284,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               foregroundColor: Colors.white,
                             ),
                             onPressed: () {
-                              final imageUrls = List<String>.generate(13, (
-                                index,
-                              ) {
-                                final number = (index + 1).toString().padLeft(
-                                  2,
-                                  '0',
-                                );
-
-                                return 'https://pub-f79c7b584e8a408282353176df4c42e6.r2.dev/Folie$number.JPG';
-                              });
-
-                              PhotoGalleryModal.open(
-                                context,
-                                imageUrls: imageUrls,
-                                initialUrl: imageUrls.first,
-                              );
+                              AboutModal.open(context);
                             },
                             child: Text(
                               getText(

@@ -62,10 +62,6 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
       }
     });
 
-    final hoverColor = Theme.of(
-      context,
-    ).colorScheme.onSurface.withValues(alpha: 0.08);
-
     return Theme(
       data: Theme.of(context).copyWith(
         listTileTheme: const ListTileThemeData(contentPadding: EdgeInsets.zero),

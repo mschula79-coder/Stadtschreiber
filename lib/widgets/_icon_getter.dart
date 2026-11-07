@@ -105,7 +105,6 @@ Widget getIcon(String keyword, double? iconsize, Color? color) {
     case "email":
       return Iconify(Mdi.email);
 
-
     case "fasnacht":
       return FaIcon(
         FontAwesomeIcons.masksTheater,
@@ -118,12 +117,12 @@ Widget getIcon(String keyword, double? iconsize, Color? color) {
         size: iconsize ?? 24,
         color: color ?? Colors.black,
       );
-    case "foodcourts":
+    /* case "foodcourts":
       return Icon(
         Icons.restaurant,
         size: iconsize ?? 24,
         color: color ?? Colors.black,
-      );
+      ); */
     case "gardens":
       return Iconify(
         GameIcons.flowers,
@@ -219,10 +218,9 @@ Widget getIcon(String keyword, double? iconsize, Color? color) {
       );
     case "information":
       return Iconify(IcomoonFree.info);
-    
+
     case "instagram":
       return Iconify(Mdi.instagram);
-    
 
     case "libraries":
       return Iconify(Clarity.library_line);

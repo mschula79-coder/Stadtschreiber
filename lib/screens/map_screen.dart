@@ -60,18 +60,39 @@ class MapScreenState extends ConsumerState<MapScreen> {
   double? lastKnownUserLat;
   double? lastKnownUserLon;
 
+  bool _systemOverlaysAreVisible = false;
+
   @override
   void initState() {
     super.initState();
+
     _registerSelectedPoiListener();
     _registerVisiblePoisListener();
     _registerCategorySelectionListener();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
+
       ref.read(categoriesProvider.notifier).loadCategoryTree();
     });
 
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+    SystemChrome.setSystemUIChangeCallback((systemOverlaysAreVisible) async {
+      if (!mounted) {
+        return;
+      }
+
+      if (_systemOverlaysAreVisible == systemOverlaysAreVisible) {
+        return;
+      }
+
+      setState(() {
+        _systemOverlaysAreVisible = systemOverlaysAreVisible;
+      });
+    });
 
     geo.Geolocator.getPositionStream(
       locationSettings: const geo.LocationSettings(
@@ -79,17 +100,25 @@ class MapScreenState extends ConsumerState<MapScreen> {
         distanceFilter: 5,
       ),
     ).listen((pos) {
+      if (!mounted) {
+        return;
+      }
+
       updateUserLocationOnMap(pos);
     });
   }
 
   @override
   void dispose() {
+    SystemChrome.setSystemUIChangeCallback(null);
+
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    super.dispose();
+
     _selectedPoiSub.close();
     _visiblePoisSub.close();
     _catPoisSub.close();
+
+    super.dispose();
   }
 
   @override
@@ -117,10 +146,10 @@ class MapScreenState extends ConsumerState<MapScreen> {
         .read(dragPoiProvider.notifier)
         .isDraggingPointMode();
 
-    final bool showPoiPanel =
-        hasSelectedPoi && !isPoiGeomEditMode && !isDraggingPoi;
-
     final bool showPoiList = ref.watch(appStateProvider).isPoiListVisible;
+
+    final bool showPoiPanel =
+        hasSelectedPoi && !isPoiGeomEditMode && !isDraggingPoi && !showPoiList;
 
     ref.watch(poiCountsByCategoryProvider);
 
@@ -434,29 +463,34 @@ class MapScreenState extends ConsumerState<MapScreen> {
                     _selectPoi(poi);
                   },
                 ),
+          AnimatedPadding(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            padding: EdgeInsets.only(
+              bottom: _systemOverlaysAreVisible ? 48 : 0,
+            ),
+            child: MapActions(
+              onChangeStyle: changeStyle,
+              onLocateMe: _locateMe,
+              onAddPoi: () async {
+                final newPoi = await poiRepository.newPoi(camera.getLocation());
+                ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
+                ref.read(appStateProvider.notifier).setAdminViewEnabled(true);
+                ref.read(appStateProvider.notifier).setPoiEditMode(true);
 
-          MapActions(
-            onChangeStyle: changeStyle,
-            onLocateMe: _locateMe,
-            onAddPoi: () async {
-              final newPoi = await poiRepository.newPoi(camera.getLocation());
-              ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
-              ref.read(appStateProvider.notifier).setAdminViewEnabled(true);
-              ref.read(appStateProvider.notifier).setPoiEditMode(true);
+                ref.invalidate(visiblePoisProvider);
+              },
+              onRemoveThumbnails: () {
+                ref.read(categoriesSelectionProvider.notifier).clear();
+                ref.read(searchSelectionProvider.notifier).clear();
+                ref.read(visiblePoisProvider.notifier).clear();
+              },
 
-              ref.invalidate(visiblePoisProvider);
-            },
-            onRemoveThumbnails: () {
-              ref.read(categoriesSelectionProvider.notifier).clear();
-              ref.read(searchSelectionProvider.notifier).clear();
-              ref.read(visiblePoisProvider.notifier).clear();
-            },
-
-            isAdmin: user.isAdmin,
-            isEditor: ref.read(supabaseUserStateProvider.notifier).isEditor(),
-            isAdminViewEnabled: isAdminViewEnabled,
+              isAdmin: user.isAdmin,
+              isEditor: ref.read(supabaseUserStateProvider.notifier).isEditor(),
+              isAdminViewEnabled: isAdminViewEnabled,
+            ),
           ),
-
           MapCredits(),
 
           // My Location Blue Dot

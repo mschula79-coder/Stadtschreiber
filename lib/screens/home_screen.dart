@@ -174,9 +174,9 @@ class _MyHomePageState extends ConsumerState<MyHomePage>
                   ),
         
                 Positioned(
-                  top: 25,
+                  top: 30,
                   left: 25,
-                  child: Image.asset('assets/icons/basel-no-bg.png', height: 35),
+                  child: Image.asset('assets/icons/basel-no-bg.png', height: 28),
                 ),
                 Positioned(
                   top: 20,

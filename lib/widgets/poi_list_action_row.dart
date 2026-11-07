@@ -63,7 +63,7 @@ class PoiListActionRow extends StatelessWidget {
               icon: const Iconify(
                 Mdi.checkbox_blank_off_outline,
                 color: Colors.black87,
-                size: 24,
+                size: 18,
               ),
               onPressed: isDeleting ? null : onClearSelection,
             ),

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stadtschreiber/provider/locale_provider.dart';
+import 'package:stadtschreiber/utils/language_utils.dart';
+import 'package:stadtschreiber/widgets/modal_about.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class MapCredits extends StatelessWidget {
+class MapCredits extends ConsumerWidget {
   const MapCredits({super.key});
 
   void _openUrl(String url) async {
@@ -10,9 +14,10 @@ class MapCredits extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+
     return Positioned(
-      bottom: 25,
+      bottom: 50,
       left: 15,
       child: GestureDetector(
         onTap: () {
@@ -46,11 +51,42 @@ class MapCredits extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Padding(
-                              padding: EdgeInsets.only(bottom: 8),
+                              padding: EdgeInsets.only(bottom: 2),
+                              child: Text(
+                                "About",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
+                                foregroundColor: Colors.white,
+                              ),
+                              onPressed: () {
+                                AboutModal.open(context);
+                              },
+                              child: Text(
+                                getText(
+                                  'joinus1',
+                                  languageCode: ref
+                                      .read(localeProvider)
+                                      .languageCode,
+                                  countryCode: ref.read(localeProvider).countryCode,
+                                ),
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 8, top: 12),
                               child: Text(
                                 "Credits",
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black,
                                 ),
@@ -61,11 +97,23 @@ class MapCredits extends StatelessWidget {
                             _creditItem("DuckServer", "https://duckdns.org"),
                             _creditItem("Iconify", "https://iconify.design"),
                             _creditItem("© MapLibre", "https://maplibre.org"),
-                            _creditItem("Maputnik", "https://maputnik.github.io"),
+                            _creditItem(
+                              "Maputnik",
+                              "https://maputnik.github.io",
+                            ),
                             _creditItem("Nominatim", "https://nominatim.org"),
-                            _creditItem("© OpenStreetMap", "https://www.openstreetmap.org"),
-                            _creditItem("Overpass API", "https://overpass-api.de"),
-                            _creditItem("Planetiler", "https://github.com/onthegomap/planetiler"),
+                            _creditItem(
+                              "© OpenStreetMap",
+                              "https://www.openstreetmap.org",
+                            ),
+                            _creditItem(
+                              "Overpass API",
+                              "https://overpass-api.de",
+                            ),
+                            _creditItem(
+                              "Planetiler",
+                              "https://github.com/onthegomap/planetiler",
+                            ),
                             _creditItem("Supabase", "https://supabase.com"),
                           ],
                         ),
@@ -83,11 +131,7 @@ class MapCredits extends StatelessWidget {
             color: const Color(0xFF000000).withValues(alpha: 0.45),
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.info_outline,
-            color: Colors.white,
-            size: 18,
-          ),
+          child: const Icon(Icons.info_outline, color: Colors.white, size: 18),
         ),
       ),
     );
@@ -102,19 +146,12 @@ class MapCredits extends StatelessWidget {
           Expanded(
             child: Text(
               name,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black,
-              ),
+              style: const TextStyle(fontSize: 14, color: Colors.black),
             ),
           ),
           InkWell(
             onTap: () => _openUrl(url),
-            child: const Icon(
-              Icons.open_in_new,
-              size: 18,
-              color: Colors.blue,
-            ),
+            child: const Icon(Icons.open_in_new, size: 18, color: Colors.blue),
           ),
         ],
       ),

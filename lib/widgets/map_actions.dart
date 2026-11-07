@@ -54,7 +54,7 @@ class _MapActionsState extends ConsumerState<MapActions> {
           ),
 
         Positioned(
-          bottom: 20,
+          bottom: 50,
           right: 20,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -92,7 +92,7 @@ class _MapActionsState extends ConsumerState<MapActions> {
                 },
                 mini: true,
 
-                child: const Iconify(Mdi.visibility_off_outline, size: 24),
+                child:  Iconify(Mdi.visibility_off_outline, size: 24, color: Theme.of(context).colorScheme.onPrimaryContainer),
               ),
               const SizedBox(height: 8),
 

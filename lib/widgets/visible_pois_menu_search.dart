@@ -145,53 +145,6 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
 
           children: [
             SizedBox(height: 3),
-
-            Container(
-              width: 300,
-              padding: const EdgeInsets.fromLTRB(6, 0, 4, 0),
-              margin: const EdgeInsets.fromLTRB(4, 0, 4, 4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: const [
-                  BoxShadow(color: Colors.black26, blurRadius: 6),
-                ],
-              ),
-
-              child: TextField(
-                controller: _searchController,
-                autofocus: false,
-                decoration: const InputDecoration(
-                  hintText: "Suche nach Orten",
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.fromLTRB(0, 8, 0, 8),
-                  isDense: true,
-                ),
-                onChanged: (value) {
-                  _searchDebounce?.cancel();
-
-                  _searchDebounce = Timer(
-                    const Duration(milliseconds: 350),
-                    () {
-                      if (!mounted) {
-                        return;
-                      }
-
-                      setState(() {
-                        _searchQuery = value.trim();
-                      });
-                    },
-                  );
-                },
-                onTap: () {
-                  ref.read(searchSelectionProvider.notifier).clear();
-                },
-                onTapOutside: (_) {
-                  FocusManager.instance.primaryFocus?.unfocus();
-                },
-              ),
-            ),
-
             if (_searchQuery.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
@@ -258,6 +211,53 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                   ],
                 ),
               ),
+
+            SizedBox(height: 10),
+            Container(
+              width: 300,
+              padding: const EdgeInsets.fromLTRB(6, 0, 4, 0),
+              margin: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black26, blurRadius: 6),
+                ],
+              ),
+
+              child: TextField(
+                controller: _searchController,
+                autofocus: false,
+                decoration: const InputDecoration(
+                  hintText: "Suche nach Orten",
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.fromLTRB(0, 8, 0, 8),
+                  isDense: true,
+                ),
+                onChanged: (value) {
+                  _searchDebounce?.cancel();
+
+                  _searchDebounce = Timer(
+                    const Duration(milliseconds: 350),
+                    () {
+                      if (!mounted) {
+                        return;
+                      }
+
+                      setState(() {
+                        _searchQuery = value.trim();
+                      });
+                    },
+                  );
+                },
+                onTap: () {
+                  ref.read(searchSelectionProvider.notifier).clear();
+                },
+                onTapOutside: (_) {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                },
+              ),
+            ),
 
             if (_searchQuery.isNotEmpty)
               searchResults.when(
@@ -331,7 +331,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                                 icon: const Iconify(
                                   Mdi.checkbox_blank_off_outline,
                                   color: Colors.black87,
-                                  size: 24,
+                                  size: 20,
                                 ),
                                 onPressed: () {
                                   ref
@@ -342,8 +342,9 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                             ],
                           ),
                         ),
-                        SizedBox(height: 5),
+                        SizedBox(height: 0),
                         ListView.builder(
+                          padding: EdgeInsets.zero,
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: filteredPois.length,

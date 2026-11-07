@@ -3,24 +3,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stadtschreiber/models/category_node_localized.dart';
 import 'package:stadtschreiber/models/localized_feature_node.dart';
 import 'package:stadtschreiber/models/poi_selection_modes.dart';
-import 'package:stadtschreiber/models/rating_criterion.dart';
+/* import 'package:stadtschreiber/models/rating_criterion.dart';
+ */
 import 'package:stadtschreiber/provider/categories_localized_provider.dart';
 import 'package:stadtschreiber/provider/categories_menu_provider.dart';
-import 'package:stadtschreiber/provider/categories_provider.dart';
-import 'package:stadtschreiber/provider/category_repository_provider.dart';
+/* import 'package:stadtschreiber/provider/categories_provider.dart';
+ */ /* import 'package:stadtschreiber/provider/category_repository_provider.dart'; */
 import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/provider/poi_counts_by_category_provider.dart';
 import 'package:stadtschreiber/provider/search_radius_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
 import 'package:stadtschreiber/provider/visible_pois_menu_state_provider.dart';
 import 'package:stadtschreiber/utils/category_localization_utils.dart';
-import 'package:stadtschreiber/utils/dialog_utils.dart';
+/* import 'package:stadtschreiber/utils/dialog_utils.dart';
+ */
 import 'package:stadtschreiber/utils/language_utils.dart';
-import 'package:stadtschreiber/widgets/_editable_list.dart';
+/* import 'package:stadtschreiber/widgets/_editable_list.dart';
+ */
 import 'package:stadtschreiber/widgets/_icon_getter.dart';
-import 'package:stadtschreiber/widgets/modal_categories_list_edit.dart';
+/* import 'package:stadtschreiber/widgets/modal_categories_list_edit.dart';
 import 'package:stadtschreiber/widgets/modal_rating_criteria_edit.dart';
-import 'package:uuid/uuid.dart';
+import 'package:uuid/uuid.dart'; */
 import 'package:stadtschreiber/provider/feature_filter_provider.dart';
 import 'package:stadtschreiber/provider/features_for_category_provider.dart';
 import 'package:stadtschreiber/widgets/modal_feature_filter.dart';
@@ -69,9 +72,9 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
 
     final categories = ref.watch(localizedCategoriesProvider);
 
-    final isAdmin = ref.watch(
+    /* final isAdmin = ref.watch(
       supabaseUserStateProvider.select((state) => state.isAdmin),
-    );
+    ); */
 
     final mode = ref.watch(
       visiblePoisMenuStateProvider.select((state) => state.poiSelectionMode),
@@ -112,6 +115,12 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
     );
     return Theme(
       data: Theme.of(context).copyWith(
+        dividerColor: Colors.transparent,
+        dividerTheme: const DividerThemeData(
+          color: Colors.transparent,
+          space: 0,
+          thickness: 0,
+        ),
         listTileTheme: const ListTileThemeData(contentPadding: EdgeInsets.zero),
       ),
       child: ListTileTheme(
@@ -161,66 +170,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
             ],
           ),
           children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(6, 0, 4, 0),
-              margin: const EdgeInsets.fromLTRB(4, 0, 4, 4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: const [
-                  BoxShadow(color: Colors.black26, blurRadius: 6),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _categoryFilterController,
-                      decoration: InputDecoration(
-                        hintText: getText(
-                          'filterCategories',
-                          languageCode: languageCode,
-                          countryCode: countryCode,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
-                        isDense: true,
-                      ),
-                      onChanged: (value) {
-                        if (!mounted) {
-                          return;
-                        }
-
-                        setState(() {
-                          _categoryFilter =
-                              CategoryLocalizationUtils.normalizeLabel(value);
-
-                          expandAll = _categoryFilter.isNotEmpty;
-                        });
-                      },
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      setState(() {
-                        if (isFilterActive) {
-                          _categoryFilter = '';
-                          _categoryFilterController.clear();
-                          expandAll = false;
-                        }
-
-                        isFilterActive = !isFilterActive;
-                      });
-                    },
-                    icon: Icon(
-                      isFilterActive ? Icons.filter_alt_off : Icons.filter_alt,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-
+            SizedBox(height: 4),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Row(
@@ -278,6 +228,65 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.fromLTRB(6, 0, 4, 0),
+              margin: const EdgeInsets.fromLTRB(4, 2, 4, 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black26, blurRadius: 6),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _categoryFilterController,
+                      decoration: InputDecoration(
+                        hintText: getText(
+                          'filterCategories',
+                          languageCode: languageCode,
+                          countryCode: countryCode,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
+                        isDense: true,
+                      ),
+                      onChanged: (value) {
+                        if (!mounted) {
+                          return;
+                        }
+
+                        setState(() {
+                          _categoryFilter =
+                              CategoryLocalizationUtils.normalizeLabel(value);
+
+                          expandAll = _categoryFilter.isNotEmpty;
+                        });
+                      },
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        if (isFilterActive) {
+                          _categoryFilter = '';
+                          _categoryFilterController.clear();
+                          expandAll = false;
+                        }
+
+                        isFilterActive = !isFilterActive;
+                      });
+                    },
+                    icon: Icon(
+                      isFilterActive ? Icons.filter_alt_off : Icons.filter_alt,
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
             const SizedBox(height: 8),
 
@@ -318,7 +327,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
               ),
             ),
 
-            if (isAdmin)
+            /*             if (isAdmin)
               ElevatedButton.icon(
                 icon: const Icon(Icons.edit),
                 label: Text(
@@ -467,6 +476,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
                       },
                     ),
               ),
+ */
           ],
         ),
       ),
@@ -552,7 +562,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
 
     final disabledColor = Theme.of(context).disabledColor;
 
-    final leftPadding = depth * 10.0;
+    final leftPadding = depth * 16.0;
 
     void setSelected(bool selected) {
       ref
@@ -568,7 +578,6 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
       if (poiCount == null) {
         return const SizedBox.shrink();
       }
-
       return Text(
         '($poiCount)',
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -590,10 +599,12 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
               color: isSelectable ? null : disabledColor,
             ),
           ),
-          Opacity(
-            opacity: isSelectable ? 1 : 0.38,
-            child: getIcon(categorySlug, iconSize, null),
-          ),
+          depth < 1
+              ? Opacity(
+                  opacity: isSelectable ? 1 : 0.38,
+                  child: getIcon(categorySlug, iconSize, null),
+                )
+              : const SizedBox.shrink(),
           buildCount(),
         ],
       );
@@ -612,35 +623,111 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
 
           final selectedFeatureSlugs = ref.watch(featureFilterProvider);
 
-          final selectedCount = selectedFeatureSlugs.length;
+          final leafFeaturesBySlug = <String, LocalizedFeatureNode>{};
+
+          void collectLeafFeatures(List<LocalizedFeatureNode> nodes) {
+            for (final feature in nodes) {
+              if (feature.children.isEmpty) {
+                leafFeaturesBySlug[feature.slug] = feature;
+              } else {
+                collectLeafFeatures(feature.children);
+              }
+            }
+          }
+
+          collectLeafFeatures(features);
+
+          final selectedFeatures =
+              selectedFeatureSlugs
+                  .map((slug) => leafFeaturesBySlug[slug])
+                  .whereType<LocalizedFeatureNode>()
+                  .toList()
+                ..sort((first, second) {
+                  return first.label.toLowerCase().compareTo(
+                    second.label.toLowerCase(),
+                  );
+                });
 
           return Padding(
             padding: EdgeInsets.only(
-              left: leftPadding + 48,
+              left: leftPadding +32,
               right: 15,
-              bottom: 6,
+              bottom: selectedFeatures.isEmpty ? 0 : 8,
             ),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.tune, size: 18),
-                label: Text(
-                  selectedCount == 0
-                      ? getText(
-                          'filterFeatures',
-                          languageCode: languageCode,
-                          countryCode: countryCode,
-                        )
-                      : '${getText('filterFeatures', languageCode: languageCode, countryCode: countryCode)} ($selectedCount)',
-                ),
-                onPressed: () {
-                  _openFeatureFilterDialog(
-                    context: context,
-                    categorySlug: categorySlug,
-                    categoryLabel: node.label,
-                    features: features,
-                  );
-                },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      alignment: Alignment.centerLeft,
+                    ),
+                    onPressed: () {
+                      _openFeatureFilterDialog(
+                        context: context,
+                        categorySlug: categorySlug,
+                        categoryLabel: node.label,
+                        features: features,
+                      );
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.tune, size: 16),
+                        const SizedBox(width: 13),
+                        Flexible(
+                          child: Text(
+                            selectedFeatures.isEmpty
+                                ? getText(
+                                    'filterFeatures',
+                                    languageCode: languageCode,
+                                    countryCode: countryCode,
+                                  )
+                                : '${getText('filterFeatures', languageCode: languageCode, countryCode: countryCode)} (${selectedFeatures.length})',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (selectedFeatures.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Wrap(
+                        alignment: WrapAlignment.start,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: selectedFeatures
+                            .map((feature) {
+                              return Chip(
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                visualDensity: VisualDensity.compact,
+                                avatar: const Icon(Icons.check, size: 16),
+                                label: Text(feature.label),
+                                deleteIcon: const Icon(Icons.close, size: 16),
+                                onDeleted: () {
+                                  final updatedSlugs = Set<String>.from(
+                                    selectedFeatureSlugs,
+                                  );
+
+                                  updatedSlugs.remove(feature.slug);
+
+                                  ref
+                                      .read(featureFilterProvider.notifier)
+                                      .replaceAll(updatedSlugs);
+                                },
+                              );
+                            })
+                            .toList(growable: false),
+                      ),
+                    ),
+                ],
               ),
             ),
           );
@@ -674,7 +761,7 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
         ),
         title: buildTitle(iconSize: 28),
         children: [
-          buildFeatureButton(),
+          depth < 1 ? buildFeatureButton() : SizedBox.shrink(),
           ...node.children.map((child) {
             return _buildCategoryNode(
               context,
@@ -690,12 +777,11 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
         ],
       );
     }
-
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         CheckboxListTile(
-          contentPadding: EdgeInsets.only(left: leftPadding, right: 15),
+          contentPadding: EdgeInsets.only(left: leftPadding + 4, right: 15),
           value: isSelected,
           tileColor: Colors.white,
           visualDensity: VisualDensity.compact,
@@ -707,7 +793,6 @@ class _PoiCategorySelectionState extends ConsumerState<PoiCategorySelection> {
               : null,
           title: buildTitle(iconSize: 24),
         ),
-        buildFeatureButton(),
       ],
     );
   }
