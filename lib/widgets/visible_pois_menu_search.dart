@@ -43,6 +43,8 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
   double _searchRadiusKm = 5;
   double _appliedSearchRadiusKm = 5;
 
+  PoiSearchMode _searchMode = PoiSearchMode.name;
+
   @override
   void initState() {
     super.initState();
@@ -62,7 +64,11 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
     final languageCode = ref.watch(localeProvider).languageCode;
     final countryCode = ref.watch(localeProvider).countryCode;
 
-    final searchParams = (query: _searchQuery, searchActive: true);
+    final searchParams = (
+      query: _searchQuery,
+      searchActive: true,
+      searchMode: _searchMode,
+    );
 
     final searchResults = ref.watch(searchResultsProvider(searchParams));
 
@@ -213,49 +219,107 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
               ),
 
             SizedBox(height: 10),
-            Container(
-              width: 300,
-              padding: const EdgeInsets.fromLTRB(6, 0, 4, 0),
-              margin: const EdgeInsets.fromLTRB(4, 0, 4, 4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: const [
-                  BoxShadow(color: Colors.black26, blurRadius: 6),
-                ],
-              ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 300,
+                    padding: const EdgeInsets.fromLTRB(6, 0, 4, 0),
+                    margin: const EdgeInsets.only(bottom: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black26, blurRadius: 6),
+                      ],
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      autofocus: false,
+                      decoration: InputDecoration(
+                        hintText: _searchMode == PoiSearchMode.name
+                            ? 'Suche nach Name'
+                            : 'Suche nach Adresse',
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
+                        isDense: true,
+                      ),
+                      onChanged: (value) {
+                        _searchDebounce?.cancel();
 
-              child: TextField(
-                controller: _searchController,
-                autofocus: false,
-                decoration: const InputDecoration(
-                  hintText: "Suche nach Orten",
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.fromLTRB(0, 8, 0, 8),
-                  isDense: true,
-                ),
-                onChanged: (value) {
-                  _searchDebounce?.cancel();
+                        _searchDebounce = Timer(
+                          const Duration(milliseconds: 350),
+                          () {
+                            if (!mounted) {
+                              return;
+                            }
 
-                  _searchDebounce = Timer(
-                    const Duration(milliseconds: 350),
-                    () {
-                      if (!mounted) {
+                            setState(() {
+                              _searchQuery = value.trim();
+                            });
+                          },
+                        );
+                      },
+                      onTap: () {
+                        ref.read(searchSelectionProvider.notifier).clear();
+                      },
+                      onTapOutside: (_) {
+                        FocusManager.instance.primaryFocus?.unfocus();
+                      },
+                    ),
+                  ),
+                  RadioGroup<PoiSearchMode>(
+                    groupValue: _searchMode,
+                    onChanged: (value) {
+                      if (value == null) {
                         return;
                       }
 
-                      setState(() {
-                        _searchQuery = value.trim();
-                      });
+                      _setSearchMode(value);
                     },
-                  );
-                },
-                onTap: () {
-                  ref.read(searchSelectionProvider.notifier).clear();
-                },
-                onTapOutside: (_) {
-                  FocusManager.instance.primaryFocus?.unfocus();
-                },
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 0,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () {
+                            _setSearchMode(PoiSearchMode.name);
+                          },
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Radio<PoiSearchMode>(
+                                value: PoiSearchMode.name,
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              Text('Nach Name'),
+                            ],
+                          ),
+                        ),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () {
+                            _setSearchMode(PoiSearchMode.address);
+                          },
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Radio<PoiSearchMode>(
+                                value: PoiSearchMode.address,
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              Text('Nach Adresse'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -369,7 +433,7 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
                     );
                   }
                 },
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: LinearProgressIndicator()),
                 error: (err, stack) => Text(
                   "${getText('error', languageCode: languageCode, countryCode: countryCode)}: $err",
                 ),
@@ -416,5 +480,20 @@ class _PoiSearchState extends ConsumerState<PoiSearch> {
         '$osmKeysJson';
 
     messageBox(context, message, 'Hinweis für Admin Suchsyntax');
+  }
+
+  void _setSearchMode(PoiSearchMode searchMode) {
+    if (_searchMode == searchMode) {
+      return;
+    }
+
+    _searchDebounce?.cancel();
+
+    setState(() {
+      _searchMode = searchMode;
+      _searchQuery = _searchController.text.trim();
+    });
+
+    ref.read(searchSelectionProvider.notifier).clear();
   }
 }

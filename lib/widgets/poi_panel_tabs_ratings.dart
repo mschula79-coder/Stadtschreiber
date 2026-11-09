@@ -15,17 +15,15 @@ class PoiPanelRatingsTab extends ConsumerWidget {
       return SizedBox.shrink();
     }
 
-    final categories = selectedPoi.categories!;
+    final categories = selectedPoi.categories ?? const <String>[];
 
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: ListView.separated(
-        itemCount: categories.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 0),
-        itemBuilder: (context, index) {
-          return CategoryRatingsSection(slug: categories[index]);
-        },
-      ),
+    if (categories.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return const Padding(
+      padding: EdgeInsets.all(12),
+      child: SingleChildScrollView(child: CategoryRatingsSection()),
     );
   }
 }

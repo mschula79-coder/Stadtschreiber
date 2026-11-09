@@ -6,6 +6,7 @@ import 'package:stadtschreiber/models/image_entry.dart';
 import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/models/poi_feature_node.dart';
 import 'package:stadtschreiber/models/poi_metadata.dart';
+import 'package:stadtschreiber/models/search_progress.dart';
 import 'package:stadtschreiber/services/debug_service.dart';
 import 'package:stadtschreiber/utils/osm_utils.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -301,6 +302,160 @@ class PoiRepository {
 
     return response
         .map<PointOfInterest>(PointOfInterest.fromSupabase)
+        .toList(growable: false);
+  }
+
+  Future<List<PointOfInterest>> searchPoisByAddress(
+  String query,
+  double latitude,
+  double longitude, {
+  void Function(SearchProgress progress)?
+      onProgressChanged,
+}) async {
+  final normalizedQuery = query.trim();
+
+  if (normalizedQuery.isEmpty) {
+    return const <PointOfInterest>[];
+  }
+
+  final currentRequestId = ++_lastRequestId;
+
+  onProgressChanged?.call(
+    SearchProgress.stadtschreiber,
+  );
+
+  final supabasePois =
+      await _searchPoisByAddressInSupabase(
+    normalizedQuery,
+  );
+
+  if (currentRequestId != _lastRequestId) {
+    return const <PointOfInterest>[];
+  }
+
+  if (supabasePois.isNotEmpty) {
+    return List<PointOfInterest>.unmodifiable(
+      supabasePois,
+    );
+  }
+
+  onProgressChanged?.call(
+    SearchProgress.openStreetMap,
+  );
+
+  final overpassPois =
+      await _searchPoisByAddressInOverpass(
+    query: normalizedQuery,
+    latitude: latitude,
+    longitude: longitude,
+  );
+
+  if (currentRequestId != _lastRequestId) {
+    return const <PointOfInterest>[];
+  }
+
+  return List<PointOfInterest>.unmodifiable(
+    overpassPois,
+  );
+}
+
+  Future<List<PointOfInterest>> _searchPoisByAddressInSupabase(
+    String query,
+  ) async {
+    final addressParts = _parseAddressQuery(query);
+
+    List<Map<String, dynamic>> response;
+
+    if (addressParts.houseNumber != null) {
+      response = await supabase
+          .from('pois')
+          .select('*')
+          .ilike('street', '%${addressParts.street}%')
+          .ilike('house_number', '%${addressParts.houseNumber}%')
+          .order('name');
+    } else {
+      final escapedQuery = _escapePostgrestFilterValue(query);
+
+      final pattern = '*$escapedQuery*';
+
+      response = await supabase
+          .from('pois')
+          .select('*')
+          .or(
+            'street.ilike.$pattern,'
+            'house_number.ilike.$pattern,'
+            'postcode.ilike.$pattern,'
+            'city.ilike.$pattern,'
+            'district.ilike.$pattern,'
+            'country.ilike.$pattern',
+          )
+          .order('name');
+    }
+
+    return response
+        .map<PointOfInterest>(
+          (row) => PointOfInterest.fromSupabase(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+  }
+
+  ({String street, String? houseNumber}) _parseAddressQuery(String query) {
+    final normalizedQuery = query.trim().replaceAll(RegExp(r'\s+'), ' ');
+
+    final match = RegExp(
+      r'^(.*?)[,\s]+(\d+[a-zA-Z]?(?:[-/]\d+[a-zA-Z]?)?)$',
+    ).firstMatch(normalizedQuery);
+
+    if (match == null) {
+      return (street: normalizedQuery, houseNumber: null);
+    }
+
+    final street = match.group(1)?.trim() ?? '';
+
+    final houseNumber = match.group(2)?.trim();
+
+    if (street.isEmpty || houseNumber == null || houseNumber.isEmpty) {
+      return (street: normalizedQuery, houseNumber: null);
+    }
+
+    return (street: street, houseNumber: houseNumber);
+  }
+
+  String _escapePostgrestFilterValue(String value) {
+    return value
+        .replaceAll('\\', '\\\\')
+        .replaceAll(',', '\\,')
+        .replaceAll('(', '\\(')
+        .replaceAll(')', '\\)');
+  }
+
+  Future<List<PointOfInterest>> _searchPoisByAddressInOverpass({
+    required String query,
+    required double latitude,
+    required double longitude,
+  }) async {
+    final addressParts = _parseAddressQuery(query);
+
+    final street = addressParts.street.trim();
+
+    final houseNumber = addressParts.houseNumber?.trim();
+
+    if (street.length < 3) {
+      return const <PointOfInterest>[];
+    }
+
+    final osmResult = await searchNearbyStreetBuildings(
+      searchTerm: street,
+      houseNumber: houseNumber,
+      lat: latitude,
+      lon: longitude,
+    );
+
+    return (osmResult as Iterable<dynamic>)
+        .whereType<Map>()
+        .map<PointOfInterest>(
+          (row) => PointOfInterest.fromOSM(Map<String, dynamic>.from(row)),
+        )
         .toList(growable: false);
   }
 

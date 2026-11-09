@@ -10,11 +10,13 @@ import '../utils/date_time_utils.dart';
 class RatingListItem extends ConsumerStatefulWidget {
   final RatingCriterionDTO criterion;
   final String poiId;
+  final VoidCallback? onTap;
 
   const RatingListItem({
     super.key,
     required this.criterion,
     required this.poiId,
+    required this.onTap,
   });
 
   @override
@@ -44,19 +46,18 @@ class _RatingListItemState extends ConsumerState<RatingListItem> {
     final commentsAsync = ref.watch(poiRatingsProvider(widget.poiId));
 
     return Column(
-      
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Text Criterion Name + Comment show/hide button + rate button
         Text(criterionName, style: Theme.of(context).textTheme.titleMedium),
         criterionDescription.isNotEmpty
-        ? const SizedBox(height: 8)
-        : SizedBox.shrink(),
+            ? const SizedBox(height: 8)
+            : SizedBox.shrink(),
 
         // Criterion description
         criterionDescription.isNotEmpty
-        ? Text(criterionDescription)
-        : SizedBox.shrink(),
+            ? Text(criterionDescription)
+            : SizedBox.shrink(),
         const SizedBox(height: 0),
 
         // List of Rating Stars, average score and no. of ratings
@@ -77,8 +78,8 @@ class _RatingListItemState extends ConsumerState<RatingListItem> {
                 Row(
                   children: [
                     // Sterne links
-                    Padding(
-                      padding: EdgeInsets.only(right: 30),
+                    GestureDetector(
+                      onTap: widget.onTap,
                       child: Row(
                         children: List.generate(5, (i) {
                           final starsCount = i + 1;
@@ -93,7 +94,7 @@ class _RatingListItemState extends ConsumerState<RatingListItem> {
                         }),
                       ),
                     ),
-
+                    
                     Spacer(),
 
                     // Score rechts

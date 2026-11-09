@@ -276,6 +276,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                           SizedBox(height: 40),
 
+                          
+                          Text(
+                            getText(
+                              'joinus2',
+                              languageCode: languageCode,
+                              countryCode: countryCode,
+                            ),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.normal,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          
                           TextButton(
                             style: TextButton.styleFrom(
                               backgroundColor: Theme.of(
@@ -292,19 +307,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 languageCode: languageCode,
                                 countryCode: countryCode,
                               ),
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            getText(
-                              'joinus2',
-                              languageCode: languageCode,
-                              countryCode: countryCode,
-                            ),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.normal,
                             ),
                           ),
                           SizedBox(height: 20),

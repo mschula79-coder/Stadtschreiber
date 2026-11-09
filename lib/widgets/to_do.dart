@@ -1,4 +1,3 @@
-// TODO Adresssuche
 // TODO Test UpdateProfile Email
 // TODO add poi owner
 // TODO Konto löschen button, check ob user vorhanden

@@ -11,44 +11,95 @@ import 'package:stadtschreiber/widgets/poi_rating_editor_dialog.dart';
 import 'package:stadtschreiber/widgets/poi_rating_list.dart';
 
 class CategoryRatingsSection extends ConsumerWidget {
-  final String slug;
-  const CategoryRatingsSection({super.key, required this.slug});
+  const CategoryRatingsSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final categoryId = ref.watch(categoryIdBySlugProvider(slug));
-    final categoryName = ref.watch(categoryLabelBySlugProvider(slug));
     final poi = ref.watch(selectedPoiProvider);
 
-    if (categoryId == null || poi == null) {
+    if (poi == null) {
       return const SizedBox.shrink();
     }
 
-    final criteriaAsync = ref.watch(criteriaForCategoryProvider(categoryId));
+    final categorySlugs =
+        (poi.categories ?? const <String>[])
+            .map((slug) => slug.trim())
+            .where((slug) => slug.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
 
-    return criteriaAsync.when(
-      data: (criteria) => GestureDetector(
-        onTap: () => _openRatingEditor(poi, criteria, ref, context),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ⭐ HEADER (Titel + Rating‑Text + Icon)
-            Row(
-              children: [
-                Text(
-                  '$categoryName',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
+    if (categorySlugs.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final categorySlugsKey = categorySlugs.join('\u001f');
+
+    final categoryCriteriaAsync = ref.watch(
+      categoryCriteriaForSlugsProvider(categorySlugsKey),
+    );
+
+    return categoryCriteriaAsync.when(
+      data: (categoryEntries) {
+        final uniqueEntriesByCategoryId = <String, CategoryCriteriaEntry>{};
+
+        for (final entry in categoryEntries) {
+          if (entry.criteria.isEmpty) {
+            continue;
+          }
+
+          final existingEntry = uniqueEntriesByCategoryId[entry.categoryId];
+
+          if (existingEntry == null) {
+            uniqueEntriesByCategoryId[entry.categoryId] = entry;
+
+            continue;
+          }
+
+          final uniqueCriteriaById = <String, RatingCriterionDTO>{
+            for (final criterion in existingEntry.criteria)
+              criterion.id: criterion,
+            for (final criterion in entry.criteria) criterion.id: criterion,
+          };
+
+          uniqueEntriesByCategoryId[entry.categoryId] = (
+            categoryId: existingEntry.categoryId,
+            categorySlug: existingEntry.categorySlug,
+            criteria: List<RatingCriterionDTO>.unmodifiable(
+              uniqueCriteriaById.values,
             ),
+          );
+        }
 
-            PoiRatingList(criteria: criteria, poi: poi),
-          ],
-        ),
-      ),
-      loading: () => const Center(child: CircularProgressIndicator()),
+        final uniqueEntries = uniqueEntriesByCategoryId.values.toList();
 
-      error: (e, _) => Text("Fehler: $e"),
+        if (uniqueEntries.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: uniqueEntries
+              .map((entry) {
+                return _CategoryRatingEntry(
+                  key: ValueKey<String>('${poi.id}-${entry.categoryId}'),
+                  categorySlug: entry.categorySlug,
+                  criteria: entry.criteria,
+                  poi: poi,
+                  onTap: () {
+                    _openRatingEditor(poi, entry.criteria, ref, context);
+                  },
+                );
+              })
+              .toList(growable: false),
+        );
+      },
+      loading: () {
+        return const Center(child: LinearProgressIndicator(minHeight: 2));
+      },
+      error: (error, stackTrace) {
+        return Text('Fehler: $error');
+      },
     );
   }
 
@@ -58,20 +109,58 @@ class CategoryRatingsSection extends ConsumerWidget {
     WidgetRef ref,
     BuildContext context,
   ) {
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (_) => PoiRatingEditorDialog(
-        poi: poi,
-        criteria: criteria,
-        onRatingChanged: (scores, comments) async {
-          await ref
-              .read(poiRatingRepositoryProvider)
-              .saveRatings(poiId: poi.id, scores: scores, comments: comments);
+      builder: (dialogContext) {
+        return PoiRatingEditorDialog(
+          poi: poi,
+          criteria: criteria,
+          onRatingChanged: (scores, comments) async {
+            await ref
+                .read(poiRatingRepositoryProvider)
+                .saveRatings(poiId: poi.id, scores: scores, comments: comments);
 
-          ref.invalidate(poiRatingsProvider(poi.id));
-          ref.invalidate(poiUserRatingsProvider(poi.id));
-          ref.invalidate(poiRatingStatsProvider(poi.id));
-        },
+            ref.invalidate(poiRatingsProvider(poi.id));
+
+            ref.invalidate(poiUserRatingsProvider(poi.id));
+
+            ref.invalidate(poiRatingStatsProvider(poi.id));
+          },
+        );
+      },
+    );
+  }
+}
+
+class _CategoryRatingEntry extends ConsumerWidget {
+  final String categorySlug;
+  final List<RatingCriterionDTO> criteria;
+  final PointOfInterest poi;
+  final VoidCallback onTap;
+
+  const _CategoryRatingEntry({
+    super.key,
+    required this.categorySlug,
+    required this.criteria,
+    required this.poi,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categoryName = ref.watch(categoryLabelBySlugProvider(categorySlug));
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            categoryName ?? categorySlug,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          PoiRatingList(criteria: criteria, poi: poi, onTap: onTap),
+        ],
       ),
     );
   }

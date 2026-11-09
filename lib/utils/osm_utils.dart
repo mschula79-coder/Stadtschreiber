@@ -142,25 +142,40 @@ Future<List<dynamic>> searchNearbyStreetBuildings({
   required double lat,
   required double lon,
   required String searchTerm,
+  String? houseNumber,
 }) async {
-  final bbox = createViewbox(lat, lon, 300);
+  final bbox = createViewbox(lat, lon, 5000);
+
   final south = bbox['bottom'];
   final west = bbox['left'];
   final north = bbox['top'];
   final east = bbox['right'];
 
-  final safeTerm = RegExp.escape(searchTerm.trim());
+  final normalizedStreet = searchTerm.trim();
+
+  final normalizedHouseNumber = houseNumber?.trim();
+
+  if (normalizedStreet.isEmpty) {
+    return const <dynamic>[];
+  }
+
+  final safeStreet = RegExp.escape(normalizedStreet);
+
+  final houseNumberFilter =
+      normalizedHouseNumber == null || normalizedHouseNumber.isEmpty
+      ? ''
+      : '["addr:housenumber"="${_escapeOverpassValue(normalizedHouseNumber)}"]';
 
   final overpassQuery =
-      """
-[out:json][timeout:25];
+      '''
+[out:json][timeout:12];
 (
-  node["addr:street"~"$safeTerm",i]["building"]($south,$west,$north,$east);
-  way["addr:street"~"$safeTerm",i]["building"]($south,$west,$north,$east);
-  relation["addr:street"~"$safeTerm",i]["building"]($south,$west,$north,$east);
+  node["addr:street"~"$safeStreet",i]$houseNumberFilter($south,$west,$north,$east);
+  way["addr:street"~"$safeStreet",i]$houseNumberFilter($south,$west,$north,$east);
+  relation["addr:street"~"$safeStreet",i]$houseNumberFilter($south,$west,$north,$east);
 );
 out center;
-""";
+''';
 
   final url = Uri.parse("https://overpass-api.de/api/interpreter");
 
@@ -181,7 +196,7 @@ out center;
       if (response.statusCode == 200 && response.body.isNotEmpty) {
         final json = jsonDecode(response.body);
 
-       /*  print(url);
+        /*  print(url);
         print(overpassQuery);
         print(response.body); */
         return json["elements"] ?? [];
@@ -208,6 +223,10 @@ out center;
   }
 
   return [];
+}
+
+String _escapeOverpassValue(String value) {
+  return value.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
 }
 
 String buildOverpassQueryForTag({
@@ -324,7 +343,7 @@ Future<List<dynamic>> searchNearbyOverpassBuildings({
 out center;
 """;
 
-/*   print(overpassQuery);
+  /*   print(overpassQuery);
  */
   final url = Uri.parse("https://overpass-api.de/api/interpreter");
 
@@ -337,7 +356,7 @@ out center;
     body: {"data": overpassQuery},
   );
 
-/*   print(response);
+  /*   print(response);
  */
   if (response.statusCode != 200) {
     throw Exception("Overpass error: ${response.statusCode}");

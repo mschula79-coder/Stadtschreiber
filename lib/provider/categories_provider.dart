@@ -82,37 +82,79 @@ final globalCriteriaProvider = FutureProvider<List<RatingCriterionDTO>>((ref) {
   return repository.criteriaListGlobal();
 });
 
-/* final poiCountForCategoryProvider =
-    FutureProvider.autoDispose.family<int, String>(
-  (ref, categorySlug) async {
-    final normalizedSlug = categorySlug.trim();
+typedef CategoryCriteriaEntry = ({
+  String categoryId,
+  String categorySlug,
+  List<RatingCriterionDTO> criteria,
+});
 
-    if (normalizedSlug.isEmpty) {
-      return 0;
+final categoryCriteriaForSlugsProvider = FutureProvider.autoDispose
+    .family<List<CategoryCriteriaEntry>, String>((ref, categorySlugsKey) async {
+      final categorySlugs = categorySlugsKey
+          .split('\u001f')
+          .map((slug) => slug.trim())
+          .where((slug) => slug.isNotEmpty)
+          .toSet();
+
+      if (categorySlugs.isEmpty) {
+        return const <CategoryCriteriaEntry>[];
+      }
+
+      final categories = ref.watch(
+        categoriesProvider.select((state) => state.categories),
+      );
+
+      final uniqueCategoriesById = <String, CategoryNode>{};
+
+      for (final categorySlug in categorySlugs) {
+        final categoryPath = _findCategoryPathBySlug(categories, categorySlug);
+
+        for (final category in categoryPath) {
+          uniqueCategoriesById.putIfAbsent(category.id, () => category);
+        }
+      }
+
+      final entries = await Future.wait(
+        uniqueCategoriesById.values.map((category) async {
+          final criteria = await ref.watch(
+            criteriaForCategoryProvider(category.id).future,
+          );
+
+          return (
+            categoryId: category.id,
+            categorySlug: category.slug,
+            criteria: criteria,
+          );
+        }),
+      );
+
+      return entries
+          .where((entry) => entry.criteria.isNotEmpty)
+          .map(
+            (entry) => (
+              categoryId: entry.categoryId,
+              categorySlug: entry.categorySlug,
+              criteria: List<RatingCriterionDTO>.unmodifiable(entry.criteria),
+            ),
+          )
+          .toList(growable: false);
+    });
+
+List<CategoryNode> _findCategoryPathBySlug(
+  List<CategoryNode> nodes,
+  String categorySlug,
+) {
+  for (final node in nodes) {
+    if (node.slug == categorySlug) {
+      return <CategoryNode>[node];
     }
 
-    final searchCenter = ref.watch(
-      poiSearchCenterProvider,
-    );
+    final childPath = _findCategoryPathBySlug(node.children, categorySlug);
 
-    if (searchCenter == null) {
-      return 0;
+    if (childPath.isNotEmpty) {
+      return <CategoryNode>[node, ...childPath];
     }
+  }
 
-    final radiusKm = ref.watch(
-      searchRadiusKmProvider,
-    );
-
-    final repository = ref.read(
-      categoriesRepositoryProvider,
-    );
-
-    return repository.poiCountForCategory(
-      categorySlug: normalizedSlug,
-      lat: searchCenter.lat,
-      lon: searchCenter.lon,
-      radiusKm: radiusKm,
-    );
-  },
-); */
-
+  return const <CategoryNode>[];
+}

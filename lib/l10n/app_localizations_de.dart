@@ -156,7 +156,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get joinus2 =>
-      'Werde Teil der Stadtschreiber-Community und teile deine Lieblingsorte mit anderen!';
+      'Werde Teil der Stadtschreiber-Community und teile deine Lieblingsorte!';
 
   @override
   String get lengthOfPoiList => 'Länge der Hitliste';

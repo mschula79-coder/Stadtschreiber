@@ -7,8 +7,9 @@ import 'package:stadtschreiber/widgets/poi_rating_list_item.dart';
 class PoiRatingList extends ConsumerWidget {
   final List<RatingCriterionDTO> criteria;
   final PointOfInterest poi;
+  final VoidCallback? onTap;
 
-  const PoiRatingList({super.key, required this.criteria, required this.poi});
+  const PoiRatingList({super.key, required this.criteria, required this.poi, required this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,7 +22,7 @@ class PoiRatingList extends ConsumerWidget {
       itemBuilder: (context, index) {
         final criterion = criteria[index];
         // Widget
-        return RatingListItem(criterion: criterion, poiId: poi.id);
+        return RatingListItem(criterion: criterion, poiId: poi.id, onTap: onTap);
       },
     );
   }
