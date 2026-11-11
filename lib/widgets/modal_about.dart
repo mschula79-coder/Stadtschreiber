@@ -5,16 +5,13 @@ class AboutModal {
   static const String _baseUrl =
       'https://pub-f79c7b584e8a408282353176df4c42e6.r2.dev';
 
-  static const int _imageCount = 13;
+  static const int _imageCount = 14;
 
   static List<String> get imageUrls {
     return List<String>.generate(
       _imageCount,
       (index) {
-        final number = (index + 1).toString().padLeft(
-          2,
-          '0',
-        );
+        final number = (index + 1).toString();
 
         return '$_baseUrl/Folie$number.JPG';
       },

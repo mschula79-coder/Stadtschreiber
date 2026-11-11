@@ -11,6 +11,8 @@ import 'package:stadtschreiber/widgets/modal_image_edit.dart';
 import 'package:stadtschreiber/widgets/modal_poi_photo_gallery.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+// TODO Upload to Cloudflare 
+// TODO no image placeholder
 class PoiPanelGalleryTab extends ConsumerWidget {
   const PoiPanelGalleryTab({super.key});
 

@@ -10,6 +10,8 @@ import 'package:stadtschreiber/provider/user_location_state_provider.dart';
 import 'package:stadtschreiber/services/geo_service.dart';
 import 'package:stadtschreiber/widgets/_icon_getter.dart';
 
+// TODO image placeholder
+
 class PoiListItem extends ConsumerWidget {
   final PointOfInterest poi;
   final VoidCallback onTap;
