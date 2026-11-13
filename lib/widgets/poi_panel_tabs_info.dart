@@ -359,7 +359,66 @@ class PoiPanelInfoTab extends ConsumerWidget {
                 ),
             ],
           ),
+          // Kategorien
+          Stack(
+            children: [
+              InputDecorator(
+                decoration: InputDecoration(
+                  labelText: getText(
+                    'categories',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
+                  alignLabelWithHint: true,
+                  floatingLabelBehavior: FloatingLabelBehavior.always,
+                  contentPadding: isEditModeEnabled
+                      ? const EdgeInsets.fromLTRB(0, 8, 35, 10)
+                      : const EdgeInsets.fromLTRB(0, 8, 0, 10),
+                ),
+                child: _buildCategoryChips(selectedPoi.categories),
+              ),
 
+              if (isEditModeEnabled)
+                Positioned(
+                  right: 0,
+                  top: 5,
+                  child: IconButton(
+                    tooltip: getText(
+                      'editCategories',
+                      languageCode: languageCode,
+                      countryCode: countryCode,
+                    ),
+                    icon: const Icon(Icons.edit),
+                    onPressed: () async {
+                      await showPoiCategoriesEditModal(
+                        context,
+                        pois: [selectedPoi],
+                      );
+
+                      if (!context.mounted) {
+                        return;
+                      }
+
+                      final updatedPoi = await ref
+                          .read(poiRepositoryProvider)
+                          .loadPoiById(selectedPoi.id);
+
+                      if (updatedPoi == null) {
+                        return;
+                      }
+
+                      ref.read(selectedPoiProvider.notifier).setPoi(updatedPoi);
+
+                      ref.invalidate(radiusFilteredPoisProvider);
+
+                      ref.invalidate(poisForCategoriesProvider);
+                    },
+                  ),
+                ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
           // Feature icons editable
           Stack(
             children: [
@@ -480,24 +539,6 @@ class PoiPanelInfoTab extends ConsumerWidget {
             ],
           ),
 
-          // Kategorien bearbeiten
-          if (isEditModeEnabled) ...[
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.category_outlined),
-              label: Text(
-                getText(
-                  'editCategories',
-                  languageCode: languageCode,
-                  countryCode: countryCode,
-                ),
-              ),
-              onPressed: () async {
-                await showPoiCategoriesEditModal(context, pois: [selectedPoi]);
-              },
-            ),
-            const SizedBox(height: 20),
-          ],
           if (isEditModeEnabled) ...[
             // Standort und Geometrie
             Text(
@@ -717,5 +758,35 @@ class PoiPanelInfoTab extends ConsumerWidget {
     );
 
     return selectedFeatures;
+  }
+
+  Widget _buildCategoryChips(List<String>? categories) {
+    final normalizedCategories =
+        (categories ?? const <String>[])
+            .map((category) => category.trim())
+            .where((category) => category.isNotEmpty)
+            .toSet()
+            .toList(growable: false)
+          ..sort(
+            (first, second) =>
+                first.toLowerCase().compareTo(second.toLowerCase()),
+          );
+
+    if (normalizedCategories.isEmpty) {
+      return const SizedBox(height: 20);
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: normalizedCategories
+          .map(
+            (category) => Chip(
+              avatar: const Icon(Icons.check, size: 16),
+              label: Text(category),
+            ),
+          )
+          .toList(growable: false),
+    );
   }
 }

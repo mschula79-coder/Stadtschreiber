@@ -8,6 +8,7 @@ import 'package:stadtschreiber/provider/user_profile_repository_provider.dart';
 import 'package:stadtschreiber/screens/osm_poi_import_screen.dart';
 import 'package:stadtschreiber/utils/language_utils.dart';
 import 'package:stadtschreiber/widgets/_icon_getter.dart';
+import 'package:stadtschreiber/widgets/auth_error_message.dart';
 import 'package:stadtschreiber/widgets/modal_user_edit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -23,32 +24,20 @@ class UserActionsBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appUser = ref.watch(
-      supabaseUserStateProvider,
-    );
+    final appUser = ref.watch(supabaseUserStateProvider);
 
     final isAdmin = appUser.isAdmin;
 
     final isAdminViewEnabled = ref.watch(
-      appStateProvider.select(
-        (state) => state.isAdminViewEnabled,
-      ),
+      appStateProvider.select((state) => state.isAdminViewEnabled),
     );
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 8,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(32),
-        boxShadow: const [
-          BoxShadow(
-            blurRadius: 8,
-            color: Colors.black26,
-          ),
-        ],
+        boxShadow: const [BoxShadow(blurRadius: 8, color: Colors.black26)],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -100,9 +89,7 @@ class UserActionsBar extends ConsumerWidget {
               onPressed: () {
                 ref
                     .read(appStateProvider.notifier)
-                    .setAdminViewEnabled(
-                      !isAdminViewEnabled,
-                    );
+                    .setAdminViewEnabled(!isAdminViewEnabled);
               },
               child: Icon(
                 isAdminViewEnabled
@@ -116,9 +103,7 @@ class UserActionsBar extends ConsumerWidget {
             heroTag: 'changeStyle',
             mini: true,
             onPressed: onChangeStyle,
-            child: const Icon(
-              Icons.color_lens_outlined,
-            ),
+            child: const Icon(Icons.color_lens_outlined),
           ),
           if (isAdmin) ...[
             const SizedBox(width: 4),
@@ -157,21 +142,20 @@ class _LanguageMenuButton extends ConsumerWidget {
           mini: true,
           onPressed: () async {
             final buttonRenderBox =
-                buttonContext.findRenderObject()
+                buttonContext.findRenderObject() as RenderBox?;
+
+            final overlayRenderBox =
+                Overlay.of(
+                      buttonContext,
+                      rootOverlay: true,
+                    ).context.findRenderObject()
                     as RenderBox?;
 
-            final overlayRenderBox = Overlay.of(
-              buttonContext,
-              rootOverlay: true,
-            ).context.findRenderObject() as RenderBox?;
-
-            if (buttonRenderBox == null ||
-                overlayRenderBox == null) {
+            if (buttonRenderBox == null || overlayRenderBox == null) {
               return;
             }
 
-            final buttonPosition =
-                buttonRenderBox.localToGlobal(
+            final buttonPosition = buttonRenderBox.localToGlobal(
               Offset.zero,
               ancestor: overlayRenderBox,
             );
@@ -184,80 +168,50 @@ class _LanguageMenuButton extends ConsumerWidget {
             const menuMargin = 8.0;
 
             final menuHeight =
-                supportedLocales.length *
-                    menuItemHeight +
-                menuVerticalPadding;
+                supportedLocales.length * menuItemHeight + menuVerticalPadding;
 
-            final preferredTop =
-                buttonPosition.dy -
-                menuHeight -
-                menuMargin;
+            final preferredTop = buttonPosition.dy - menuHeight - menuMargin;
 
-            final maximumTop =
-                overlaySize.height -
-                menuHeight -
-                menuMargin;
+            final maximumTop = overlaySize.height - menuHeight - menuMargin;
 
             final menuTop = preferredTop.clamp(
               menuMargin,
-              maximumTop < menuMargin
-                  ? menuMargin
-                  : maximumTop,
+              maximumTop < menuMargin ? menuMargin : maximumTop,
             );
 
-            final selectedLocale =
-                await showMenu<Locale>(
+            final selectedLocale = await showMenu<Locale>(
               context: buttonContext,
               useRootNavigator: true,
               initialValue: currentLocale,
               position: RelativeRect.fromLTRB(
                 buttonPosition.dx,
                 menuTop,
-                overlaySize.width -
-                    buttonPosition.dx -
-                    buttonSize.width,
-                overlaySize.height -
-                    buttonPosition.dy,
+                overlaySize.width - buttonPosition.dx - buttonSize.width,
+                overlaySize.height - buttonPosition.dy,
               ),
               elevation: 8,
               shape: RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(16),
               ),
-              constraints: const BoxConstraints(
-                minWidth: 180,
-                maxWidth: 220,
-              ),
+              constraints: const BoxConstraints(minWidth: 180, maxWidth: 220),
               items: supportedLocales.map((locale) {
                 final isSelected =
-                    locale.languageCode ==
-                        currentLocale.languageCode &&
-                    locale.countryCode ==
-                        currentLocale.countryCode;
+                    locale.languageCode == currentLocale.languageCode &&
+                    locale.countryCode == currentLocale.countryCode;
 
                 return PopupMenuItem<Locale>(
                   value: locale,
                   height: menuItemHeight,
                   child: Row(
                     children: [
-                      getIcon(
-                        _localeIconCode(locale),
-                        24,
-                        null,
-                      ),
+                      getIcon(_localeIconCode(locale), 24, null),
                       const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _localeName(locale),
-                        ),
-                      ),
+                      Expanded(child: Text(_localeName(locale))),
                       if (isSelected)
                         Icon(
                           Icons.check,
                           size: 20,
-                          color: Theme.of(
-                            buttonContext,
-                          ).colorScheme.primary,
+                          color: Theme.of(buttonContext).colorScheme.primary,
                         ),
                     ],
                   ),
@@ -265,38 +219,28 @@ class _LanguageMenuButton extends ConsumerWidget {
               }).toList(),
             );
 
-            if (selectedLocale == null ||
-                selectedLocale == currentLocale) {
+            if (selectedLocale == null || selectedLocale == currentLocale) {
               return;
             }
 
-            ref
-                .read(localeProvider.notifier)
-                .state = selectedLocale;
+            ref.read(localeProvider.notifier).state = selectedLocale;
           },
-          child: getIcon(
-            _localeIconCode(currentLocale),
-            24,
-            null,
-          ),
+          child: getIcon(_localeIconCode(currentLocale), 24, null),
         );
       },
     );
   }
 
   static String _localeIconCode(Locale locale) {
-    if (locale.languageCode == 'de' &&
-        locale.countryCode == 'CH') {
+    if (locale.languageCode == 'de' && locale.countryCode == 'CH') {
       return 'CH';
     }
 
-    return locale.countryCode ??
-        locale.languageCode;
+    return locale.countryCode ?? locale.languageCode;
   }
 
   static String _localeName(Locale locale) {
-    if (locale.languageCode == 'de' &&
-        locale.countryCode == 'CH') {
+    if (locale.languageCode == 'de' && locale.countryCode == 'CH') {
       return 'Baseldeutsch';
     }
 
@@ -322,12 +266,9 @@ class _SettingsSheet extends ConsumerWidget {
     final languageCode = locale.languageCode;
     final countryCode = locale.countryCode;
 
-    final userAuth =
-        Supabase.instance.client.auth.currentUser;
+    final userAuth = Supabase.instance.client.auth.currentUser;
 
-    final user = ref.watch(
-      supabaseUserStateProvider,
-    );
+    final user = ref.watch(supabaseUserStateProvider);
 
     if (userAuth == null) {
       return const SizedBox.shrink();
@@ -337,11 +278,7 @@ class _SettingsSheet extends ConsumerWidget {
         ? 'Admin'
         : user.isEditor
         ? 'Editor'
-        : getText(
-            'user',
-            languageCode: languageCode,
-            countryCode: countryCode,
-          );
+        : getText('user', languageCode: languageCode, countryCode: countryCode);
 
     return SafeArea(
       child: Padding(
@@ -349,14 +286,12 @@ class _SettingsSheet extends ConsumerWidget {
           24,
           24,
           24,
-          MediaQuery.viewInsetsOf(context).bottom +
-              24,
+          MediaQuery.viewInsetsOf(context).bottom + 24,
         ),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 getText(
@@ -364,9 +299,7 @@ class _SettingsSheet extends ConsumerWidget {
                   languageCode: languageCode,
                   countryCode: countryCode,
                 ),
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge,
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
               Text(
@@ -389,8 +322,7 @@ class _SettingsSheet extends ConsumerWidget {
                     return;
                   }
 
-                  final updatedProfile =
-                      await showDialog<List<String>>(
+                  final updatedProfile = await showDialog<List<String>>(
                     context: context,
                     barrierDismissible: false,
                     builder: (_) {
@@ -407,32 +339,22 @@ class _SettingsSheet extends ConsumerWidget {
                     return;
                   }
 
-                  final newName =
-                      updatedProfile[0].trim();
+                  final newName = updatedProfile[0].trim();
 
-                  final newEmail =
-                      updatedProfile[1].trim();
+                  final newEmail = updatedProfile[1].trim();
 
-                  final repository = ref.read(
-                    userRepositoryProvider,
-                  );
+                  final repository = ref.read(userRepositoryProvider);
 
                   var changed = false;
 
-                  if (newName.isNotEmpty &&
-                      newName != user.username) {
-                    await repository.updateUsername(
-                      newName,
-                    );
+                  if (newName.isNotEmpty && newName != user.username) {
+                    await repository.updateUsername(newName);
 
                     changed = true;
                   }
 
-                  if (newEmail.isNotEmpty &&
-                      newEmail != email) {
-                    await repository.updateEmail(
-                      newEmail,
-                    );
+                  if (newEmail.isNotEmpty && newEmail != email) {
+                    await repository.updateEmail(newEmail);
 
                     changed = true;
 
@@ -440,17 +362,13 @@ class _SettingsSheet extends ConsumerWidget {
                       return;
                     }
 
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(
+                    ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
                           getText(
                             'confirmEmail',
-                            languageCode:
-                                languageCode,
-                            countryCode:
-                                countryCode,
+                            languageCode: languageCode,
+                            countryCode: countryCode,
                           ),
                         ),
                       ),
@@ -459,10 +377,7 @@ class _SettingsSheet extends ConsumerWidget {
 
                   if (changed) {
                     await ref
-                        .read(
-                          supabaseUserStateProvider
-                              .notifier,
-                        )
+                        .read(supabaseUserStateProvider.notifier)
                         .loadProfile(userAuth.id);
                   }
                 },
@@ -498,45 +413,26 @@ class _SettingsSheet extends ConsumerWidget {
               const SizedBox(height: 12),
               ElevatedButton.icon(
                 onPressed: () async {
-                  final currentUser = Supabase
-                      .instance
-                      .client
-                      .auth
-                      .currentUser;
+                  final currentUser = Supabase.instance.client.auth.currentUser;
 
                   if (currentUser == null) {
                     return;
                   }
 
-                  await Supabase
-                      .instance
-                      .client
-                      .functions
-                      .invoke(
-                        'delete-user',
-                        body: {
-                          'user_id': currentUser.id,
-                        },
-                      );
+                  await Supabase.instance.client.functions.invoke(
+                    'delete-user',
+                    body: {'user_id': currentUser.id},
+                  );
 
-                  await Supabase
-                      .instance
-                      .client
-                      .auth
-                      .signOut();
+                  await Supabase.instance.client.auth.signOut();
 
                   if (!context.mounted) {
                     return;
                   }
 
-                  Navigator.pushReplacementNamed(
-                    context,
-                    '/login',
-                  );
+                  Navigator.pushReplacementNamed(context, '/login');
                 },
-                icon: const Icon(
-                  Icons.delete_forever,
-                ),
+                icon: const Icon(Icons.delete_forever),
                 label: Text(
                   getText(
                     'deleteUser',
@@ -553,24 +449,19 @@ class _SettingsSheet extends ConsumerWidget {
   }
 }
 
-class _ChangePasswordSheet
-    extends ConsumerStatefulWidget {
+class _ChangePasswordSheet extends ConsumerStatefulWidget {
   const _ChangePasswordSheet();
 
   @override
-  ConsumerState<_ChangePasswordSheet>
-  createState() {
+  ConsumerState<_ChangePasswordSheet> createState() {
     return _ChangePasswordSheetState();
   }
 }
 
-class _ChangePasswordSheetState
-    extends ConsumerState<_ChangePasswordSheet> {
-  final TextEditingController pass1 =
-      TextEditingController();
+class _ChangePasswordSheetState extends ConsumerState<_ChangePasswordSheet> {
+  final TextEditingController pass1 = TextEditingController();
 
-  final TextEditingController pass2 =
-      TextEditingController();
+  final TextEditingController pass2 = TextEditingController();
 
   String? error;
   bool loading = false;
@@ -594,8 +485,7 @@ class _ChangePasswordSheetState
           24,
           24,
           24,
-          MediaQuery.viewInsetsOf(context).bottom +
-              24,
+          MediaQuery.viewInsetsOf(context).bottom + 24,
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -607,9 +497,7 @@ class _ChangePasswordSheetState
                   languageCode: languageCode,
                   countryCode: countryCode,
                 ),
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge,
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 16),
               TextField(
@@ -621,8 +509,7 @@ class _ChangePasswordSheetState
                     languageCode: languageCode,
                     countryCode: countryCode,
                   ),
-                  border:
-                      const OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 12),
@@ -631,44 +518,31 @@ class _ChangePasswordSheetState
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: getText(
-                    'confirm',
+                    'confirmPassword',
                     languageCode: languageCode,
                     countryCode: countryCode,
                   ),
-                  border:
-                      const OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                 ),
               ),
               if (error != null) ...[
                 const SizedBox(height: 16),
-                Text(
-                  error!,
-                  style: const TextStyle(
-                    color: Colors.red,
-                  ),
-                ),
+                Text(error!, style: const TextStyle(color: Colors.red)),
               ],
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: loading
-                    ? null
-                    : _submitPasswordChange,
+                onPressed: loading ? null : _submitPasswordChange,
                 child: loading
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child:
-                            CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : Text(
                         getText(
                           'save',
-                          languageCode:
-                              languageCode,
-                          countryCode:
-                              countryCode,
+                          languageCode: languageCode,
+                          countryCode: countryCode,
                         ),
                       ),
               ),
@@ -711,6 +585,14 @@ class _ChangePasswordSheetState
       return;
     }
 
+    if (firstPassword.length < 8) {
+      setState(() {
+        error = 'Das neue Passwort muss mindestens 8 Zeichen enthalten.';
+      });
+
+      return;
+    }
+
     setState(() {
       loading = true;
       error = null;
@@ -718,9 +600,7 @@ class _ChangePasswordSheetState
 
     try {
       await Supabase.instance.client.auth.updateUser(
-        UserAttributes(
-          password: firstPassword,
-        ),
+        UserAttributes(password: firstPassword),
       );
 
       if (!mounted) {
@@ -740,14 +620,27 @@ class _ChangePasswordSheetState
           ),
         ),
       );
+    } on AuthException catch (exception) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        error = getAuthErrorMessage(
+          exception, languageCode, countryCode,
+          operation: AuthOperation.passwordUpdate,
+        );
+      });
     } catch (exception) {
       if (!mounted) {
         return;
       }
 
       setState(() {
-        error =
-            '${getText('error', languageCode: languageCode, countryCode: countryCode)}: $exception';
+        error = getAuthErrorMessage(
+          exception, languageCode, countryCode,
+          operation: AuthOperation.passwordUpdate,
+        );
       });
     } finally {
       if (mounted) {

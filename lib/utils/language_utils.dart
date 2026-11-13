@@ -71,6 +71,8 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
       return localization.confirmDeletionOfList2;
     case 'confirmEmail':
       return localization.confirmEmail;
+    case 'confirmPassword':
+      return localization.confirmPassword;
     case 'criterion':
       return localization.criterion;
     case 'deleteDate':
@@ -180,6 +182,8 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
       return localization.passwordChanged;
     case 'passwordForgotten':
       return localization.passwordForgotten;
+    case 'passwordTooShort':
+      return localization.passwordTooShort;
     case 'passwordsDoNotMatch':
       return localization.passwordsDoNotMatch;
     case 'poiNotFound':
@@ -225,6 +229,88 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
       return localization.user;
     case 'username':
       return localization.userName;
+    case 'authActionForbidden':
+      return localization.authActionForbidden;
+    case 'authCaptchaFailed':
+      return localization.authCaptchaFailed;
+    case 'authConfirmationLinkInvalid':
+      return localization.authConfirmationLinkInvalid;
+    case 'authConflict':
+      return localization.authConflict;
+    case 'authDataStatus422':
+      return localization.authDataStatus422;
+    case 'authEmailConfirmationFailed':
+      return localization.authEmailConfirmationFailed;
+    case 'authEmailNotAuthorized':
+      return localization.authEmailNotAuthorized;
+    case 'authEmailNotConfirmed':
+      return localization.authEmailNotConfirmed;
+    case 'authEmailProviderDisabled':
+      return localization.authEmailProviderDisabled;
+    case 'authEmailRateLimit':
+      return localization.authEmailRateLimit;
+    case 'authFlowExpired':
+      return localization.authFlowExpired;
+    case 'authIdentityLinkFailed':
+      return localization.authIdentityLinkFailed;
+    case 'authInvalidCredentials':
+      return localization.authInvalidCredentials;
+    case 'authInvalidEmailAddress':
+      return localization.authInvalidEmailAddress;
+    case 'authInvalidLogin':
+      return localization.authInvalidLogin;
+    case 'authLoginFailed':
+      return localization.authLoginFailed;
+    case 'authLoginStatus400':
+      return localization.authLoginStatus400;
+    case 'authOtpDisabled':
+      return localization.authOtpDisabled;
+    case 'authOtpExpired':
+      return localization.authOtpExpired;
+    case 'authPasswordResetFailed':
+      return localization.authPasswordResetFailed;
+    case 'authPasswordResetStatus400':
+      return localization.authPasswordResetStatus400;
+    case 'authPasswordUpdateFailed':
+      return localization.authPasswordUpdateFailed;
+    case 'authPasswordUpdateStatus400':
+      return localization.authPasswordUpdateStatus400;
+    case 'authPasswordUpdateStatus422':
+      return localization.authPasswordUpdateStatus422;
+    case 'authRegistrationFailed':
+      return localization.authRegistrationFailed;
+    case 'authRegistrationStatus400':
+      return localization.authRegistrationStatus400;
+    case 'authRegistrationStatus422':
+      return localization.authRegistrationStatus422;
+    case 'authRequestRateLimit':
+      return localization.authRequestRateLimit;
+    case 'authSamePassword':
+      return localization.authSamePassword;
+    case 'authServiceUnavailable':
+      return localization.authServiceUnavailable;
+    case 'authSessionExpired':
+      return localization.authSessionExpired;
+    case 'authSignupDisabled':
+      return localization.authSignupDisabled;
+    case 'authStatus429':
+      return localization.authStatus429;
+    case 'authUnexpectedFailure':
+      return localization.authUnexpectedFailure;
+    case 'authUserAlreadyExists':
+      return localization.authUserAlreadyExists;
+    case 'authUserBanned':
+      return localization.authUserBanned;
+    case 'authWeakPassword':
+      return localization.authWeakPassword;
+    case 'authDatabaseUserCreationFailed':
+      return localization.authDatabaseUserCreationFailed;
+    case 'authNetworkError':
+      return localization.authNetworkError;
+    case 'authReauthenticationInvalid':
+      return localization.authReauthenticationInvalid;
+    case 'authReauthenticationNeeded':
+      return localization.authReauthenticationNeeded;
     default:
       return 'NO TEXT FOUND FOR $textCode';
   }

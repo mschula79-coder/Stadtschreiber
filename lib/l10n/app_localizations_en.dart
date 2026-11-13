@@ -368,4 +368,171 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchRadius => 'Radius around map center';
+
+  @override
+  String get confirmPassword => 'Confirm password';
+
+  @override
+  String get passwordTooShort =>
+      'Please choose a password with at least 8 characters.';
+
+  @override
+  String get authActionForbidden =>
+      'You are not authorized to perform this action.';
+
+  @override
+  String get authCaptchaFailed =>
+      'The security verification failed. Please try again.';
+
+  @override
+  String get authConfirmationLinkInvalid =>
+      'The confirmation link is invalid or has already expired.';
+
+  @override
+  String get authConflict =>
+      'The change could not be saved due to a data conflict. Please try again.';
+
+  @override
+  String get authDatabaseUserCreationFailed =>
+      'The user account could not be created completely. Please try again later.';
+
+  @override
+  String get authDataStatus422 => 'The entered data could not be processed.';
+
+  @override
+  String get authEmailConfirmationFailed =>
+      'The email address could not be confirmed.';
+
+  @override
+  String get authEmailNotAuthorized =>
+      'This email address cannot be used for registration.';
+
+  @override
+  String get authEmailNotConfirmed =>
+      'Please confirm your email address first. Also check your spam folder.';
+
+  @override
+  String get authEmailProviderDisabled =>
+      'Signing in with an email address and password is currently unavailable.';
+
+  @override
+  String get authEmailRateLimit =>
+      'Too many emails have been requested. Please wait a few minutes and try again.';
+
+  @override
+  String get authFlowExpired =>
+      'The sign-in process has expired. Please start again.';
+
+  @override
+  String get authIdentityLinkFailed =>
+      'The user account could not be linked to this sign-in method.';
+
+  @override
+  String get authInvalidCredentials =>
+      'The email address or password is incorrect.';
+
+  @override
+  String get authInvalidEmailAddress => 'Please enter a valid email address.';
+
+  @override
+  String get authInvalidLogin =>
+      'Your sign-in is no longer valid. Please sign in again.';
+
+  @override
+  String get authLoginFailed =>
+      'Sign-in failed. Please check your details and try again.';
+
+  @override
+  String get authLoginStatus400 =>
+      'Sign-in failed.\n\nPossible reasons:\nThe password is incorrect.\nNo user account was found for this email address.\n\nPlease check the email address or register a new account.';
+
+  @override
+  String get authNetworkError =>
+      'A connection to the authentication service could not be established. Please check your internet connection.';
+
+  @override
+  String get authOtpDisabled =>
+      'Signing in with a confirmation code is currently unavailable.';
+
+  @override
+  String get authOtpExpired =>
+      'The confirmation code has expired. Please request a new code.';
+
+  @override
+  String get authPasswordResetFailed =>
+      'The password reset email could not be sent.';
+
+  @override
+  String get authPasswordResetStatus400 =>
+      'The password reset request is invalid.';
+
+  @override
+  String get authPasswordUpdateFailed => 'The password could not be changed.';
+
+  @override
+  String get authPasswordUpdateStatus400 =>
+      'The new password could not be saved.';
+
+  @override
+  String get authPasswordUpdateStatus422 =>
+      'The password does not meet the security requirements. Use at least 8 characters and do not reuse a previous password.';
+
+  @override
+  String get authReauthenticationInvalid =>
+      'The verification of your sign-in is invalid or has expired. Please sign in again.';
+
+  @override
+  String get authReauthenticationNeeded =>
+      'Please sign in again before changing your password.';
+
+  @override
+  String get authRegistrationFailed =>
+      'Registration failed. Please check your details and try again.';
+
+  @override
+  String get authRegistrationStatus400 =>
+      'The registration details are invalid. Please check the email address, username, and password.';
+
+  @override
+  String get authRegistrationStatus422 =>
+      'Registration could not be completed with these details.';
+
+  @override
+  String get authRequestRateLimit =>
+      'Too many requests have been sent. Please wait a moment and try again.';
+
+  @override
+  String get authSamePassword =>
+      'The new password must be different from the current password.';
+
+  @override
+  String get authServiceUnavailable =>
+      'The authentication service is currently unavailable. Please try again later.';
+
+  @override
+  String get authSessionExpired =>
+      'Your session has expired. Please sign in again.';
+
+  @override
+  String get authSignupDisabled =>
+      'New registrations are currently unavailable.';
+
+  @override
+  String get authStatus429 =>
+      'A free email service with limited usage is currently being used. Please try again later. You may need to wait up to one hour. Alternatively, you can send an informal email to stadtschreiber.basel@gmail.com.';
+
+  @override
+  String get authUnexpectedFailure =>
+      'An unexpected error occurred in the authentication service. Please try again later.';
+
+  @override
+  String get authUserAlreadyExists =>
+      'A user account already exists for this email address. You can sign in or reset your password.';
+
+  @override
+  String get authUserBanned => 'This user account is currently blocked.';
+
+  @override
+  String get authWeakPassword =>
+      'The password does not meet the security requirements. Use at least 8 characters.';
 }

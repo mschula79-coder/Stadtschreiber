@@ -6,6 +6,7 @@ import 'package:stadtschreiber/main.dart' show supportedLocales;
 import 'package:stadtschreiber/provider/locale_provider.dart';
 import 'package:stadtschreiber/utils/language_utils.dart';
 import 'package:stadtschreiber/widgets/_icon_getter.dart';
+import 'package:stadtschreiber/widgets/auth_error_message.dart';
 import 'package:stadtschreiber/widgets/modal_about.dart';
 import 'package:stadtschreiber/widgets/modal_message_box.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -245,7 +246,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                                             messageBox(
                                               context,
-                                              'Bitte Passwort mit min. 8 Zeichen setzen',
+                                              getText(
+                                                'passwordTooShort',
+                                                languageCode: languageCode,
+                                                countryCode: countryCode,
+                                              ),
                                               '',
                                             );
                                           }
@@ -276,7 +281,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                           SizedBox(height: 40),
 
-                          
                           Text(
                             getText(
                               'joinus2',
@@ -290,7 +294,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                           ),
                           SizedBox(height: 8),
-                          
+
                           TextButton(
                             style: TextButton.styleFrom(
                               backgroundColor: Theme.of(
@@ -362,16 +366,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _login() async {
-    await _authAction(() async {
+    final email = emailController.text.trim().toLowerCase();
+
+    final loginSuccessful = await _authAction(() async {
       await Supabase.instance.client.auth.signInWithPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
+        email: email,
+        password: passwordController.text,
       );
-    });
+    }, operation: AuthOperation.login);
+
+    if (!loginSuccessful) {
+      return;
+    }
 
     final prefs = await SharedPreferences.getInstance();
 
-    await prefs.setString('last_email', emailController.text.trim());
+    await prefs.setString('last_email', email);
   }
 
   Future<void> _askUsernameAndRegister() async {
@@ -391,19 +401,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               border: const OutlineInputBorder(),
             ),
             onSubmitted: (value) {
-              Navigator.pop(dialogContext, value.trim());
+              Navigator.of(dialogContext).pop(value.trim());
             },
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(dialogContext);
+                Navigator.of(dialogContext).pop();
               },
               child: Text(AppLocalizations.of(dialogContext)!.cancel),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(dialogContext, usernameController.text.trim());
+                Navigator.of(dialogContext).pop(usernameController.text.trim());
               },
               child: Text(AppLocalizations.of(dialogContext)!.goOn),
             ),
@@ -414,21 +424,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     usernameController.dispose();
 
-    if (username == null || username.isEmpty) {
+    if (username == null || username.trim().isEmpty) {
       return;
     }
 
-    final prefs = await SharedPreferences.getInstance();
-
-    await prefs.setString('pending_username', username);
-
-    await _register();
+    await _register(username.trim());
   }
 
-  Future<void> _register() async {
+  Future<void> _register(String username) async {
     if (!mounted) {
       return;
     }
+    final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
+
+    final email = emailController.text.trim();
+
+    final password = passwordController.text.trim();
+
+    final normalizedUsername = username.trim();
 
     setState(() {
       loading = true;
@@ -437,15 +451,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     try {
-      await Supabase.instance.client.auth.signUp(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
+      final response = await Supabase.instance.client.auth.signUp(
+        email: email,
+        password: password,
         emailRedirectTo: 'stadtschreiber://auth-callback',
+        data: <String, dynamic>{'username': normalizedUsername},
       );
+
+      final registeredUser = response.user;
+
+      if (registeredUser == null) {
+        throw const AuthException('registration_failed');
+      }
+
+      final storedUsername = registeredUser.userMetadata?['username']
+          ?.toString()
+          .trim();
+
+      if (storedUsername != normalizedUsername) {
+        await Supabase.instance.client.auth.updateUser(
+          UserAttributes(
+            data: <String, dynamic>{'username': normalizedUsername},
+          ),
+        );
+      }
 
       final prefs = await SharedPreferences.getInstance();
 
-      await prefs.setString('last_email', emailController.text.trim());
+      await prefs.setString('last_email', email);
+
+      await prefs.remove('pending_username');
 
       if (!mounted) {
         return;
@@ -461,7 +496,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
 
       setState(() {
-        errorMessage = error.toString();
+        errorMessage = getAuthErrorMessage(
+          error,
+          languageCode,
+          countryCode ?? '',
+          operation: AuthOperation.registration,
+        );
       });
     } finally {
       if (mounted) {
@@ -472,10 +512,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  Future<void> _authAction(Future<void> Function() action) async {
+  Future<bool> _authAction(
+    Future<void> Function() action, {
+    required AuthOperation operation,
+  }) async {
     if (!mounted) {
-      return;
+      return false;
     }
+    final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
 
     setState(() {
       loading = true;
@@ -488,27 +533,52 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       final session = Supabase.instance.client.auth.currentSession;
 
-      if (!mounted) {
-        return;
-      }
-
       if (session == null) {
+        if (!mounted) {
+          return false;
+        }
+
         setState(() {
-          errorMessage = 'Authentication failed';
+          errorMessage =
+              'Die Anmeldung konnte nicht abgeschlossen werden. '
+              'Bitte bestätige gegebenenfalls zuerst deine E-Mail-Adresse.';
         });
 
-        return;
+        return false;
+      }
+
+      if (!mounted) {
+        return false;
       }
 
       Navigator.pushReplacementNamed(context, '/map');
-    } catch (error) {
+
+      return true;
+    } on AuthException catch (error) {
       if (!mounted) {
-        return;
+        return false;
       }
 
       setState(() {
-        errorMessage = error.toString();
+        errorMessage = getAuthErrorMessage(
+          error,
+          languageCode,
+          countryCode ?? '',
+          operation: operation,
+        );
       });
+
+      return false;
+    } catch (error) {
+      if (!mounted) {
+        return false;
+      }
+
+      setState(() {
+        errorMessage = getAuthErrorMessage(error, languageCode, countryCode, operation: operation);
+      });
+
+      return false;
     } finally {
       if (mounted) {
         setState(() {

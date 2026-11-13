@@ -808,6 +808,264 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Radius around map center'**
   String get searchRadius;
+
+  /// No description provided for @confirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm password'**
+  String get confirmPassword;
+
+  /// No description provided for @passwordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Please choose a password with at least 8 characters.'**
+  String get passwordTooShort;
+
+  /// No description provided for @authActionForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'You are not authorized to perform this action.'**
+  String get authActionForbidden;
+
+  /// No description provided for @authCaptchaFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The security verification failed. Please try again.'**
+  String get authCaptchaFailed;
+
+  /// No description provided for @authConfirmationLinkInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The confirmation link is invalid or has already expired.'**
+  String get authConfirmationLinkInvalid;
+
+  /// No description provided for @authConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'The change could not be saved due to a data conflict. Please try again.'**
+  String get authConflict;
+
+  /// No description provided for @authDatabaseUserCreationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The user account could not be created completely. Please try again later.'**
+  String get authDatabaseUserCreationFailed;
+
+  /// No description provided for @authDataStatus422.
+  ///
+  /// In en, this message translates to:
+  /// **'The entered data could not be processed.'**
+  String get authDataStatus422;
+
+  /// No description provided for @authEmailConfirmationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The email address could not be confirmed.'**
+  String get authEmailConfirmationFailed;
+
+  /// No description provided for @authEmailNotAuthorized.
+  ///
+  /// In en, this message translates to:
+  /// **'This email address cannot be used for registration.'**
+  String get authEmailNotAuthorized;
+
+  /// No description provided for @authEmailNotConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Please confirm your email address first. Also check your spam folder.'**
+  String get authEmailNotConfirmed;
+
+  /// No description provided for @authEmailProviderDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in with an email address and password is currently unavailable.'**
+  String get authEmailProviderDisabled;
+
+  /// No description provided for @authEmailRateLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many emails have been requested. Please wait a few minutes and try again.'**
+  String get authEmailRateLimit;
+
+  /// No description provided for @authFlowExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'The sign-in process has expired. Please start again.'**
+  String get authFlowExpired;
+
+  /// No description provided for @authIdentityLinkFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The user account could not be linked to this sign-in method.'**
+  String get authIdentityLinkFailed;
+
+  /// No description provided for @authInvalidCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'The email address or password is incorrect.'**
+  String get authInvalidCredentials;
+
+  /// No description provided for @authInvalidEmailAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid email address.'**
+  String get authInvalidEmailAddress;
+
+  /// No description provided for @authInvalidLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Your sign-in is no longer valid. Please sign in again.'**
+  String get authInvalidLogin;
+
+  /// No description provided for @authLoginFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in failed. Please check your details and try again.'**
+  String get authLoginFailed;
+
+  /// No description provided for @authLoginStatus400.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in failed.\n\nPossible reasons:\nThe password is incorrect.\nNo user account was found for this email address.\n\nPlease check the email address or register a new account.'**
+  String get authLoginStatus400;
+
+  /// No description provided for @authNetworkError.
+  ///
+  /// In en, this message translates to:
+  /// **'A connection to the authentication service could not be established. Please check your internet connection.'**
+  String get authNetworkError;
+
+  /// No description provided for @authOtpDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in with a confirmation code is currently unavailable.'**
+  String get authOtpDisabled;
+
+  /// No description provided for @authOtpExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'The confirmation code has expired. Please request a new code.'**
+  String get authOtpExpired;
+
+  /// No description provided for @authPasswordResetFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The password reset email could not be sent.'**
+  String get authPasswordResetFailed;
+
+  /// No description provided for @authPasswordResetStatus400.
+  ///
+  /// In en, this message translates to:
+  /// **'The password reset request is invalid.'**
+  String get authPasswordResetStatus400;
+
+  /// No description provided for @authPasswordUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The password could not be changed.'**
+  String get authPasswordUpdateFailed;
+
+  /// No description provided for @authPasswordUpdateStatus400.
+  ///
+  /// In en, this message translates to:
+  /// **'The new password could not be saved.'**
+  String get authPasswordUpdateStatus400;
+
+  /// No description provided for @authPasswordUpdateStatus422.
+  ///
+  /// In en, this message translates to:
+  /// **'The password does not meet the security requirements. Use at least 8 characters and do not reuse a previous password.'**
+  String get authPasswordUpdateStatus422;
+
+  /// No description provided for @authReauthenticationInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The verification of your sign-in is invalid or has expired. Please sign in again.'**
+  String get authReauthenticationInvalid;
+
+  /// No description provided for @authReauthenticationNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again before changing your password.'**
+  String get authReauthenticationNeeded;
+
+  /// No description provided for @authRegistrationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration failed. Please check your details and try again.'**
+  String get authRegistrationFailed;
+
+  /// No description provided for @authRegistrationStatus400.
+  ///
+  /// In en, this message translates to:
+  /// **'The registration details are invalid. Please check the email address, username, and password.'**
+  String get authRegistrationStatus400;
+
+  /// No description provided for @authRegistrationStatus422.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration could not be completed with these details.'**
+  String get authRegistrationStatus422;
+
+  /// No description provided for @authRequestRateLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many requests have been sent. Please wait a moment and try again.'**
+  String get authRequestRateLimit;
+
+  /// No description provided for @authSamePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'The new password must be different from the current password.'**
+  String get authSamePassword;
+
+  /// No description provided for @authServiceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The authentication service is currently unavailable. Please try again later.'**
+  String get authServiceUnavailable;
+
+  /// No description provided for @authSessionExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has expired. Please sign in again.'**
+  String get authSessionExpired;
+
+  /// No description provided for @authSignupDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'New registrations are currently unavailable.'**
+  String get authSignupDisabled;
+
+  /// No description provided for @authStatus429.
+  ///
+  /// In en, this message translates to:
+  /// **'A free email service with limited usage is currently being used. Please try again later. You may need to wait up to one hour. Alternatively, you can send an informal email to stadtschreiber.basel@gmail.com.'**
+  String get authStatus429;
+
+  /// No description provided for @authUnexpectedFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'An unexpected error occurred in the authentication service. Please try again later.'**
+  String get authUnexpectedFailure;
+
+  /// No description provided for @authUserAlreadyExists.
+  ///
+  /// In en, this message translates to:
+  /// **'A user account already exists for this email address. You can sign in or reset your password.'**
+  String get authUserAlreadyExists;
+
+  /// No description provided for @authUserBanned.
+  ///
+  /// In en, this message translates to:
+  /// **'This user account is currently blocked.'**
+  String get authUserBanned;
+
+  /// No description provided for @authWeakPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'The password does not meet the security requirements. Use at least 8 characters.'**
+  String get authWeakPassword;
 }
 
 class _AppLocalizationsDelegate

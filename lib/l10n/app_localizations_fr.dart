@@ -373,4 +373,174 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get searchRadius => 'Rayon autour du centre de la carte';
+
+  @override
+  String get confirmPassword => 'Confirmer le mot de passe';
+
+  @override
+  String get passwordTooShort =>
+      'Veuillez choisir un mot de passe comportant au moins 8 caractères.';
+
+  @override
+  String get authActionForbidden =>
+      'Vous n’êtes pas autorisé à effectuer cette action.';
+
+  @override
+  String get authCaptchaFailed =>
+      'La vérification de sécurité a échoué. Veuillez réessayer.';
+
+  @override
+  String get authConfirmationLinkInvalid =>
+      'Le lien de confirmation est invalide ou a déjà expiré.';
+
+  @override
+  String get authConflict =>
+      'La modification n’a pas pu être enregistrée en raison d’un conflit de données. Veuillez réessayer.';
+
+  @override
+  String get authDatabaseUserCreationFailed =>
+      'Le compte utilisateur n’a pas pu être créé complètement. Veuillez réessayer plus tard.';
+
+  @override
+  String get authDataStatus422 =>
+      'Les données saisies n’ont pas pu être traitées.';
+
+  @override
+  String get authEmailConfirmationFailed =>
+      'L’adresse e-mail n’a pas pu être confirmée.';
+
+  @override
+  String get authEmailNotAuthorized =>
+      'Cette adresse e-mail ne peut pas être utilisée pour l’inscription.';
+
+  @override
+  String get authEmailNotConfirmed =>
+      'Veuillez d’abord confirmer votre adresse e-mail. Vérifiez également votre dossier de courrier indésirable.';
+
+  @override
+  String get authEmailProviderDisabled =>
+      'La connexion par adresse e-mail et mot de passe n’est actuellement pas disponible.';
+
+  @override
+  String get authEmailRateLimit =>
+      'Trop d’e-mails ont été demandés. Veuillez patienter quelques minutes avant de réessayer.';
+
+  @override
+  String get authFlowExpired =>
+      'La procédure de connexion a expiré. Veuillez la recommencer.';
+
+  @override
+  String get authIdentityLinkFailed =>
+      'Le compte utilisateur n’a pas pu être associé à cette méthode de connexion.';
+
+  @override
+  String get authInvalidCredentials =>
+      'L’adresse e-mail ou le mot de passe est incorrect.';
+
+  @override
+  String get authInvalidEmailAddress =>
+      'Veuillez saisir une adresse e-mail valide.';
+
+  @override
+  String get authInvalidLogin =>
+      'Votre connexion n’est plus valide. Veuillez vous reconnecter.';
+
+  @override
+  String get authLoginFailed =>
+      'La connexion a échoué. Vérifiez vos informations et réessayez.';
+
+  @override
+  String get authLoginStatus400 =>
+      'La connexion a échoué.\n\nCauses possibles :\nLe mot de passe est incorrect.\nAucun compte utilisateur n’a été trouvé avec cette adresse e-mail.\n\nVérifiez l’adresse e-mail ou inscrivez-vous.';
+
+  @override
+  String get authNetworkError =>
+      'La connexion au service d’authentification n’a pas pu être établie. Vérifiez votre connexion Internet.';
+
+  @override
+  String get authOtpDisabled =>
+      'La connexion avec un code de confirmation n’est actuellement pas disponible.';
+
+  @override
+  String get authOtpExpired =>
+      'Le code de confirmation a expiré. Veuillez demander un nouveau code.';
+
+  @override
+  String get authPasswordResetFailed =>
+      'L’e-mail de réinitialisation du mot de passe n’a pas pu être envoyé.';
+
+  @override
+  String get authPasswordResetStatus400 =>
+      'La demande de réinitialisation du mot de passe est invalide.';
+
+  @override
+  String get authPasswordUpdateFailed =>
+      'Le mot de passe n’a pas pu être modifié.';
+
+  @override
+  String get authPasswordUpdateStatus400 =>
+      'Le nouveau mot de passe n’a pas pu être enregistré.';
+
+  @override
+  String get authPasswordUpdateStatus422 =>
+      'Le mot de passe ne respecte pas les exigences de sécurité. Utilisez au moins 8 caractères et ne réutilisez pas un ancien mot de passe.';
+
+  @override
+  String get authReauthenticationInvalid =>
+      'La nouvelle vérification de votre connexion est invalide ou a expiré. Veuillez vous reconnecter.';
+
+  @override
+  String get authReauthenticationNeeded =>
+      'Veuillez vous reconnecter avant de modifier votre mot de passe.';
+
+  @override
+  String get authRegistrationFailed =>
+      'L’inscription a échoué. Vérifiez vos informations et réessayez.';
+
+  @override
+  String get authRegistrationStatus400 =>
+      'Les données d’inscription sont invalides. Vérifiez l’adresse e-mail, le nom d’utilisateur et le mot de passe.';
+
+  @override
+  String get authRegistrationStatus422 =>
+      'L’inscription n’a pas pu être terminée avec ces informations.';
+
+  @override
+  String get authRequestRateLimit =>
+      'Trop de demandes ont été envoyées. Veuillez patienter un moment avant de réessayer.';
+
+  @override
+  String get authSamePassword =>
+      'Le nouveau mot de passe doit être différent du mot de passe actuel.';
+
+  @override
+  String get authServiceUnavailable =>
+      'Le service d’authentification est actuellement indisponible. Veuillez réessayer plus tard.';
+
+  @override
+  String get authSessionExpired =>
+      'Votre session a expiré. Veuillez vous reconnecter.';
+
+  @override
+  String get authSignupDisabled =>
+      'Les nouvelles inscriptions ne sont actuellement pas disponibles.';
+
+  @override
+  String get authStatus429 =>
+      'Un service d’e-mail gratuit à usage limité est actuellement utilisé. Veuillez réessayer plus tard. L’attente peut durer jusqu’à une heure. Vous pouvez également envoyer un e-mail informel à stadtschreiber.basel@gmail.com.';
+
+  @override
+  String get authUnexpectedFailure =>
+      'Une erreur inattendue s’est produite dans le service d’authentification. Veuillez réessayer plus tard.';
+
+  @override
+  String get authUserAlreadyExists =>
+      'Un compte utilisateur existe déjà pour cette adresse e-mail. Vous pouvez vous connecter ou réinitialiser votre mot de passe.';
+
+  @override
+  String get authUserBanned => 'Ce compte utilisateur est actuellement bloqué.';
+
+  @override
+  String get authWeakPassword =>
+      'Le mot de passe ne respecte pas les exigences de sécurité. Utilisez au moins 8 caractères.';
 }
