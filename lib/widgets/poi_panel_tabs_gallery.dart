@@ -12,7 +12,6 @@ import 'package:stadtschreiber/widgets/modal_poi_photo_gallery.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // TODO Upload Images to Cloudflare 
-// TODO no image placeholder
 class PoiPanelGalleryTab extends ConsumerWidget {
   const PoiPanelGalleryTab({super.key});
 
@@ -102,11 +101,7 @@ class PoiPanelGalleryTab extends ConsumerWidget {
             // Featured image
             if (selectedPoi.featuredImageUrl == null ||
                 selectedPoi.featuredImageUrl!.isEmpty) ...[
-              const Icon(
-                Icons.image_not_supported,
-                size: 80,
-                color: Colors.grey,
-              ),
+              SizedBox.shrink()
             ] else ...[
               GestureDetector(
                 onTap: () => PoiPhotoGalleryModal.open(

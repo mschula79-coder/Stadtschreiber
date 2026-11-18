@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:stadtschreiber/models/address.dart';
-import 'package:stadtschreiber/models/poi.dart';
 import 'package:stadtschreiber/models/poi_feature_node.dart';
 import 'package:stadtschreiber/provider/app_state_provider.dart';
+import 'package:stadtschreiber/provider/categories_localized_provider.dart';
 import 'package:stadtschreiber/provider/locale_provider.dart';
-import 'package:stadtschreiber/provider/poi_drag_provider.dart';
 import 'package:stadtschreiber/provider/poi_repository_provider.dart';
 import 'package:stadtschreiber/provider/selected_poi_provider.dart';
 import 'package:stadtschreiber/provider/supabase_user_state_provider.dart';
@@ -15,9 +15,9 @@ import 'package:stadtschreiber/services/debug_service.dart';
 import 'package:stadtschreiber/utils/dialog_utils.dart';
 import 'package:stadtschreiber/utils/language_utils.dart';
 import 'package:stadtschreiber/utils/url_utils.dart';
-import 'package:stadtschreiber/widgets/_editable_list.dart';
 import 'package:stadtschreiber/widgets/modal_address_edit.dart';
 import 'package:stadtschreiber/widgets/modal_poi_categories_edit.dart';
+import 'package:stadtschreiber/widgets/modal_poi_geometry_edit.dart';
 import 'package:stadtschreiber/widgets/modal_string_features_editor.dart';
 import 'package:stadtschreiber/provider/poi_features_provider.dart';
 import 'package:stadtschreiber/provider/pois_for_categories_provider.dart';
@@ -42,17 +42,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
 
     final poiFeaturesAsync = ref.watch(poiFeaturesProvider(selectedPoi.id));
     final location = selectedPoi.location;
-    final pts = selectedPoi.getPoints();
-    final pointsList = pts == null
-        ? <String>[]
-        : pts
-              .map(
-                (p) =>
-                    "${p.lat.toStringAsFixed(6)}, ${p.lon.toStringAsFixed(6)}",
-              )
-              .toList();
 
-    final appState = ref.watch(appStateProvider);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
       child: Column(
@@ -375,7 +365,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
                       ? const EdgeInsets.fromLTRB(0, 8, 35, 10)
                       : const EdgeInsets.fromLTRB(0, 8, 0, 10),
                 ),
-                child: _buildCategoryChips(selectedPoi.categories),
+                child: _buildCategoryChips(selectedPoi.categories, ref),
               ),
 
               if (isEditModeEnabled)
@@ -538,178 +528,58 @@ class PoiPanelInfoTab extends ConsumerWidget {
                 ),
             ],
           ),
+          const SizedBox(height: 8),
 
-          if (isEditModeEnabled) ...[
-            // Standort und Geometrie
-            Text(
-              getText(
-                'locationAndGeometrie',
-                languageCode: languageCode,
-                countryCode: countryCode,
+          // Standort und Geometrie
+          Stack(
+            children: [
+              InputDecorator(
+                decoration: InputDecoration(
+                  labelText: getText(
+                    'location',
+                    languageCode: languageCode,
+                    countryCode: countryCode,
+                  ),
+                  alignLabelWithHint: true,
+                  floatingLabelBehavior: FloatingLabelBehavior.always,
+                  isDense: true,
+                  contentPadding: isEditModeEnabled
+                      ? const EdgeInsets.fromLTRB(0, 8, 35, 5)
+                      : const EdgeInsets.fromLTRB(0, 8, 0, 5),
+                ),
+                child: Text(
+                  '${location.lat.toStringAsFixed(6)}, '
+                  '${location.lon.toStringAsFixed(6)}',
+                ),
               ),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 15),
-            Padding(
-              padding: EdgeInsetsGeometry.only(right: 25),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Label Standort: Lat: ${location.lat} Lon: ${location.lon}',
+              if (isEditModeEnabled)
+                Positioned(
+                  right: 0,
+                  top: 5,
+                  child: IconButton(
+                    tooltip: getText(
+                      'editLocation',
+                      languageCode: languageCode,
+                      countryCode: countryCode,
                     ),
-                  ),
-
-                  GestureDetector(
-                    onTap: () {
-                      ref
-                          .read(dragPoiProvider.notifier)
-                          .startDraggingPoiMode(selectedPoi);
+                    icon: const Icon(Icons.edit),
+                    onPressed: () async {
+                      await showDialog<void>(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (dialogContext) {
+                          return PointerInterceptor(
+                            child: PoiGeometryEditDialog(poi: selectedPoi),
+                          );
+                        },
+                      );
                     },
-                    child: Icon(Icons.edit),
-                  ),
-                ],
-              ),
-            ),
-            // Geometriepunkte bearbeiten
-            const SizedBox(height: 5),
-            SwitchListTile(
-              tileColor: Colors.white,
-              title: Text(
-                getText(
-                  'editGeometryPoints',
-                  languageCode: languageCode,
-                  countryCode: countryCode,
-                ),
-              ),
-              contentPadding: const EdgeInsets.only(left: 0, right: 0),
-              value: appState.isPoiGeomEditMode,
-              onChanged: (newValue) {
-                ref
-                    .read(appStateProvider.notifier)
-                    .setPoiGeomEditMode(newValue);
-                if (newValue) {
-                  ref.read(dragPoiProvider.notifier).setDragPoi(selectedPoi);
-                }
-              },
-            ),
-            const SizedBox(height: 5),
-            buildGeometryTypeSelector(context, selectedPoi, ref),
-            const SizedBox(height: 5),
-
-            Text(
-              getText(
-                'editGeometryPointsInstruction',
-                languageCode: languageCode,
-                countryCode: countryCode,
-              ),
-            ),
-
-            // Pointslist
-            EditableList<String>(
-              items: pointsList,
-              isEditModeEnabled: true,
-              itemBuilder: (entry) {
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 0, 0, 15),
-                  child: Text(entry, style: const TextStyle(fontSize: 16)),
-                );
-              },
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget buildGeometryTypeSelector(
-    BuildContext context,
-    PointOfInterest selectedPoi,
-    WidgetRef ref,
-  ) {
-    final languageCode = ref.watch(localeProvider).languageCode;
-    final countryCode = ref.watch(localeProvider).countryCode;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          getText(
-            'geometryType',
-            languageCode: languageCode,
-            countryCode: countryCode,
-          ),
-          style: TextStyle(fontSize: 16),
-        ),
-        const SizedBox(height: 8),
-
-        RadioGroup<String>(
-          groupValue: selectedPoi.geometryType,
-          onChanged: (value) {
-            final newPoi = selectedPoi.copyWith(geometryType: value!);
-
-            if (newPoi.isGeometryValid()) {
-              final poiRepository = ref.read(poiRepositoryProvider);
-              poiRepository.updatePoiGeomInSupabase(newPoi);
-            }
-            ref.read(appStateProvider.notifier).setPoiGeomEditMode(false);
-            ref.read(selectedPoiProvider.notifier).setPoi(newPoi);
-            //ref.invalidate(visiblePoisProvider);
-          },
-          child: Column(
-            children: <Widget>[
-              ListTile(
-                tileColor: Colors.white,
-
-                title: Text(
-                  getText(
-                    'point',
-                    languageCode: languageCode,
-                    countryCode: countryCode,
                   ),
                 ),
-                leading: Radio<String>(toggleable: true, value: 'point'),
-              ),
-              ListTile(
-                tileColor: Colors.white,
-
-                title: Text(
-                  getText(
-                    'line',
-                    languageCode: languageCode,
-                    countryCode: countryCode,
-                  ),
-                ),
-                leading: Radio<String>(toggleable: true, value: 'linestring'),
-              ),
-              ListTile(
-                tileColor: Colors.white,
-
-                title: Text(
-                  getText(
-                    'polygone',
-                    languageCode: languageCode,
-                    countryCode: countryCode,
-                  ),
-                ),
-                leading: Radio<String>(toggleable: true, value: 'polygon'),
-              ),
-              ListTile(
-                tileColor: Colors.white,
-
-                title: Text(
-                  getText(
-                    'multipolygone',
-                    languageCode: languageCode,
-                    countryCode: countryCode,
-                  ),
-                ),
-                leading: Radio<String>(toggleable: true, value: 'multipolygon'),
-              ),
             ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -760,7 +630,7 @@ class PoiPanelInfoTab extends ConsumerWidget {
     return selectedFeatures;
   }
 
-  Widget _buildCategoryChips(List<String>? categories) {
+  Widget _buildCategoryChips(List<String>? categories, WidgetRef ref) {
     final normalizedCategories =
         (categories ?? const <String>[])
             .map((category) => category.trim())
@@ -780,12 +650,16 @@ class PoiPanelInfoTab extends ConsumerWidget {
       spacing: 8,
       runSpacing: 8,
       children: normalizedCategories
-          .map(
-            (category) => Chip(
+          .map((category) {
+            final categoryLabel = ref.watch(
+              categoryLabelBySlugProvider(category),
+            );
+
+            return Chip(
               avatar: const Icon(Icons.check, size: 16),
-              label: Text(category),
-            ),
-          )
+              label: Text(categoryLabel ?? category),
+            );
+          })
           .toList(growable: false),
     );
   }

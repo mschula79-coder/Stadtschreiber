@@ -458,8 +458,7 @@ class _PoiTop10ListState extends ConsumerState<PoiTop10List> {
 
     return const <LocalizedCategoryNode>[];
   }
-  // TODO Supabase photos migrieren
-
+  
   Widget buildListLengthDropdown(BuildContext context, WidgetRef ref) {
     final allRated = AppLocalizations.of(context)?.allRated ?? 'All rated';
 

@@ -10,8 +10,6 @@ import 'package:stadtschreiber/provider/user_location_state_provider.dart';
 import 'package:stadtschreiber/services/geo_service.dart';
 import 'package:stadtschreiber/widgets/_icon_getter.dart';
 
-// TODO image placeholder
-
 class PoiListItem extends ConsumerWidget {
   final PointOfInterest poi;
   final VoidCallback onTap;
@@ -72,62 +70,10 @@ class PoiListItem extends ConsumerWidget {
             }
           },
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16,4),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // ⭐ Thumbnail + Checkmark Overlay
-                Padding(
-                  padding: EdgeInsetsGeometry.fromLTRB(
-                    paddingLeft ?? 12,
-                    0,
-                    0,
-                    0,
-                  ),
-                  child: Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: SizedBox(
-                          width: imageWidth ?? 120,
-                          height: imageHeight ?? 120,
-                          child:
-                              (poi.featuredImageUrl != null &&
-                                  poi.featuredImageUrl!.isNotEmpty)
-                              ? Image.network(
-                                  poi.featuredImageUrl!,
-                                  fit: BoxFit.cover,
-                                )
-                              : Container(
-                                  color: Colors.grey.shade300,
-                                  child: const Icon(Icons.image_not_supported),
-                                ),
-                        ),
-                      ),
-
-                      // ⭐ Checkmark Overlay (zentriert)
-                      if (isSelected)
-                        Positioned.fill(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.35),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.check_circle,
-                                color: Colors.white,
-                                size: 48,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(width: 12),
-
                 // ⭐ Textbereich
                 Expanded(
                   child: Column(
@@ -237,7 +183,7 @@ class PoiListItem extends ConsumerWidget {
                           : SizedBox.shrink(),
                       isAdmin
                           ? Text(
-                              '${poi.osmKey??'-'}: ${poi.osmValue??'-'}',
+                              '${poi.osmKey ?? '-'}: ${poi.osmValue ?? '-'}',
                               maxLines: 99,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -246,6 +192,55 @@ class PoiListItem extends ConsumerWidget {
                               ),
                             )
                           : SizedBox.shrink(),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                // ⭐ Thumbnail + Checkmark Overlay
+                Padding(
+                  padding: EdgeInsetsGeometry.fromLTRB(
+                    paddingLeft ?? 12,
+                    0,
+                    0,
+                    0,
+                  ),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: SizedBox(
+                          width: imageWidth ?? 120,
+                          height: imageHeight ?? 120,
+                          child:
+                              (poi.featuredImageUrl != null &&
+                                  poi.featuredImageUrl!.isNotEmpty)
+                              ? Image.network(
+                                  poi.featuredImageUrl!,
+                                  fit: BoxFit.cover,
+                                )
+                              : SizedBox.shrink()
+                        ),
+                      ),
+
+                      // ⭐ Checkmark Overlay (zentriert)
+                      if (isSelected)
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.35),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.check_circle,
+                                color: Colors.white,
+                                size: 48,
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),

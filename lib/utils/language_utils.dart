@@ -101,6 +101,8 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
       return localization.editGeometryPointsInstruction;
     case 'editImageInformation':
       return localization.editImageInformation;
+    case 'editLocation':
+      return 'Standort bearbeiten';
     case 'editLinks':
       return localization.editLinks;
     case 'editProfile':
@@ -140,12 +142,17 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
       return localization.line;
     case 'links':
       return localization.links;
+    case 'location':
+      return 'Standort';
+
     case 'locationAndGeometrie':
       return localization.locationAndGeometrie;
     case 'login':
       return localization.login;
     case 'loginRequired':
       return localization.loginRequired;
+      case 'moveLocation':
+      return "Standort anpassen";
     case 'moveMapMessage':
       return localization.moveMapMessage;
     case 'msgArticleEditError':
@@ -172,6 +179,8 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
       return localization.noEntries;
     case 'noFavoritesListsAvailable':
       return localization.noFavoritesListsAvailable;
+      case 'noGeometryPoints':
+      return 'Keine Geometrie gespeichert';
     case 'noPoiFound':
       return localization.noPoiFound;
     case 'noPoiFoundWithTheseCriteria':

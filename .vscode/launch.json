@@ -20,6 +20,18 @@
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
-        }
+        },
+        {
+            "name": "Stadtschreiber Web - Port 3000",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "chrome",
+            "flutterMode": "debug",
+            "toolArgs": [
+                "--web-port",
+                "3000"
+            ]
+        },
     ]
 }

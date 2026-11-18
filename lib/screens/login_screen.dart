@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,7 +23,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
+  static const String _backgroundImageUrl =
+      'https://pub-a3b6ec9e27e54bfa8694c78d3794399e.r2.dev/blick_von_dreirosenbruecke_1778771451102.webp';
   bool loading = false;
   String? errorMessage;
   bool checkEmail = false;
@@ -49,308 +51,324 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final horizontalPadding = constraints.maxWidth < 600 ? 24.0 : 48.0;
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned.fill(
+            child: Image.network(
+              _backgroundImageUrl,
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+              filterQuality: FilterQuality.high,
+              errorBuilder: (context, error, stackTrace) {
+                return ColoredBox(color: Theme.of(context).colorScheme.surface);
+              },
+            ),
+          ),
+          Positioned.fill(
+            child: ColoredBox(color: Colors.black.withValues(alpha: 0.38)),
+          ),
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final horizontalPadding = constraints.maxWidth < 600
+                    ? 24.0
+                    : 48.0;
 
-            final availableHeight = constraints.maxHeight - 48.0;
+                final availableHeight = constraints.maxHeight - 48.0;
 
-            return SingleChildScrollView(
-              physics: keyboardVisible
-                  ? const ClampingScrollPhysics()
-                  : const NeverScrollableScrollPhysics(),
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: EdgeInsets.symmetric(
-                horizontal: horizontalPadding,
-                vertical: 24,
-              ),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: availableHeight.clamp(0.0, constraints.maxHeight),
-                ),
-                child: Center(
+                return SingleChildScrollView(
+                  physics: keyboardVisible
+                      ? const ClampingScrollPhysics()
+                      : const NeverScrollableScrollPhysics(),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                    vertical: 24,
+                  ),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 520),
-                    child: AutofillGroup(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (loading) ...[
-                            const CircularProgressIndicator(),
-                            const SizedBox(height: 24),
-                          ],
-                          const SizedBox(height: 40),
-
-                          Text(
-                            'Stadtschreiber Basel',
-                            textAlign: TextAlign.center,
-
-                            style: TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.w300,
+                    constraints: BoxConstraints(
+                      minHeight: availableHeight.clamp(
+                        0.0,
+                        constraints.maxHeight,
+                      ),
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 520),
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surface.withValues(alpha: 0.72),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.35),
                             ),
-                          ),
-                          const SizedBox(height: 0),
-                          Text(
-                            getText(
-                              'slogan',
-                              languageCode: languageCode,
-                              countryCode: countryCode,
-                            ),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w300,
-                            ),
-                          ),
-                          const SizedBox(height: 30),
-                          /* 
-                          TextButton(
-                            style: TextButton.styleFrom(
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.primary,
-                              foregroundColor: Colors.white,
-                            ),
-                            onPressed: () {
-                              final imageUrls = List<String>.generate(13, (
-                                index,
-                              ) {
-                                final number = (index + 1).toString().padLeft(
-                                  2,
-                                  '0',
-                                );
-
-                                return 'https://pub-f79c7b584e8a408282353176df4c42e6.r2.dev/Folie$number.JPG';
-                              });
-
-                              PhotoGalleryModal.open(
-                                context,
-                                imageUrls: imageUrls,
-                                initialUrl: imageUrls.first,
-                              );
-                            },
-                            child: Text(
-                              getText('newHere', languageCode: languageCode, countryCode: countryCode),
-                            ),
-                          ), */
-
-                          Text(
-                            getText(
-                              'underConstruction',
-                              languageCode: languageCode,
-                              countryCode: countryCode,
-                            ),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.normal,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-
-                          const SizedBox(height: 20),
-                          TextField(
-                            controller: emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            textInputAction: TextInputAction.next,
-                            autofillHints: const [
-                              AutofillHints.email,
-                              AutofillHints.username,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.28),
+                                blurRadius: 24,
+                                spreadRadius: 2,
+                                offset: const Offset(0, 8),
+                              ),
                             ],
-                            decoration: InputDecoration(
-                              labelText: getText(
-                                'email',
-                                languageCode: languageCode,
-                                countryCode: countryCode,
-                              ),
-                              border: const OutlineInputBorder(),
-                            ),
                           ),
-                          const SizedBox(height: 16),
-                          TextField(
-                            controller: passwordController,
-                            obscureText: true,
-                            textInputAction: TextInputAction.done,
-                            autofillHints: const [AutofillHints.password],
-                            onSubmitted: (_) {
-                              if (!loading) {
-                                _login();
-                              }
-                            },
-                            decoration: InputDecoration(
-                              labelText: getText(
-                                'password',
-                                languageCode: languageCode,
-                                countryCode: countryCode,
-                              ),
-                              border: const OutlineInputBorder(),
-                            ),
-                          ),
-                          if (errorMessage != null) ...[
-                            const SizedBox(height: 12),
-                            Text(
-                              errorMessage!,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.red),
-                            ),
-                          ],
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: TextButton(
-                              onPressed: loading ? null : _resetPassword,
-                              child: Text(
-                                getText(
-                                  'passwordForgotten',
-                                  languageCode: languageCode,
-                                  countryCode: countryCode,
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 5),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Wrap(
-                              alignment: WrapAlignment.start,
-                              spacing: 12,
-                              runSpacing: 12,
+                          child: AutofillGroup(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                SizedBox(width: 4),
+                                if (loading) ...[
+                                  const CircularProgressIndicator(),
+                                  const SizedBox(height: 24),
+                                ],
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'Stadtschreiber Basel',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.w300,
+                                  ),
+                                ),
+                                Text(
+                                  getText(
+                                    'slogan',
+                                    languageCode: languageCode,
+                                    countryCode: countryCode,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w300,
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                Text(
+                                  getText(
+                                    'underConstruction',
+                                    languageCode: languageCode,
+                                    countryCode: countryCode,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.normal,
+                                  ),
+                                ),
+                                const SizedBox(height: 28),
+                                TextField(
+                                  controller: emailController,
+                                  keyboardType: TextInputType.emailAddress,
+                                  textInputAction: TextInputAction.next,
+                                  autofillHints: const [
+                                    AutofillHints.email,
+                                    AutofillHints.username,
+                                  ],
+                                  decoration: InputDecoration(
+                                    labelText: getText(
+                                      'email',
+                                      languageCode: languageCode,
+                                      countryCode: countryCode,
+                                    ),
+                                    filled: true,
+                                    fillColor: Theme.of(
+                                      context,
+                                    ).colorScheme.surface,
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                TextField(
+                                  controller: passwordController,
+                                  obscureText: true,
+                                  textInputAction: TextInputAction.done,
+                                  autofillHints: const [AutofillHints.password],
+                                  onSubmitted: (_) {
+                                    if (!loading) {
+                                      _login();
+                                    }
+                                  },
+                                  decoration: InputDecoration(
+                                    labelText: getText(
+                                      'password',
+                                      languageCode: languageCode,
+                                      countryCode: countryCode,
+                                    ),
+                                    filled: true,
+                                    fillColor: Theme.of(
+                                      context,
+                                    ).colorScheme.surface,
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                ),
+                                if (errorMessage != null) ...[
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    errorMessage!,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(color: Colors.red),
+                                  ),
+                                ],
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: TextButton(
+                                    onPressed: loading ? null : _resetPassword,
+                                    child: Text(
+                                      getText(
+                                        'passwordForgotten',
+                                        languageCode: languageCode,
+                                        countryCode: countryCode,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                Align(
+                                  alignment: Alignment.center,
+                                  child: Wrap(
+                                    alignment: WrapAlignment.start,
+                                    spacing: 12,
+                                    runSpacing: 12,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
+                                    children: [
+                                      buildLanguageDropdown(context, ref),
+                                      ElevatedButton(
+                                        onPressed: loading ? null : _login,
+                                        child: Text(
+                                          getText(
+                                            'login',
+                                            languageCode: languageCode,
+                                            countryCode: countryCode,
+                                          ),
+                                        ),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: loading
+                                            ? null
+                                            : () async {
+                                                if (passwordController.text
+                                                        .trim()
+                                                        .length >=
+                                                    8) {
+                                                  await _askUsernameAndRegister();
+                                                } else {
+                                                  if (!context.mounted) {
+                                                    return;
+                                                  }
 
-                                buildLanguageDropdown(context, ref),
-                                ElevatedButton(
-                                  onPressed: loading ? null : _login,
+                                                  messageBox(
+                                                    context,
+                                                    getText(
+                                                      'passwordTooShort',
+                                                      languageCode:
+                                                          languageCode,
+                                                      countryCode: countryCode,
+                                                    ),
+                                                    '',
+                                                  );
+                                                }
+                                              },
+                                        child: Text(
+                                          getText(
+                                            'register',
+                                            languageCode: languageCode,
+                                            countryCode: countryCode,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (checkEmail) ...[
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    getText(
+                                      'checkEmail',
+                                      languageCode: languageCode,
+                                      countryCode: countryCode,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(color: Colors.red),
+                                  ),
+                                ],
+                                const SizedBox(height: 40),
+                                Text(
+                                  getText(
+                                    'joinus2',
+                                    languageCode: languageCode,
+                                    countryCode: countryCode,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.normal,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                TextButton(
+                                  style: TextButton.styleFrom(
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                    foregroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimary,
+                                  ),
+                                  onPressed: () {
+                                    AboutModal.open(context);
+                                  },
                                   child: Text(
                                     getText(
-                                      'login',
+                                      'joinus1',
                                       languageCode: languageCode,
                                       countryCode: countryCode,
                                     ),
                                   ),
                                 ),
-                                ElevatedButton(
-                                  onPressed: loading
-                                      ? null
-                                      : () async {
-                                          if (passwordController.text
-                                                  .trim()
-                                                  .length >=
-                                              8) {
-                                            await _askUsernameAndRegister();
-                                          } else {
-                                            if (!context.mounted) {
-                                              return;
-                                            }
-
-                                            messageBox(
-                                              context,
-                                              getText(
-                                                'passwordTooShort',
-                                                languageCode: languageCode,
-                                                countryCode: countryCode,
-                                              ),
-                                              '',
-                                            );
-                                          }
-                                        },
-                                  child: Text(
-                                    getText(
-                                      'register',
-                                      languageCode: languageCode,
-                                      countryCode: countryCode,
+                                const SizedBox(height: 20),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton(
+                                      icon: getIcon('instagram', 24, null),
+                                      onPressed: () {
+                                        launchUrl(
+                                          Uri.parse(
+                                            'https://www.instagram.com/stadtschreiber.basel/',
+                                          ),
+                                          mode: LaunchMode.externalApplication,
+                                        );
+                                      },
                                     ),
-                                  ),
+                                    IconButton(
+                                      icon: getIcon('email', 24, null),
+                                      onPressed: () {
+                                        launchUrl(
+                                          Uri.parse(
+                                            'mailto:stadtschreiber.basel@gmail.com',
+                                          ),
+                                          mode: LaunchMode.externalApplication,
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ),
-                          if (checkEmail) ...[
-                            const SizedBox(height: 16),
-                            Text(
-                              getText(
-                                'checkEmail',
-                                languageCode: languageCode,
-                                countryCode: countryCode,
-                              ),
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.red),
-                            ),
-                          ],
-
-                          SizedBox(height: 40),
-
-                          Text(
-                            getText(
-                              'joinus2',
-                              languageCode: languageCode,
-                              countryCode: countryCode,
-                            ),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.normal,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-
-                          TextButton(
-                            style: TextButton.styleFrom(
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.primary,
-                              foregroundColor: Colors.white,
-                            ),
-                            onPressed: () {
-                              AboutModal.open(context);
-                            },
-                            child: Text(
-                              getText(
-                                'joinus1',
-                                languageCode: languageCode,
-                                countryCode: countryCode,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 20),
-
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              IconButton(
-                                icon: getIcon("instagram", 24, null),
-                                onPressed: () {
-                                  launchUrl(
-                                    Uri.parse(
-                                      'https://www.instagram.com/stadtschreiber.basel/',
-                                    ),
-                                    mode: LaunchMode.externalApplication,
-                                  );
-                                },
-                              ),
-                              IconButton(
-                                icon: getIcon("email", 24, null),
-                                onPressed: () {
-                                  launchUrl(
-                                    Uri.parse(
-                                      'mailto:stadtschreiber.basel@gmail.com',
-                                    ),
-                                    mode: LaunchMode.externalApplication,
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-            );
-          },
-        ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -533,6 +551,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       final session = Supabase.instance.client.auth.currentSession;
 
+      /* print(
+  'ACCESS_TOKEN=${session?.accessToken}'
+    );
+ */
       if (session == null) {
         if (!mounted) {
           return false;
@@ -575,7 +597,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
 
       setState(() {
-        errorMessage = getAuthErrorMessage(error, languageCode, countryCode, operation: operation);
+        errorMessage = getAuthErrorMessage(
+          error,
+          languageCode,
+          countryCode,
+          operation: operation,
+        );
       });
 
       return false;
@@ -641,13 +668,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
+    final normalizedEmail = email.trim().toLowerCase();
+
     final messenger = ScaffoldMessenger.of(context);
+
     final resetLinkSent = AppLocalizations.of(context)!.resetLinkSent;
+
+    if (normalizedEmail.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Bitte gib deine E-Mail-Adresse ein.')),
+      );
+
+      return;
+    }
+//// TODO Hinweis Der Recovery-Link muss grundsätzlich im selben Browser und auf demselben Gerät geöffnet werden
 
     try {
       await Supabase.instance.client.auth.resetPasswordForEmail(
-        email,
-        redirectTo: 'stadtschreiber://auth-callback',
+        normalizedEmail,
+        redirectTo: kIsWeb
+            ? 'https://stadtschreiber.app/?passwordRecovery=true'
+            : 'stadtschreiber://auth-callback',
       );
 
       if (!mounted) {

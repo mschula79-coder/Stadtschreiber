@@ -12,6 +12,7 @@
 .swiftpm/
 migrate_working_dir/
 
+
 # IntelliJ related
 *.iml
 *.ipr
@@ -36,6 +37,14 @@ coverage/
 **/ios/Flutter/.last_build_id
 assets/tiles/*.pmtiles
 
+node_modules/
+.npm/
+
+.env
+.env.*
+!.env.example
+supabase/functions/.env
+
 # Symbolication related
 app.*.symbols
 
@@ -45,4 +54,3 @@ app.*.map.json
 # Android Studio will place build artifacts here
 /android/app/debug
 /android/app/profile
-/android/app/release
