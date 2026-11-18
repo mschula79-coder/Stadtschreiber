@@ -411,26 +411,143 @@ class _SettingsSheet extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 12),
+              // TODO übersetzung
               ElevatedButton.icon(
                 onPressed: () async {
-                  final currentUser = Supabase.instance.client.auth.currentUser;
-
-                  if (currentUser == null) {
-                    return;
-                  }
-
-                  await Supabase.instance.client.functions.invoke(
-                    'delete-user',
-                    body: {'user_id': currentUser.id},
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (dialogContext) {
+                      return AlertDialog(
+                        icon: Icon(
+                          Icons.warning_amber_rounded,
+                          size: 48,
+                          color: Theme.of(dialogContext).colorScheme.error,
+                        ),
+                        title: const Text(
+                          'Konto endgültig löschen?',
+                          textAlign: TextAlign.center,
+                        ),
+                        content: const Text(
+                          'Dein Benutzerkonto wird endgültig gelöscht. '
+                          'Dieser Vorgang kann nicht rückgängig gemacht werden.',
+                          textAlign: TextAlign.center,
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(dialogContext).pop(false);
+                            },
+                            child: const Text('Abbrechen'),
+                          ),
+                          FilledButton.icon(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Theme.of(
+                                dialogContext,
+                              ).colorScheme.error,
+                              foregroundColor: Theme.of(
+                                dialogContext,
+                              ).colorScheme.onError,
+                            ),
+                            onPressed: () {
+                              Navigator.of(dialogContext).pop(true);
+                            },
+                            icon: const Icon(Icons.delete_forever),
+                            label: const Text('Konto löschen'),
+                          ),
+                        ],
+                      );
+                    },
                   );
 
-                  await Supabase.instance.client.auth.signOut();
-
-                  if (!context.mounted) {
+                  if (confirmed != true || !context.mounted) {
                     return;
                   }
 
-                  Navigator.pushReplacementNamed(context, '/login');
+                  final supabase = Supabase.instance.client;
+                  final messenger = ScaffoldMessenger.of(context);
+
+                  try {
+                    var session = supabase.auth.currentSession;
+
+                    if (session == null) {
+                      throw const AuthException(
+                        'Keine aktive Anmeldung vorhanden.',
+                      );
+                    }
+
+                    if (session.isExpired) {
+                      final refreshResponse = await supabase.auth
+                          .refreshSession();
+
+                      session = refreshResponse.session;
+                    }
+
+                    if (session == null) {
+                      throw const AuthException(
+                        'Die Anmeldung ist abgelaufen. '
+                        'Bitte melde dich erneut an.',
+                      );
+                    }
+
+                    final response = await supabase.functions.invoke(
+                      'delete-user',
+                      headers: <String, String>{
+                        'Authorization': 'Bearer ${session.accessToken}',
+                      },
+                    );
+
+                    if (response.status < 200 || response.status >= 300) {
+                      throw StateError(
+                        'Das Konto konnte nicht gelöscht werden. '
+                        'Status: ${response.status}, '
+                        'Antwort: ${response.data}',
+                      );
+                    }
+
+                    await supabase.auth.signOut();
+
+                    if (!context.mounted) {
+                      return;
+                    }
+
+                    Navigator.of(
+                      context,
+                    ).pushNamedAndRemoveUntil('/', (route) => false);
+                  } on FunctionException catch (error) {
+                    if (!context.mounted) {
+                      return;
+                    }
+
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Das Konto konnte nicht gelöscht werden: '
+                          '${error.details ?? error.reasonPhrase ?? error.status}',
+                        ),
+                      ),
+                    );
+                  } on AuthException catch (error) {
+                    if (!context.mounted) {
+                      return;
+                    }
+
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(error.message)),
+                    );
+                  } catch (error) {
+                    if (!context.mounted) {
+                      return;
+                    }
+
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Das Konto konnte nicht gelöscht werden: $error',
+                        ),
+                      ),
+                    );
+                  }
                 },
                 icon: const Icon(Icons.delete_forever),
                 label: Text(
@@ -627,7 +744,9 @@ class _ChangePasswordSheetState extends ConsumerState<_ChangePasswordSheet> {
 
       setState(() {
         error = getAuthErrorMessage(
-          exception, languageCode, countryCode,
+          exception,
+          languageCode,
+          countryCode,
           operation: AuthOperation.passwordUpdate,
         );
       });
@@ -638,7 +757,9 @@ class _ChangePasswordSheetState extends ConsumerState<_ChangePasswordSheet> {
 
       setState(() {
         error = getAuthErrorMessage(
-          exception, languageCode, countryCode,
+          exception,
+          languageCode,
+          countryCode,
           operation: AuthOperation.passwordUpdate,
         );
       });
