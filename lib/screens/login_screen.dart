@@ -49,6 +49,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final languageCode = ref.watch(localeProvider).languageCode;
     final countryCode = ref.watch(localeProvider).countryCode;
 
+    final String aboutUrl =
+        'https://pub-f79c7b584e8a408282353176df4c42e6.r2.dev';
+    final int aboutImageCount = 14;
+
+    final String becomeTesterUrl =
+        'https://pub-5aa263be2c474862888d4d2e780421b7.r2.dev';
+    final int becomeTesterImageCount = 7;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: Stack(
@@ -309,26 +317,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                TextButton(
-                                  style: TextButton.styleFrom(
-                                    backgroundColor: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                    foregroundColor: Theme.of(
-                                      context,
-                                    ).colorScheme.onPrimary,
-                                  ),
-                                  onPressed: () {
-                                    AboutModal.open(context);
-                                  },
-                                  child: Text(
-                                    getText(
-                                      'joinus1',
-                                      languageCode: languageCode,
-                                      countryCode: countryCode,
+
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    // About
+                                    TextButton(
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                        foregroundColor: Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimary,
+                                      ),
+                                      onPressed: () {
+                                        AboutModal.open(context, baseUrl: aboutUrl, imageCount: aboutImageCount);
+                                      },
+                                      child: Text(
+                                        getText(
+                                          'aboutus',
+                                          languageCode: languageCode,
+                                          countryCode: countryCode,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(width: 10),
+                                    TextButton(
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                        foregroundColor: Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimary,
+                                      ),
+                                      onPressed: () {
+                                        AboutModal.open(context, baseUrl: becomeTesterUrl, imageCount: becomeTesterImageCount);
+                                      },
+                                      child: Text(
+                                        getText(
+                                          'becomeTester',
+                                          languageCode: languageCode,
+                                          countryCode: countryCode,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
+
                                 const SizedBox(height: 20),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,

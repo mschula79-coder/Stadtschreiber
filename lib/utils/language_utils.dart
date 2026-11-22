@@ -40,6 +40,8 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
   }
 
   switch (textCode) {
+    case 'aboutus':
+      return 'Über Stadtschreiber'; // TODO translate
     case 'add':
       return localization.add;
     case 'addToList':
@@ -50,6 +52,8 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
       return localization.apply;
     case 'attention':
       return localization.attention;
+    case 'becomeTester':
+      return 'Werde App Tester';
     case 'cancel':
       return localization.cancel;
     case 'categories':
@@ -210,7 +214,7 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
       return localization.register;
     case 'removeSelection':
       return localization.removeSelection;
-      // TODO Hinweis übersetzen
+    // TODO Hinweis übersetzen
     case 'resetLinkSent':
       return localization.resetLinkSent;
     case 'results':

@@ -2,42 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:stadtschreiber/widgets/modal_photo_gallery.dart';
 
 class AboutModal {
-  static const String _baseUrl =
-      'https://pub-f79c7b584e8a408282353176df4c42e6.r2.dev';
-
-  static const int _imageCount = 14;
-
-  static List<String> get imageUrls {
-    return List<String>.generate(
-      _imageCount,
-      (index) {
-        final number = (index + 1).toString();
-
-        return '$_baseUrl/Folie$number.JPG';
-      },
-      growable: false,
-    );
-  }
-
   static void open(
     BuildContext context, {
+    required String baseUrl,
+    required int imageCount,
     int initialIndex = 0,
+    String filePrefix = 'Folie',
+    String fileExtension = 'JPG',
   }) {
-    final urls = imageUrls;
+    final normalizedBaseUrl = baseUrl.trim().replaceFirst(RegExp(r'/+$'), '');
 
-    if (urls.isEmpty) {
+    if (normalizedBaseUrl.isEmpty || imageCount <= 0) {
       return;
     }
 
-    final safeInitialIndex = initialIndex.clamp(
-      0,
-      urls.length - 1,
-    );
+    final imageUrls = List<String>.generate(imageCount, (index) {
+      final number = index + 1;
+
+      return '$normalizedBaseUrl/'
+          '$filePrefix$number.$fileExtension';
+    }, growable: false);
+
+    final safeInitialIndex = initialIndex.clamp(0, imageUrls.length - 1);
 
     PhotoGalleryModal.open(
       context,
-      imageUrls: urls,
-      initialUrl: urls[safeInitialIndex],
+      imageUrls: imageUrls,
+      initialUrl: imageUrls[safeInitialIndex],
     );
   }
 }

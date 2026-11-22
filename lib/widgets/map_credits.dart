@@ -15,6 +15,9 @@ class MapCredits extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final String aboutUrl =
+        'https://pub-f79c7b584e8a408282353176df4c42e6.r2.dev';
+    final int aboutImageCount = 14;
 
     return Positioned(
       bottom: 50,
@@ -69,7 +72,7 @@ class MapCredits extends ConsumerWidget {
                                 foregroundColor: Colors.white,
                               ),
                               onPressed: () {
-                                AboutModal.open(context);
+                                AboutModal.open(context, baseUrl: aboutUrl, imageCount: aboutImageCount);
                               },
                               child: Text(
                                 getText(
@@ -77,7 +80,9 @@ class MapCredits extends ConsumerWidget {
                                   languageCode: ref
                                       .read(localeProvider)
                                       .languageCode,
-                                  countryCode: ref.read(localeProvider).countryCode,
+                                  countryCode: ref
+                                      .read(localeProvider)
+                                      .countryCode,
                                 ),
                               ),
                             ),
