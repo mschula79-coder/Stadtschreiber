@@ -283,7 +283,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get register => 'S’inscrire';
 
   @override
-  String get resetLinkSent => 'Nous vous avons envoyé un lien';
+  String get resetLinkSent =>
+      'Nous vous avons envoyé un lien. Merci de le confirmer avec le même appareil et dans le même navigateur ou la même application.';
 
   @override
   String get resetPassword => 'Réinitialiser le mot de passe';

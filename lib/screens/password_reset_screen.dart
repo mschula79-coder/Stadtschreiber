@@ -25,21 +25,37 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(getText('setNewPassword', languageCode: languageCode, countryCode: countryCode)),
+        title: Text(
+          getText(
+            'setNewPassword',
+            languageCode: languageCode,
+            countryCode: countryCode,
+          ),
+        ),
       ),
 
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            Text(getText('setNewPassword', languageCode: languageCode, countryCode: countryCode)),
+            Text(
+              getText(
+                'setNewPassword',
+                languageCode: languageCode,
+                countryCode: countryCode,
+              ),
+            ),
             const SizedBox(height: 16),
 
             TextField(
               controller: passwordCtrl,
               obscureText: true,
               decoration: InputDecoration(
-                labelText: getText('newPassword', languageCode: languageCode, countryCode: countryCode),
+                labelText: getText(
+                  'newPassword',
+                  languageCode: languageCode,
+                  countryCode: countryCode,
+                ),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -48,17 +64,36 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
             if (error != null)
               Text(error!, style: const TextStyle(color: Colors.red)),
-
-            ElevatedButton(
-              onPressed: loading ? null : _savePassword,
-              child: loading
-                  ? const CircularProgressIndicator()
-                  : Text(AppLocalizations.of(context)!.save),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: loading ? null : _cancel,
+                  child: Text(AppLocalizations.of(context)!.cancel),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  onPressed: loading ? null : _savePassword,
+                  child: loading
+                      ? const CircularProgressIndicator()
+                      : Text(AppLocalizations.of(context)!.save),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _cancel() async {
+  /*   await Supabase.instance.client.auth.signOut();
+ */
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
   }
 
   Future<void> _savePassword() async {

@@ -96,7 +96,7 @@
   "processLink": "Link prüfen",
   "rating": "Bewertung",
   "register": "Registrieren",
-  "resetLinkSent": "Wir haben dir einen Link geschickt",
+  "resetLinkSent": "Wir haben dir einen Link geschickt. Bitte bestätige ihn mit dem gleichen Gerät und im gleichen Browser / App",
   "resetPassword": "Passwort zurücksetzen",
   "results": "Resultate",
   "role": "Rolle",

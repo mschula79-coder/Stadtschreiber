@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:iconify_flutter/iconify_flutter.dart';
+import 'package:iconify_flutter/icons/mdi.dart';
 import 'package:intl/intl.dart';
 import 'package:stadtschreiber/models/article_entry.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -54,7 +56,6 @@ class ArticlesModal extends StatefulWidget {
 
 class _ArticlesModalState extends State<ArticlesModal> {
   late final List<WebViewController?> _webViewControllers;
-
   late int _currentIndex;
 
   bool _isPageLoading = false;
@@ -192,7 +193,6 @@ class _ArticlesModalState extends State<ArticlesModal> {
 
   String _formatArticleMetadata(ArticleEntry article) {
     final values = <String>[];
-
     final source = article.source.trim();
 
     if (source.isNotEmpty) {
@@ -255,6 +255,25 @@ class _ArticlesModalState extends State<ArticlesModal> {
 
   void _showNextArticle() {
     _showArticleAt(_currentIndex + 1);
+  }
+
+  void _handleHorizontalSwipe(DragEndDetails details) {
+    if (widget.articles.length <= 1) {
+      return;
+    }
+
+    final velocity = details.primaryVelocity ?? 0;
+
+    if (velocity.abs() < 250) {
+      return;
+    }
+
+    if (velocity < 0) {
+      _showNextArticle();
+      return;
+    }
+
+    _showPreviousArticle();
   }
 
   Future<void> _reloadCurrentArticle() async {
@@ -383,6 +402,80 @@ class _ArticlesModalState extends State<ArticlesModal> {
     );
   }
 
+  Widget _buildNarrowArticleArea(BuildContext context, ArticleEntry article) {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onHorizontalDragEnd: _handleHorizontalSwipe,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: KeyedSubtree(
+                key: ValueKey<String>('article-$_currentIndex-${article.url}'),
+                child: _buildArticleContent(context),
+              ),
+            ),
+          ),
+        ),
+        if (_isPageLoading && article.canEmbed == true)
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: LinearProgressIndicator(),
+          ),
+        if (_pageError != null)
+          Positioned.fill(child: _buildPageError(context)),
+        Positioned(
+          right: 16,
+          bottom: 16,
+          child: FloatingActionButton(
+            heroTag: 'open-article-browser',
+            tooltip: 'Im Browser öffnen',
+            backgroundColor: Colors.black87,
+            foregroundColor: Colors.white,
+            onPressed: () async {
+              final opened = await _openArticleExternally(_currentArticle);
+
+              if (!opened && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Der Artikel konnte nicht im Browser geöffnet werden.',
+                    ),
+                  ),
+                );
+              }
+            },
+            child: const Iconify(
+              Mdi.open_in_new,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWideArticleArea(BuildContext context, ArticleEntry article) {
+    return Stack(
+      children: [
+        Positioned.fill(child: _buildArticleContent(context)),
+        if (_isPageLoading && article.canEmbed == true)
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: LinearProgressIndicator(),
+          ),
+        if (_pageError != null)
+          Positioned.fill(child: _buildPageError(context)),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
@@ -392,6 +485,11 @@ class _ArticlesModalState extends State<ArticlesModal> {
     final metadata = _formatArticleMetadata(article);
 
     final canNavigate = widget.articles.length > 1;
+    final isNarrowScreen = size.width < 700;
+
+    final modalWidth = isNarrowScreen ? size.width : size.width * 0.9;
+
+    final modalHeight = isNarrowScreen ? size.height : size.height * 0.92;
 
     return Material(
       color: Colors.transparent,
@@ -411,94 +509,100 @@ class _ArticlesModalState extends State<ArticlesModal> {
             Center(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxWidth: size.width * 0.9,
-                  maxHeight: size.height * 0.92,
+                  maxWidth: modalWidth,
+                  maxHeight: modalHeight,
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(isNarrowScreen ? 0 : 12),
                   child: Material(
                     color: Colors.white,
                     child: Column(
                       children: [
                         Container(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.surfaceContainerHighest,
-                          padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      article.title,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.titleMedium,
-                                    ),
-                                    if (metadata.isNotEmpty) ...[
-                                      const SizedBox(height: 2),
+                          color: Colors.black87,
+                          padding: EdgeInsets.fromLTRB(
+                            isNarrowScreen ? 12 : 16,
+                            8,
+                            8,
+                            8,
+                          ),
+                          child: IconTheme(
+                            data: const IconThemeData(color: Colors.white),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
                                       Text(
-                                        metadata,
-                                        maxLines: 1,
+                                        article.title,
+                                        maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.bodySmall,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(color: Colors.white),
                                       ),
+                                      if (metadata.isNotEmpty) ...[
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          metadata,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(color: Colors.white70),
+                                        ),
+                                      ],
                                     ],
-                                  ],
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                '${_currentIndex + 1} / '
-                                '${widget.articles.length}',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                              IconButton(
-                                tooltip: 'Neu laden',
-                                onPressed: _reloadCurrentArticle,
-                                icon: const Icon(Icons.refresh),
-                              ),
-                              IconButton(
-                                tooltip: 'Im Browser öffnen',
-                                onPressed: () {
-                                  unawaited(_openCurrentArticleExternally());
-                                },
-                                icon: const Icon(Icons.open_in_browser),
-                              ),
-                              IconButton(
-                                tooltip: 'Schliessen',
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                icon: const Icon(Icons.close),
-                              ),
-                            ],
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${_currentIndex + 1} / '
+                                  '${widget.articles.length}',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(color: Colors.white),
+                                ),
+                                if (!isNarrowScreen)
+                                  IconButton(
+                                    tooltip: 'Neu laden',
+                                    color: Colors.white,
+                                    disabledColor: Colors.white38,
+                                    onPressed: _reloadCurrentArticle,
+                                    icon: const Icon(Icons.refresh),
+                                  ),
+                                if (!isNarrowScreen)
+                                  IconButton(
+                                    tooltip: 'Im Browser öffnen',
+                                    color: Colors.white,
+                                    disabledColor: Colors.white38,
+                                    onPressed: () {
+                                      unawaited(
+                                        _openCurrentArticleExternally(),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.open_in_browser),
+                                  ),
+                                IconButton(
+                                  tooltip: 'Schliessen',
+                                  color: Colors.white,
+                                  disabledColor: Colors.white38,
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  icon: const Icon(Icons.close),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         Expanded(
-                          child: Stack(
-                            children: [
-                              Positioned.fill(
-                                child: _buildArticleContent(context),
-                              ),
-                              if (_isPageLoading && article.canEmbed == true)
-                                const Positioned(
-                                  top: 0,
-                                  left: 0,
-                                  right: 0,
-                                  child: LinearProgressIndicator(),
-                                ),
-                              if (_pageError != null)
-                                Positioned.fill(
-                                  child: _buildPageError(context),
-                                ),
-                            ],
-                          ),
+                          child: isNarrowScreen
+                              ? _buildNarrowArticleArea(context, article)
+                              : _buildWideArticleArea(context, article),
                         ),
                       ],
                     ),
@@ -506,26 +610,30 @@ class _ArticlesModalState extends State<ArticlesModal> {
                 ),
               ),
             ),
-            Positioned(
-              left: 8,
-              child: IconButton(
-                tooltip: 'Vorheriger Artikel',
-                iconSize: 48,
-                color: canNavigate ? Colors.white : Colors.white38,
-                onPressed: canNavigate ? _showPreviousArticle : null,
-                icon: const Icon(Icons.chevron_left),
+            if (!isNarrowScreen)
+              Positioned(
+                left: 8,
+                child: IconButton(
+                  tooltip: 'Vorheriger Artikel',
+                  iconSize: 48,
+                  color: canNavigate ? Colors.white : Colors.white38,
+                  disabledColor: Colors.white38,
+                  onPressed: canNavigate ? _showPreviousArticle : null,
+                  icon: const Icon(Icons.chevron_left),
+                ),
               ),
-            ),
-            Positioned(
-              right: 8,
-              child: IconButton(
-                tooltip: 'Nächster Artikel',
-                iconSize: 48,
-                color: canNavigate ? Colors.white : Colors.white38,
-                onPressed: canNavigate ? _showNextArticle : null,
-                icon: const Icon(Icons.chevron_right),
+            if (!isNarrowScreen)
+              Positioned(
+                right: 8,
+                child: IconButton(
+                  tooltip: 'Nächster Artikel',
+                  iconSize: 48,
+                  color: canNavigate ? Colors.white : Colors.white38,
+                  disabledColor: Colors.white38,
+                  onPressed: canNavigate ? _showNextArticle : null,
+                  icon: const Icon(Icons.chevron_right),
+                ),
               ),
-            ),
           ],
         ),
       ),

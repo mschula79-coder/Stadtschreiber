@@ -111,6 +111,9 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
       return localization.editRatingCriterion;
     case 'email':
       return localization.email;
+    case 'enterEmail':
+      return 'Bitte gib deine E-Mail-Adresse ein.';
+
     case 'enterName':
       return localization.enterName;
     case 'error':
@@ -151,7 +154,7 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
       return localization.login;
     case 'loginRequired':
       return localization.loginRequired;
-      case 'moveLocation':
+    case 'moveLocation':
       return "Standort anpassen";
     case 'moveMapMessage':
       return localization.moveMapMessage;
@@ -179,7 +182,7 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
       return localization.noEntries;
     case 'noFavoritesListsAvailable':
       return localization.noFavoritesListsAvailable;
-      case 'noGeometryPoints':
+    case 'noGeometryPoints':
       return 'Keine Geometrie gespeichert';
     case 'noPoiFound':
       return localization.noPoiFound;
@@ -207,7 +210,9 @@ String getText(String textCode, {String? languageCode, String? countryCode}) {
       return localization.register;
     case 'removeSelection':
       return localization.removeSelection;
-
+      // TODO Hinweis übersetzen
+    case 'resetLinkSent':
+      return localization.resetLinkSent;
     case 'results':
       return localization.results;
     case 'role':

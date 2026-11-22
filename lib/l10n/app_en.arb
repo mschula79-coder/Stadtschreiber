@@ -89,7 +89,7 @@
   "processLink": "Check link",
   "rating": "Rating",
   "register": "Register",
-  "resetLinkSent": "We have sent you a link",
+  "resetLinkSent": "We have sent you a link. Please confirm it using the same device and the same browser or app.",
   "resetPassword": "Reset password",
   "results": "Results",
   "role": "Role",

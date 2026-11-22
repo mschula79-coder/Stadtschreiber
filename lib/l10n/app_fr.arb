@@ -89,7 +89,7 @@
   "processLink": "Vérifier le lien",
   "rating": "Évaluation",
   "register": "S’inscrire",
-  "resetLinkSent": "Nous vous avons envoyé un lien",
+  "resetLinkSent": "Nous vous avons envoyé un lien. Merci de le confirmer avec le même appareil et dans le même navigateur ou la même application.",
   "resetPassword": "Réinitialiser le mot de passe",
   "results": "Résultats",
   "role": "Rôle",

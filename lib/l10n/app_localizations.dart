@@ -632,7 +632,7 @@ abstract class AppLocalizations {
   /// No description provided for @resetLinkSent.
   ///
   /// In en, this message translates to:
-  /// **'We have sent you a link'**
+  /// **'We have sent you a link. Please confirm it using the same device and the same browser or app.'**
   String get resetLinkSent;
 
   /// No description provided for @resetPassword.

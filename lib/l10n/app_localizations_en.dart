@@ -280,7 +280,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get register => 'Register';
 
   @override
-  String get resetLinkSent => 'We have sent you a link';
+  String get resetLinkSent =>
+      'We have sent you a link. Please confirm it using the same device and the same browser or app.';
 
   @override
   String get resetPassword => 'Reset password';

@@ -556,17 +556,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
  */
       if (session == null) {
-        if (!mounted) {
-          return false;
-        }
-
-        setState(() {
-          errorMessage =
-              'Die Anmeldung konnte nicht abgeschlossen werden. '
-              'Bitte bestätige gegebenenfalls zuerst deine E-Mail-Adresse.';
-        });
-
-        return false;
+        throw const AuthException('session_missing');
       }
 
       if (!mounted) {
@@ -672,16 +662,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     final messenger = ScaffoldMessenger.of(context);
 
-    final resetLinkSent = AppLocalizations.of(context)!.resetLinkSent;
+    final resetLinkSent = getText(
+      'resetLinkSent',
+      languageCode: ref.read(localeProvider).languageCode,
+      countryCode: ref.read(localeProvider).countryCode,
+    );
+
+    final languageCode = ref.watch(localeProvider).languageCode;
+    final countryCode = ref.watch(localeProvider).countryCode;
 
     if (normalizedEmail.isEmpty) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Bitte gib deine E-Mail-Adresse ein.')),
+        SnackBar(
+          content: Text(
+            getText(
+              'enterEmail',
+              languageCode: languageCode,
+              countryCode: countryCode,
+            ),
+          ),
+        ),
       );
-
       return;
     }
-//// TODO Hinweis Der Recovery-Link muss grundsätzlich im selben Browser und auf demselben Gerät geöffnet werden
 
     try {
       await Supabase.instance.client.auth.resetPasswordForEmail(
@@ -701,7 +704,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         return;
       }
 
-      messenger.showSnackBar(SnackBar(content: Text('Fehler: $error')));
+      final message = getAuthErrorMessage(
+        error,
+        languageCode,
+        countryCode ?? '',
+        operation: AuthOperation.passwordReset,
+      );
+
+      setState(() {
+        errorMessage = message;
+      });
+
+      messenger.showSnackBar(SnackBar(content: Text(message)));
     }
   }
 

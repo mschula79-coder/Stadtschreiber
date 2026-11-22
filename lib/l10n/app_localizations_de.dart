@@ -281,7 +281,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get register => 'Registrieren';
 
   @override
-  String get resetLinkSent => 'Wir haben dir einen Link geschickt';
+  String get resetLinkSent =>
+      'Wir haben dir einen Link geschickt. Bitte bestätige ihn mit dem gleichen Gerät und im gleichen Browser / App';
 
   @override
   String get resetPassword => 'Passwort zurücksetzen';
@@ -817,7 +818,8 @@ class AppLocalizationsDeCh extends AppLocalizationsDe {
   String get register => 'Registriere';
 
   @override
-  String get resetLinkSent => 'Mir hän dir e Link gschiggt';
+  String get resetLinkSent =>
+      'Mir hän dir e Link gschiggt. Bitte bestätig en mit em gliiche Grät und im gliiche Browser beziehungsweise in dr gliiche App.';
 
   @override
   String get resetPassword => 'Passwort zruggsetze';
